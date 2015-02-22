@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:BpmnDiagram xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:bpmn="http://stp.eclipse.org/bpmn" xmi:id="_XszTQBUPEeGnHaH5EKxkKg" iD="_XsysMRUPEeGnHaH5EKxkKg" author="">
+  <pools xmi:type="bpmn:Pool" xmi:id="_Xu0FcRUPEeGnHaH5EKxkKg" iD="_Xu0FcBUPEeGnHaH5EKxkKg" name="Recommendation Module">
+    <artifacts xmi:type="bpmn:Group" xmi:id="_flQmkRW6EeGXKffp59bjTQ" iD="_flQmkBW6EeGXKffp59bjTQ" name="Rank and Characterize Users" activities="_qBOzQRUXEeGnHaH5EKxkKg _OZiT8BUWEeGnHaH5EKxkKg _7bzzwRUXEeGnHaH5EKxkKg _eyQZYBUXEeGnHaH5EKxkKg _Qb9UIRUVEeGnHaH5EKxkKg _IMvTIRUZEeGnHaH5EKxkKg"/>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_XwA_URUPEeGnHaH5EKxkKg" iD="_XwA_UBUPEeGnHaH5EKxkKg" incomingEdges="_wk9foRUPEeGnHaH5EKxkKg" name="User query  = Query" activityType="Task">
+      <outgoingMessages xmi:type="bpmn:MessagingEdge" href="#_-TyxsBUQEeGnHaH5EKxkKg"/>
+    </vertices>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_uGocARUPEeGnHaH5EKxkKg" iD="_uGocABUPEeGnHaH5EKxkKg" outgoingEdges="_wk9foRUPEeGnHaH5EKxkKg" activityType="EventIntermediateLink"/>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_LBa64RUREeGnHaH5EKxkKg" iD="_LBa64BUREeGnHaH5EKxkKg" outgoingEdges="_-G42wRUTEeGnHaH5EKxkKg" name="Weighted Related &#xD;&#xA;Concepts">
+      <incomingMessages xmi:type="bpmn:MessagingEdge" href="#_MojQwRUREeGnHaH5EKxkKg"/>
+    </vertices>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_FYzaoRUTEeGnHaH5EKxkKg" iD="_FYzaoBUTEeGnHaH5EKxkKg" incomingEdges="_-G42wRUTEeGnHaH5EKxkKg" name="Top Related&#xD;&#xA; Concepts">
+      <outgoingMessages xmi:type="bpmn:MessagingEdge" href="#_pXHKIBUVEeGnHaH5EKxkKg"/>
+    </vertices>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_HhUw4RUUEeGnHaH5EKxkKg" iD="_HhUw4BUUEeGnHaH5EKxkKg" outgoingEdges="_1Xl5cRUVEeGnHaH5EKxkKg" name="Twitter &#xD;&#xA;ScreenNames">
+      <incomingMessages xmi:type="bpmn:MessagingEdge" href="#_bOxy8RUUEeGnHaH5EKxkKg"/>
+    </vertices>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_Qb9UIRUVEeGnHaH5EKxkKg" iD="_Qb9UIBUVEeGnHaH5EKxkKg" incomingEdges="_1Xl5cRUVEeGnHaH5EKxkKg _onAhoRW_EeGXKffp59bjTQ" name="Unique Twitter&#xD;&#xA;ScreenNames" groups="_flQmkRW6EeGXKffp59bjTQ">
+      <outgoingMessages xmi:type="bpmn:MessagingEdge" href="#_7tTeURUVEeGnHaH5EKxkKg"/>
+    </vertices>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_OZiT8BUWEeGnHaH5EKxkKg" iD="_OZhs4BUWEeGnHaH5EKxkKg" outgoingEdges="_lB3WQRUXEeGnHaH5EKxkKg" name="A set of Users&#xD;&#xA;with their Tweets" groups="_flQmkRW6EeGXKffp59bjTQ" activityType="Task">
+      <incomingMessages xmi:type="bpmn:MessagingEdge" href="#_OZvIQRUWEeGnHaH5EKxkKg"/>
+    </vertices>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_eyQZYBUXEeGnHaH5EKxkKg" iD="_eyPyURUXEeGnHaH5EKxkKg" outgoingEdges="_qBYkQRUXEeGnHaH5EKxkKg _k5NikRWxEeGXKffp59bjTQ" incomingEdges="_lB3WQRUXEeGnHaH5EKxkKg" name="Twit Tokenizer&#xD;&#xA;words, hashtags, urls, mentions" groups="_flQmkRW6EeGXKffp59bjTQ"/>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_qBOzQRUXEeGnHaH5EKxkKg" iD="_qBOzQBUXEeGnHaH5EKxkKg" outgoingEdges="_BxPEwRUYEeGnHaH5EKxkKg" incomingEdges="_qBYkQRUXEeGnHaH5EKxkKg" name="Term - User Vector&#xD;&#xA;(TF-IDF Indexed)" groups="_flQmkRW6EeGXKffp59bjTQ" activityType="Task"/>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_7bzzwRUXEeGnHaH5EKxkKg" iD="_7bzzwBUXEeGnHaH5EKxkKg" outgoingEdges="_a0FBsRUZEeGnHaH5EKxkKg" incomingEdges="_BxPEwRUYEeGnHaH5EKxkKg" name="Rank Users" groups="_flQmkRW6EeGXKffp59bjTQ"/>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_PUAtQRUYEeGnHaH5EKxkKg" iD="_PUAtQBUYEeGnHaH5EKxkKg" outgoingEdges="_4mst8RW-EeGXKffp59bjTQ" incomingEdges="_7Y7FURW7EeGXKffp59bjTQ" name="Top n Twitterer" activityType="Task"/>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_UUSwQRUYEeGnHaH5EKxkKg" iD="_UUSwQBUYEeGnHaH5EKxkKg" outgoingEdges="_onAhoRW_EeGXKffp59bjTQ" incomingEdges="_4mst8RW-EeGXKffp59bjTQ" name="Their mentioned and&#xD;&#xA;retweeted users" activityType="Task"/>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_35np8BUYEeGnHaH5EKxkKg" iD="_35nC4BUYEeGnHaH5EKxkKg" outgoingEdges="_4EpRIRW7EeGXKffp59bjTQ _7Y7FURW7EeGXKffp59bjTQ" incomingEdges="_a0FBsRUZEeGnHaH5EKxkKg" activityType="GatewayDataBasedExclusive"/>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_IMvTIRUZEeGnHaH5EKxkKg" iD="_IMvTIBUZEeGnHaH5EKxkKg" incomingEdges="_k5NikRWxEeGXKffp59bjTQ" name="Characterize Users" groups="_flQmkRW6EeGXKffp59bjTQ" activityType="Task"/>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_njyt8BW7EeGXKffp59bjTQ" iD="_njyG4BW7EeGXKffp59bjTQ" incomingEdges="_4EpRIRW7EeGXKffp59bjTQ" activityType="EventEndTerminate"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_wk9foRUPEeGnHaH5EKxkKg" iD="_wk9foBUPEeGnHaH5EKxkKg"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_-G42wRUTEeGnHaH5EKxkKg" iD="_-G42wBUTEeGnHaH5EKxkKg"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_1Xl5cRUVEeGnHaH5EKxkKg" iD="_1Xl5cBUVEeGnHaH5EKxkKg"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_lB3WQRUXEeGnHaH5EKxkKg" iD="_lB3WQBUXEeGnHaH5EKxkKg"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_qBYkQRUXEeGnHaH5EKxkKg" iD="_qBYkQBUXEeGnHaH5EKxkKg" name="words and&#xD;&#xA; hashtags"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_BxPEwRUYEeGnHaH5EKxkKg" iD="_BxPEwBUYEeGnHaH5EKxkKg" name="using top related concepts &#xD;&#xA;and user query, Query"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_a0FBsRUZEeGnHaH5EKxkKg" iD="_a0FBsBUZEeGnHaH5EKxkKg" name="First run?"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_k5NikRWxEeGXKffp59bjTQ" iD="_k5NikBWxEeGXKffp59bjTQ" name="words, hashtags, urls, mentions"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_4EpRIRW7EeGXKffp59bjTQ" iD="_4EpRIBW7EeGXKffp59bjTQ" name="no"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_7Y7FURW7EeGXKffp59bjTQ" iD="_7Y7FUBW7EeGXKffp59bjTQ" name="yes" conditionType="Default" isDefault="true"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_4mst8RW-EeGXKffp59bjTQ" iD="_4mst8BW-EeGXKffp59bjTQ"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_onAhoRW_EeGXKffp59bjTQ" iD="_onAhoBW_EeGXKffp59bjTQ"/>
+  </pools>
+  <pools xmi:type="bpmn:Pool" xmi:id="_x0SkERUQEeGnHaH5EKxkKg" iD="_x0SkEBUQEeGnHaH5EKxkKg" name=" Delicious ">
+    <vertices xmi:type="bpmn:Activity" xmi:id="_1NkNABUQEeGnHaH5EKxkKg" iD="_1Ni-4BUQEeGnHaH5EKxkKg" outgoingEdges="_KXqzQRUREeGnHaH5EKxkKg" name="Latest Popular Links tagged with Query">
+      <incomingMessages xmi:type="bpmn:MessagingEdge" href="#_-TyxsBUQEeGnHaH5EKxkKg"/>
+    </vertices>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_G_qVoRUREeGnHaH5EKxkKg" iD="_G_qVoBUREeGnHaH5EKxkKg" incomingEdges="_KXqzQRUREeGnHaH5EKxkKg" name="Co-occuring Tags &#xD;&#xA;with tag Query">
+      <outgoingMessages xmi:type="bpmn:MessagingEdge" href="#_MojQwRUREeGnHaH5EKxkKg"/>
+    </vertices>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_KXqzQRUREeGnHaH5EKxkKg" iD="_KXqzQBUREeGnHaH5EKxkKg"/>
+  </pools>
+  <pools xmi:type="bpmn:Pool" xmi:id="_i8apgRUTEeGnHaH5EKxkKg" iD="_i8apgBUTEeGnHaH5EKxkKg" name=" Twitter ">
+    <vertices xmi:type="bpmn:Activity" xmi:id="_o3BmwRUTEeGnHaH5EKxkKg" iD="_o3A_sRUTEeGnHaH5EKxkKg" outgoingEdges="_QreMQRUUEeGnHaH5EKxkKg" name="Twitter Search" activityType="Task" looping="true">
+      <incomingMessages xmi:type="bpmn:MessagingEdge" href="#_pXHKIBUVEeGnHaH5EKxkKg"/>
+    </vertices>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_D1BeQRUUEeGnHaH5EKxkKg" iD="_D1BeQBUUEeGnHaH5EKxkKg" incomingEdges="_QreMQRUUEeGnHaH5EKxkKg" name="A List of  Tweets">
+      <outgoingMessages xmi:type="bpmn:MessagingEdge" href="#_bOxy8RUUEeGnHaH5EKxkKg"/>
+    </vertices>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_5IdjARUVEeGnHaH5EKxkKg" iD="_5IdjABUVEeGnHaH5EKxkKg" outgoingEdges="_KWgjYRUWEeGnHaH5EKxkKg" name="User Timeline&#xD;&#xA;(User Tweets)" activityType="Task" looping="true">
+      <incomingMessages xmi:type="bpmn:MessagingEdge" href="#_7tTeURUVEeGnHaH5EKxkKg"/>
+    </vertices>
+    <vertices xmi:type="bpmn:Activity" xmi:id="_H4rPARUWEeGnHaH5EKxkKg" iD="_H4rPABUWEeGnHaH5EKxkKg" incomingEdges="_KWgjYRUWEeGnHaH5EKxkKg" name="A List of User Tweets">
+      <outgoingMessages xmi:type="bpmn:MessagingEdge" href="#_OZvIQRUWEeGnHaH5EKxkKg"/>
+    </vertices>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_QreMQRUUEeGnHaH5EKxkKg" iD="_QreMQBUUEeGnHaH5EKxkKg"/>
+    <sequenceEdges xmi:type="bpmn:SequenceEdge" xmi:id="_KWgjYRUWEeGnHaH5EKxkKg" iD="_KWgjYBUWEeGnHaH5EKxkKg"/>
+  </pools>
+  <messages xmi:type="bpmn:MessagingEdge" xmi:id="_-TyxsBUQEeGnHaH5EKxkKg" iD="_-TyKoBUQEeGnHaH5EKxkKg" source="_XwA_URUPEeGnHaH5EKxkKg" target="_1NkNABUQEeGnHaH5EKxkKg"/>
+  <messages xmi:type="bpmn:MessagingEdge" xmi:id="_MojQwRUREeGnHaH5EKxkKg" iD="_MojQwBUREeGnHaH5EKxkKg" name="weight = num. of co-occurrence" source="_G_qVoRUREeGnHaH5EKxkKg" target="_LBa64RUREeGnHaH5EKxkKg"/>
+  <messages xmi:type="bpmn:MessagingEdge" xmi:id="_bOxy8RUUEeGnHaH5EKxkKg" iD="_bOxy8BUUEeGnHaH5EKxkKg" source="_D1BeQRUUEeGnHaH5EKxkKg" target="_HhUw4RUUEeGnHaH5EKxkKg"/>
+  <messages xmi:type="bpmn:MessagingEdge" xmi:id="_pXHKIBUVEeGnHaH5EKxkKg" iD="_pXGjEBUVEeGnHaH5EKxkKg" name="for each concept" source="_FYzaoRUTEeGnHaH5EKxkKg" target="_o3BmwRUTEeGnHaH5EKxkKg"/>
+  <messages xmi:type="bpmn:MessagingEdge" xmi:id="_7tTeURUVEeGnHaH5EKxkKg" iD="_7tTeUBUVEeGnHaH5EKxkKg" name="for each&#xD;&#xA;user name" source="_Qb9UIRUVEeGnHaH5EKxkKg" target="_5IdjARUVEeGnHaH5EKxkKg"/>
+  <messages xmi:type="bpmn:MessagingEdge" xmi:id="_OZvIQRUWEeGnHaH5EKxkKg" iD="_OZvIQBUWEeGnHaH5EKxkKg" source="_H4rPARUWEeGnHaH5EKxkKg" target="_OZiT8BUWEeGnHaH5EKxkKg"/>
+</bpmn:BpmnDiagram>

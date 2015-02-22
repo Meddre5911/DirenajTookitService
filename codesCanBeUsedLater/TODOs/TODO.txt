@@ -1,0 +1,10 @@
+1) Maven'de repository'si bulunmayan jar'larýn Maven'e taþýnmasýný saðlayacak offline script'lerin yazýlmasý
+   (Þu an için "DBPedia" & "twitter text" jar'ý için gerekli sadece)
+   
+2)	Burak'ýn Kodundaki "RelatedTagsFinder" & "RelatedKeywordsFinder" sýnýflarý Direnaj'da nasýl kullanýlabilir.
+	Bu class'lardaki kodlar ne yapmak istiyor ? Bunlarýn detaylý analizi yapýldýktan sonra, kodlar DirenajProcessorAPI'ye
+	tasinacak
+
+3) Bir loglama mekanizmasý kurulacak
+
+4) properties dosyasýný src'nin icinden degilde, properties dosyasýnýn icinden yapacak sekilde okumayý yap 
