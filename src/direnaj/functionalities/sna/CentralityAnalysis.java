@@ -42,8 +42,8 @@ public class CentralityAnalysis {
                     BigDecimal.valueOf(betweennessCentrality.getVertexRankScore(userNode)));
             degreeCentralityResults.put(userNode, BigDecimal.valueOf(userRelationsGraph.getInDegree(userNode)));
         }
-        ArrayList<Entry<User, BigDecimal>> betweennessResults = CollectionUtil.sortValues(betweennessCentralityResults);
-        ArrayList<Entry<User, BigDecimal>> degreeResults = CollectionUtil.sortValues(degreeCentralityResults);
+        ArrayList<Entry<User, BigDecimal>> betweennessResults = CollectionUtil.sortValues(betweennessCentralityResults, true);
+        ArrayList<Entry<User, BigDecimal>> degreeResults = CollectionUtil.sortValues(degreeCentralityResults, true);
 
         Map<CentralityTypes, ArrayList<Entry<User, BigDecimal>>> centralities = new HashMap<CentralityTypes, ArrayList<Entry<User, BigDecimal>>>();
         centralities.put(CentralityTypes.Betweenness, betweennessResults);

@@ -36,7 +36,7 @@ public class HashtagAnalysis {
             JSONObject tweetData = (JSONObject) iterator.next();
             JSONObject tweet = DirenajDriverUtils.getTweet(tweetData);
             List<String> hashTagsList = DirenajDriverUtils.getHashTagsList(DirenajDriverUtils.getEntities(tweet));
-            Date tweetCreationDate = DirenajDriverUtils.getTweetCreationDate(tweet);
+            Date tweetCreationDate = DirenajDriverUtils.getObjectCreationDate(tweet);
             if (hashTagsList.contains(searchedHashtag)) {
                 List<JSONObject> tweets;
                 if (tweetsInTimeBasis.containsKey(tweetCreationDate)) {

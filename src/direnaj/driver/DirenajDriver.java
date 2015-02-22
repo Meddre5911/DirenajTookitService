@@ -38,7 +38,7 @@ public class DirenajDriver {
      * String getSingleTweetInfo
      * 
      */
-    
+
     public ArrayList<String> collectTweetTexts(String campaignID, int skip, int limit) throws Exception,
             DirenajInvalidJSONException {
         if (limit > 1000) {
@@ -357,16 +357,15 @@ public class DirenajDriver {
         JSONArray tags = null;
 
         try {
-        	
 
             arr = obj.getJSONArray("results");
-      
+
             tw = (JSONObject) arr.get(0);
-            
+
             tweet = (JSONObject) tw.get("tweet");
-            
+
             retVal += "Tweet ID : " + tweet.get("id").toString();
-            
+
             retVal += "<br><br><hr>";
 
             retVal += "results<br><br>";
@@ -402,7 +401,7 @@ public class DirenajDriver {
             for (int i = 0; i < tags.length(); i++) {
                 retVal += "--- " + tags.getJSONObject(i).get("text").toString() + "<br>";
             }
-            
+
         } catch (Exception e) {
             throw new DirenajInvalidJSONException(mName + e.getMessage());
         }
@@ -411,8 +410,64 @@ public class DirenajDriver {
         retVal += "FULL DUMP<br><br>";
 
         retVal += tweet.toString();
-        
+
         return retVal;
     }
 
+    public ArrayList<User> getBulkUsersInTweets(String campaignID, int skip, int limit) {
+        ArrayList<User> users = new ArrayList<User>();
+        while (limit > 0) {
+            int retrieveAmount;
+            if (limit < 1000) {
+                retrieveAmount = limit;
+                limit = 0;
+            } else {
+                retrieveAmount = 1000;
+                limit -= retrieveAmount;
+            }
+            getUsersInTweets(campaignID, skip, retrieveAmount, users);
+            skip += retrieveAmount;
+        }
+        return users;
+    }
+
+    private void getUsersInTweets(String campaignID, int skip, int limit, ArrayList<User> users) {
+        try {
+            // get data from dataHandler
+            JSONObject obj = DirenajDataHandler.getData(this.userID, this.password, campaignID, skip, limit);
+            // getting "results" field from response object
+            JSONArray results = DirenajDriverUtils.getResults(obj);
+            // get user & count post count for every user
+            for (int index = 0; index < results.length() - 1; index++) {
+                try {
+                    // get tweets
+                    JSONObject tweetData = DirenajDriverUtils.getTweetData(results, index);
+                    JSONObject tweet = DirenajDriverUtils.getTweet(tweetData);
+                    JSONObject entities = DirenajDriverUtils.getEntities(tweet);
+                    int usedHashtagCount = DirenajDriverUtils.getHashTags(entities).length();
+                    List<String> urlStrings = DirenajDriverUtils.getUrlStrings(entities);
+                    int mentionedUserCount = DirenajDriverUtils.getUserMentions(entities).length();
+                    // get user
+                    User domainUser = DirenajDriverUtils.parseUser(tweet);
+                    String tweetText = DirenajDriverUtils.getSingleTweetText(tweetData);
+                    if (users.contains(domainUser)) {
+                        int userSetIndex = users.indexOf(domainUser);
+                        domainUser = users.get(userSetIndex);
+                    } else {
+                        users.add(domainUser);
+                    }
+                    domainUser.addPost(tweetText);
+                    domainUser.addUrlsToUser(urlStrings);
+                    domainUser.addValue2CountOfHashtags((double) usedHashtagCount);
+                    domainUser.addValue2CountOfMentionedUsers((double) mentionedUserCount);
+                } catch (DirenajInvalidJSONException e) {
+                    // FIXME loglama yapilacak
+                    e.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            // FIXME loglama yapilacak
+            e.printStackTrace();
+        }
+    }
 }

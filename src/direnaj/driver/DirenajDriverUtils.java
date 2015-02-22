@@ -13,6 +13,10 @@ import direnaj.adapter.DirenajInvalidJSONException;
 import direnaj.domain.User;
 import direnaj.util.DateTimeUtils;
 
+/**
+ * @author Erdem
+ * 
+ */
 public class DirenajDriverUtils {
 
     /*
@@ -37,6 +41,12 @@ public class DirenajDriverUtils {
      * sortCounts(Hashtable<String, Integer> t)
      */
 
+    /**
+     * @param tweet
+     *            Tweet JSON object retrieved from Tweet Data JSON object
+     * @return Entities JSON object from Tweet JSON object
+     * @throws DirenajInvalidJSONException
+     */
     public static JSONObject getEntities(JSONObject tweet) throws DirenajInvalidJSONException {
         try {
             return (JSONObject) tweet.get("entities");
@@ -45,6 +55,12 @@ public class DirenajDriverUtils {
         }
     }
 
+    /**
+     * @param entities
+     *            Entities JSON object retrieved from Tweet JSON object
+     * @return hashtags JSON Array object
+     * @throws DirenajInvalidJSONException
+     */
     public static JSONArray getHashTags(JSONObject entities) throws DirenajInvalidJSONException {
         try {
             return (JSONArray) entities.get("hashtags");
@@ -103,6 +119,12 @@ public class DirenajDriverUtils {
         }
     }
 
+    /**
+     * @param entities
+     *            Entities JSON object in Tweet JSON object
+     * @return Array of Mentioned Users in tweet
+     * @throws DirenajInvalidJSONException
+     */
     public static JSONArray getUserMentions(JSONObject entities) throws DirenajInvalidJSONException {
         try {
             return (JSONArray) entities.get("user_mentions");
@@ -126,6 +148,12 @@ public class DirenajDriverUtils {
         }
     }
 
+    /**
+     * @param obj
+     *            Main JSON Data retrieved from Direnaj after request is sent
+     * @return
+     * @throws DirenajInvalidJSONException
+     */
     public static JSONArray getResults(JSONObject obj) throws DirenajInvalidJSONException {
         try {
             return obj.getJSONArray("results");
@@ -134,6 +162,12 @@ public class DirenajDriverUtils {
         }
     }
 
+    /**
+     * @param tweetData
+     *            Tweet Data JSON object which is retrived from the Results JSON Array
+     * @return tweet JSON object in the tweet data
+     * @throws DirenajInvalidJSONException
+     */
     public static JSONObject getTweet(JSONObject tweetData) throws DirenajInvalidJSONException {
         try {
             return (JSONObject) tweetData.get("tweet");
@@ -142,6 +176,17 @@ public class DirenajDriverUtils {
         }
     }
 
+    /**
+     * @param results
+     *            Result Json Array retrieved from Main JSON data that Direnaj is sent
+     * @param index
+     *            index of Tweet data in the results array
+     *            <p>
+     *            <b>Note that : </b> Tweet data mentioned here does not only compose of tweet text. It has all data
+     *            relevant with tweet such as user, tweet, entities, hashtags etc ...
+     * @return tweet JSON object in the array
+     * @throws DirenajInvalidJSONException
+     */
     public static JSONObject getTweetData(JSONArray results, int index) throws DirenajInvalidJSONException {
         try {
             return (JSONObject) results.get(index);
@@ -164,12 +209,80 @@ public class DirenajDriverUtils {
             JSONObject userJson = getUser(tweet);
             // get user domain
             User user = new User(getUserId(userJson), getUserScreenName(userJson));
+            // set user info
+            user.setFollowersCount(getUserFollowerCount(userJson));
+            user.setFriendsCount(getUserFriendCount(userJson));
+            user.setProtected(getUserProtectedInfo(userJson));
+            user.setVerified(getUserVerifiedInfo(userJson));
+            user.setCreationDate(getObjectCreationDate(userJson));
             return user;
         } catch (Exception e) {
             throw new DirenajInvalidJSONException("parseUser : " + e.getMessage());
         }
     }
 
+    /**
+     * @param user
+     *            User JSON object retrieved from Tweet JSON object
+     * @return user verified or not
+     * @throws DirenajInvalidJSONException
+     */
+    public static boolean getUserVerifiedInfo(JSONObject user) throws DirenajInvalidJSONException {
+        try {
+            return user.getBoolean("verified");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * @param user
+     *            User JSON object retrieved from Tweet JSON object
+     * @return user has a protected account or not
+     * @throws DirenajInvalidJSONException
+     */
+    public static boolean getUserProtectedInfo(JSONObject user) throws DirenajInvalidJSONException {
+        try {
+            return user.getBoolean("protected");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * @param user
+     *            User JSON object retrieved from Tweet JSON object
+     * @return user follower count
+     * @throws DirenajInvalidJSONException
+     */
+    public static Long getUserFollowerCount(JSONObject user) throws DirenajInvalidJSONException {
+        try {
+            return user.getLong("followers_count");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * @param user
+     *            User JSON object retrieved from Tweet JSON object
+     * @return user friend count
+     * @throws DirenajInvalidJSONException
+     */
+    public static Long getUserFriendCount(JSONObject user) throws DirenajInvalidJSONException {
+        try {
+            return user.getLong("friends_count");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * @param user
+     *            User JSON object retrieved from Tweet JSON object
+     * @return userId of user
+     * @throws DirenajInvalidJSONException
+     */
     public static String getUserId(JSONObject user) throws DirenajInvalidJSONException {
         try {
             return user.getString("id_str");
@@ -178,6 +291,12 @@ public class DirenajDriverUtils {
         }
     }
 
+    /**
+     * @param user
+     *            User JSON object retrieved from Tweet JSON object
+     * @return user Screen Name of user
+     * @throws DirenajInvalidJSONException
+     */
     public static String getUserScreenName(JSONObject user) throws DirenajInvalidJSONException {
         try {
             return user.getString("screen_name");
@@ -186,6 +305,12 @@ public class DirenajDriverUtils {
         }
     }
 
+    /**
+     * @param tweetData
+     *            TweetData JSON object retrieved from Main Results JSON Array
+     * @return text of Tweet
+     * @throws DirenajInvalidJSONException
+     */
     public static String getSingleTweetText(JSONObject tweetData) throws DirenajInvalidJSONException {
         try {
             return tweetData.getJSONObject("tweet").get("text").toString();
@@ -233,9 +358,9 @@ public class DirenajDriverUtils {
         return retweetedUser;
     }
 
-    public static Date getTweetCreationDate(JSONObject tweet) throws DirenajInvalidJSONException {
+    public static Date getObjectCreationDate(JSONObject object) throws DirenajInvalidJSONException {
         try {
-            String createdTime = String.valueOf(tweet.get("created_at"));
+            String createdTime = String.valueOf(object.get("created_at"));
             return DateTimeUtils.getTwitterDateFromRateDieFormat(createdTime);
         } catch (Exception e) {
             throw new DirenajInvalidJSONException("getTweetCreationDate : " + e.getMessage());

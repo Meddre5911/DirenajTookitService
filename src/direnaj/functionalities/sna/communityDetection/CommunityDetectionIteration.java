@@ -8,6 +8,7 @@ import direnaj.domain.Community;
 
 public class CommunityDetectionIteration {
 
+    // toolkit branch deneme
     private HashMap<Integer, Community> communityMapping;
     private RealMatrix communityMatrix;
 

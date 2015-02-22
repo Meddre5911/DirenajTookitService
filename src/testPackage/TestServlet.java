@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,10 +25,13 @@ import direnaj.driver.DirenajDriver;
 import direnaj.functionalities.graph.DirenajGraph;
 import direnaj.functionalities.graph.GraphUtil;
 import direnaj.functionalities.graph.Relations;
+import direnaj.functionalities.sna.BotAccountCalculationWeight;
 import direnaj.functionalities.sna.CentralityAnalysis;
 import direnaj.functionalities.sna.CentralityTypes;
+import direnaj.functionalities.sna.UserAccountPropertyAnalyser;
 import direnaj.functionalities.sna.communityDetection.CommunityDetector;
 import direnaj.functionalities.sna.communityDetection.DetectedCommunities;
+import direnaj.util.CollectionUtil;
 import direnaj.util.TextUtils;
 import direnaj.util.d3Lib.D3GraphicType;
 
@@ -205,6 +209,34 @@ public class TestServlet extends HttpServlet {
                 }
                 dispatcher.forward(request, response);
 
+            } else if (operation.equals("getAllUsers")) {
+
+                // create Weights object
+                BotAccountCalculationWeight botAccountCalculationWeight = new BotAccountCalculationWeight();
+                botAccountCalculationWeight.setCreationDateWeight(new BigDecimal(request
+                        .getParameter("creationDateWeight")));
+                botAccountCalculationWeight.setFriendFollowerWeight(new BigDecimal(request
+                        .getParameter("friendFollowerWeight")));
+                botAccountCalculationWeight.setHashtagRatioWeight(new BigDecimal(request
+                        .getParameter("hashtagRatioWeight")));
+                botAccountCalculationWeight.setMentionRatioWeight(new BigDecimal(request
+                        .getParameter("mentionRatioWeight")));
+                botAccountCalculationWeight.setProtectedAccountWeight(new BigDecimal(request
+                        .getParameter("protectedAccountWeight")));
+                botAccountCalculationWeight.setUrlRatioWeight(new BigDecimal(request.getParameter("urlRatioWeight")));
+                botAccountCalculationWeight.setVerifiedAccountWeight(new BigDecimal(request
+                        .getParameter("verifiedAccountWeight")));
+
+                ArrayList<User> bulkUsersInTweets = driver.getBulkUsersInTweets(campaignId, skip, limit);
+                UserAccountPropertyAnalyser.analyseUserAccountProperties(bulkUsersInTweets);
+                Hashtable<User, BigDecimal> userProbabilities = UserAccountPropertyAnalyser
+                        .calculateProbabilityOfBeingHuman(bulkUsersInTweets, botAccountCalculationWeight);
+                ArrayList<Entry<User, BigDecimal>> sortedValues = CollectionUtil.sortValues(userProbabilities,false);
+
+                request.setAttribute("sortedValues", sortedValues);
+                ServletContext context = getServletContext();
+                RequestDispatcher dispatcher = context.getRequestDispatcher("/botUserAnalysis.jsp");
+                dispatcher.forward(request, response);
             } else {
                 retHtmlStr += "OPERATION NOT SUPPORTED!";
             }

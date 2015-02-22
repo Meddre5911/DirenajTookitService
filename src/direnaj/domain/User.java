@@ -1,5 +1,6 @@
 package direnaj.domain;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
@@ -7,11 +8,31 @@ public class User implements Comparable<User> {
 
     private String userId;
     private String userScreenName;
-    private List<String> posts;
     private double userDegree;
+    private double friendsCount;
+    private double followersCount;
+    private boolean isProtected;
+    private boolean isVerified;
+    private Date creationDate;
+    private UserAccountProperties accountProperties;
+    private List<String> posts;
+    private List<String> usedUrls;
+    /**
+     * count of Mentioned Users in all posted tweets
+     */
+    private double countOfMentionedUsers;
+    /**
+     * count of Hashtags in all posted tweets
+     */
+    private double countOfHashtags;
 
     public User(String userId, String screenName) {
         posts = new Vector<String>();
+        usedUrls = new Vector<String>();
+        friendsCount = 0L;
+        followersCount = 0L;
+        countOfMentionedUsers = 0L;
+        countOfHashtags = 0L;
         setUserId(userId);
         setUserScreenName(screenName);
     }
@@ -52,6 +73,88 @@ public class User implements Comparable<User> {
 
     public void setUserDegree(double userDegree) {
         this.userDegree = userDegree;
+    }
+
+    public double getFriendsCount() {
+        return friendsCount;
+    }
+
+    public void setFriendsCount(double friendsCount) {
+        this.friendsCount = friendsCount;
+    }
+
+    public double getFollowersCount() {
+        return followersCount;
+    }
+
+    public void setFollowersCount(double followersCount) {
+        this.followersCount = followersCount;
+    }
+
+    public boolean isProtected() {
+        return isProtected;
+    }
+
+    public void setProtected(boolean isProtected) {
+        this.isProtected = isProtected;
+    }
+
+    public boolean isVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(boolean isVerified) {
+        this.isVerified = isVerified;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    public UserAccountProperties getAccountProperties() {
+        return accountProperties;
+    }
+
+    public void setAccountProperties(UserAccountProperties accountProperties) {
+        this.accountProperties = accountProperties;
+    }
+
+    public List<String> getUsedUrls() {
+        return usedUrls;
+    }
+
+    public void addUrlsToUser(List<String> otherUrls) {
+        if (otherUrls != null) {
+            usedUrls.addAll(otherUrls);
+        }
+    }
+
+    public double getCountOfMentionedUsers() {
+        return countOfMentionedUsers;
+    }
+
+    public void setCountOfMentionedUsers(double countOfMentionedUsers) {
+        this.countOfMentionedUsers = countOfMentionedUsers;
+    }
+
+    public double getCountOfHashtags() {
+        return countOfHashtags;
+    }
+
+    public void setCountOfHashtags(double countOfHashtags) {
+        this.countOfHashtags = countOfHashtags;
+    }
+
+    public void addValue2CountOfMentionedUsers(double countOfMentionedUsers) {
+        this.countOfMentionedUsers += countOfMentionedUsers;
+    }
+
+    public void addValue2CountOfHashtags(double countOfHashtags) {
+        this.countOfHashtags += countOfHashtags;
     }
 
     @Override
