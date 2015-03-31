@@ -2,17 +2,23 @@ package direnaj.functionalities;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.Vector;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Result;
+import org.neo4j.graphdb.Transaction;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.BulkWriteOperation;
+import com.mongodb.BulkWriteResult;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -24,6 +30,7 @@ import direnaj.driver.DirenajDriverUtils;
 import direnaj.driver.DirenajDriverVersion2;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.DirenajMongoDriverUtil;
+import direnaj.driver.DirenajNeo4jDriver;
 import direnaj.twitter.UserAccountPropertyAnalyser;
 import direnaj.util.CollectionUtil;
 import direnaj.util.DateTimeUtils;
@@ -116,17 +123,105 @@ public class OrganizationDetector {
         // get total user count for detection
         DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
         Long preprocessUserCounts = direnajMongoDriver.executeCountQuery(orgBehaviorPreProcessUsers, requestIdObj);
+        List<String> userIds = new Vector<>();
         for (int i = 1; i <= preprocessUserCounts; i++) {
             DBObject preProcessUser = orgBehaviorPreProcessUsers.findOne(requestIdObj);
             User domainUser = analyzePreProcessUser(preProcessUser);
             // do hashtag / mention / url & twitter device ratio
             UserAccountPropertyAnalyser.getInstance().calculateUserAccountProperties(domainUser);
             domainUsers.add(domainUser);
+            userIds.add(domainUser.getUserId());
             if ((i == preprocessUserCounts) || domainUsers.size() > DirenajMongoDriver.BULK_INSERT_SIZE) {
                 domainUsers = saveOrganizedBehaviourInputData(domainUsers);
             }
         }
+        calculateClosenessCentrality(userIds);
 
+    }
+
+    private void calculateClosenessCentrality(List<String> userIds) {
+        String subgraphEdgeLabel = createSubgraphByAddingEdges(userIds);
+        HashMap<String, Double> userClosenessCentralities = calculateInNeo4J(userIds, subgraphEdgeLabel);
+        bulkUpdateMongo4ClosenessCentrality(userClosenessCentralities);
+    }
+
+    private void bulkUpdateMongo4ClosenessCentrality(HashMap<String, Double> userClosenessCentralities) {
+        DBCollection processInputDataCollection = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
+        BulkWriteOperation bulkWriteOperation = processInputDataCollection.initializeUnorderedBulkOperation();
+
+        for (Map.Entry<String, Double> entry : userClosenessCentralities.entrySet()) {
+            bulkWriteOperation.find(new BasicDBObject("requestId", requestId).append("userId", entry.getKey()))
+                    .updateOne(new BasicDBObject("$set", new BasicDBObject("closenessCentrality", entry.getValue())));
+
+        }
+        BulkWriteResult result = bulkWriteOperation.execute();
+    }
+
+    private HashMap<String, Double> calculateInNeo4J(List<String> userIds, String subgraphEdgeLabel) {
+        HashMap<String, Double> userClosenessCentralities = new HashMap<>();
+        if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
+            GraphDatabaseService db = DirenajNeo4jDriver.getNeo4jService();
+            Transaction tx = db.beginTx();
+            try {
+                for (String userId : userIds) {
+                    Map<String, Object> params = new HashMap<String, Object>();
+                    params.put("userId", userId);
+                    String closenessCalculateQuery = "MATCH (a), (b) WHERE a<>b and a.id_str = {userId} " //
+                            + "WITH length(shortestPath((a)<-[:" + subgraphEdgeLabel + "]-(b))) AS dist, a, b " //
+                            + "RETURN DISTINCT sum(1.0/dist) AS closenessCentrality, a.id_str";
+                    double closenessCentrality = 0;
+                    try {
+                        Result closenessResult = db.execute(closenessCalculateQuery, params);
+                        while (closenessResult.hasNext()) {
+                            Map<String, Object> resultMap = closenessResult.next();
+                            closenessCentrality = (double) resultMap.get("closenessCentrality");
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    userClosenessCentralities.put(userId, closenessCentrality);
+                }
+                tx.success();
+            } catch (Exception e) {
+                tx.failure();
+                e.printStackTrace();
+            } finally {
+                tx.close();
+            }
+        }
+        return userClosenessCentralities;
+    }
+
+    private String createSubgraphByAddingEdges(List<String> userIds) {
+        String newRelationName = "FOLLOWS_" + requestId;
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("hopCount", 3);
+        params.put("userIds", userIds);
+
+        String cypherQuery = "MATCH p = (begin:User)-[r:FOLLOWS*..{hopCount}]-(end:User) " //
+                + "WHERE begin.id_str in {userIds} " //
+                + "WITH distinct nodes(p) as nodes " //   
+                + "MATCH (x)-[FOLLOWS]->(y) " // find all relationships between nodes
+                + "WHERE x in nodes and y in nodes " // which were found earlier
+                + "CREATE (x)-[r1:" + newRelationName + "]->(y) " //
+                + "WITH nodes " // 
+                + "MATCH (z)<-[FOLLOWS]-(t) " // find all relationships between nodes
+                + "WHERE z in nodes and t in nodes " // which were found earlier
+                + "CREATE (z)<-[r2:" + newRelationName + "]-(t) RETURN 1 ";
+
+        GraphDatabaseService db = DirenajNeo4jDriver.getNeo4jService();
+        Transaction tx = db.beginTx();
+        try {
+            db.execute(cypherQuery, params);
+            tx.success();
+        } catch (Exception e) {
+            newRelationName = "";
+            tx.failure();
+            e.printStackTrace();
+        } finally {
+            tx.close();
+        }
+        return newRelationName;
     }
 
     private List<User> saveOrganizedBehaviourInputData(List<User> domainUsers) {
