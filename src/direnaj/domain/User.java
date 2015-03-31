@@ -4,6 +4,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
+import direnaj.twitter.TweetPostSource;
+import direnaj.twitter.TweetPostSourceAnalyser;
+
 public class User implements Comparable<User> {
 
     private String userId;
@@ -11,6 +14,7 @@ public class User implements Comparable<User> {
     private double userDegree;
     private double friendsCount;
     private double followersCount;
+    private double postCount;
     private boolean isProtected;
     private boolean isVerified;
     private Date creationDate;
@@ -18,6 +22,12 @@ public class User implements Comparable<User> {
     private UserAccountProperties accountProperties;
     private List<String> posts;
     private List<String> usedUrls;
+    private double webDevicePostCount;
+    private double mobileDevicePostCount;
+    private double apiDevicePostCount;
+    private double thirdPartyDevicePostCount;
+    private double usedUrlCount;
+
     /**
      * count of Mentioned Users in all posted tweets
      */
@@ -117,6 +127,9 @@ public class User implements Comparable<User> {
     }
 
     public UserAccountProperties getAccountProperties() {
+        if (accountProperties == null) {
+            accountProperties = new UserAccountProperties();
+        }
         return accountProperties;
     }
 
@@ -158,6 +171,66 @@ public class User implements Comparable<User> {
         this.countOfHashtags += countOfHashtags;
     }
 
+    public Date getCampaignTweetPostDate() {
+        return campaignTweetPostDate;
+    }
+
+    public void setCampaignTweetPostDate(Date campaignTweetPostDate) {
+        this.campaignTweetPostDate = campaignTweetPostDate;
+    }
+
+    public double getPostCount() {
+        return postCount;
+    }
+
+    public void setPostCount(double postCount) {
+        this.postCount = postCount;
+    }
+
+    public double getWebDevicePostCount() {
+        return webDevicePostCount;
+    }
+
+    public void setWebDevicePostCount(double webDevicePostCount) {
+        this.webDevicePostCount = webDevicePostCount;
+    }
+
+    public double getMobileDevicePostCount() {
+        return mobileDevicePostCount;
+    }
+
+    public void setMobileDevicePostCount(double mobileDevicePostCount) {
+        this.mobileDevicePostCount = mobileDevicePostCount;
+    }
+
+    public double getApiDevicePostCount() {
+        return apiDevicePostCount;
+    }
+
+    public void setApiDevicePostCount(double apiDevicePostCount) {
+        this.apiDevicePostCount = apiDevicePostCount;
+    }
+
+    public double getThirdPartyDevicePostCount() {
+        return thirdPartyDevicePostCount;
+    }
+
+    public void setThirdPartyDevicePostCount(double thirdPartyDevicePostCount) {
+        this.thirdPartyDevicePostCount = thirdPartyDevicePostCount;
+    }
+
+    public double getUsedUrlCount() {
+        return usedUrlCount;
+    }
+
+    public void setUsedUrlCount(double usedUrlCount) {
+        this.usedUrlCount = usedUrlCount;
+    }
+
+    public void incrementPostCount() {
+        postCount++;
+    }
+
     public double calculateFriendFollowerRatio() {
         Double ratioValue = new Double(0);
         try {
@@ -169,6 +242,26 @@ public class User implements Comparable<User> {
         } catch (Exception e) {
             return new Double(0);
         }
+    }
+
+    public void incrementPostDeviceCount(String tweetPostSource) {
+        TweetPostSource tweetSource = TweetPostSourceAnalyser.getTweetSource(tweetPostSource);
+        switch (tweetSource) {
+        case WEB:
+            webDevicePostCount++;
+            break;
+        case MOBILE:
+            mobileDevicePostCount++;
+            break;
+        case API:
+            apiDevicePostCount++;
+            break;
+        case THIRDPARTY:
+        default:
+            thirdPartyDevicePostCount++;
+            break;
+        }
+
     }
 
     @Override
@@ -203,11 +296,8 @@ public class User implements Comparable<User> {
         }
     }
 
-    public Date getCampaignTweetPostDate() {
-        return campaignTweetPostDate;
-    }
+    public void addValue2CountOfUsedUrls(int usedUrlCountInPost) {
+        usedUrlCount += usedUrlCountInPost;
 
-    public void setCampaignTweetPostDate(Date campaignTweetPostDate) {
-        this.campaignTweetPostDate = campaignTweetPostDate;
     }
 }

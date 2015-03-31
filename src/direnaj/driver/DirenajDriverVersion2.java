@@ -127,7 +127,6 @@ public class DirenajDriverVersion2 {
                     preprocessUser.put("requestId", requestId);
                     preprocessUser.put("userId", user.getUserId());
                     preprocessUser.put("userScreenName", user.getUserScreenName());
-                    preprocessUser.put("friendFollowerRatio", user.calculateFriendFollowerRatio());
                     preprocessUser.put("friendCount", user.getFriendsCount());
                     preprocessUser.put("followerCount", user.getFollowersCount());
                     preprocessUser.put("isProtected", user.isProtected());

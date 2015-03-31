@@ -1,4 +1,4 @@
-package direnaj.functionalities.sna;
+package direnaj.twitter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -16,12 +16,35 @@ import org.json.JSONObject;
 
 import direnaj.domain.User;
 import direnaj.domain.UserAccountProperties;
+import direnaj.functionalities.sna.BotAccountCalculationWeight;
 import direnaj.util.HTTPUtil;
 import direnaj.util.TextUtils;
 import direnaj.util.URLUtil;
 
 public class UserAccountPropertyAnalyser {
 
+    private static UserAccountPropertyAnalyser userAccountPropertyAnalyser;
+    private Date controlDate;
+
+    private UserAccountPropertyAnalyser() {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            String dateInString = "31-03-2007";
+            controlDate = sdf.parse(dateInString);
+        } catch (ParseException e) {
+            // FIXME loglama yapilacak
+            e.printStackTrace();
+        }
+    }
+
+    public static UserAccountPropertyAnalyser getInstance() {
+        if (userAccountPropertyAnalyser == null) {
+            userAccountPropertyAnalyser = new UserAccountPropertyAnalyser();
+        }
+        return userAccountPropertyAnalyser;
+    }
+
+    @Deprecated
     public static void analyseUserAccountProperties(ArrayList<User> users) {
         List<String> shortenURLServices = getShortenURLServices();
 
@@ -67,6 +90,7 @@ public class UserAccountPropertyAnalyser {
         }
     }
 
+    @Deprecated
     private static List<String> getShortenURLServices() {
         Vector<String> shortenURLServices = new Vector<String>();
         try {
@@ -83,6 +107,7 @@ public class UserAccountPropertyAnalyser {
         return shortenURLServices;
     }
 
+    @Deprecated
     private static double getNumberOfSpamLinks(List<String> shortenURLServices, List<String> usedUrls) {
         double count = 0;
         for (String url : usedUrls) {
@@ -98,6 +123,7 @@ public class UserAccountPropertyAnalyser {
         return count;
     }
 
+    @Deprecated
     private static boolean isSpamURL(String url) {
         boolean isSpam = false;
         try {
@@ -114,6 +140,7 @@ public class UserAccountPropertyAnalyser {
         return isSpam;
     }
 
+    @Deprecated
     private static String getOriginalURL(String url) {
         String originalURL = "";
         try {
@@ -128,6 +155,7 @@ public class UserAccountPropertyAnalyser {
         return originalURL;
     }
 
+    @Deprecated
     public static Hashtable<User, BigDecimal> calculateProbabilityOfBeingHuman(ArrayList<User> bulkUsersInTweets,
             BotAccountCalculationWeight botAccountCalculationWeight) {
         Hashtable<User, BigDecimal> userProbabilities = new Hashtable<User, BigDecimal>();
@@ -139,4 +167,23 @@ public class UserAccountPropertyAnalyser {
         return userProbabilities;
     }
 
+    public void calculateUserAccountProperties(User user) {
+        double totalPostCount = user.getPostCount();
+        // initialize User Account Properties
+        UserAccountProperties accountProperties = user.getAccountProperties();
+        accountProperties.setProtected(user.isProtected());
+        accountProperties.setVerified(user.isVerified());
+        if (controlDate != null && user.getCreationDate().compareTo(controlDate) < 0) {
+            accountProperties.setEarlierThanMarch2007(true);
+        }
+        // calculate ratios
+        accountProperties.setFriendFollowerRatio(user.calculateFriendFollowerRatio());
+        accountProperties.setUrlRatio(user.getUsedUrlCount() / totalPostCount);
+        accountProperties.setHashtagRatio(user.getCountOfHashtags() / totalPostCount);
+        accountProperties.setMentionRatio(user.getCountOfMentionedUsers() / totalPostCount);
+        accountProperties.setWebPostRatio(user.getWebDevicePostCount() / totalPostCount);
+        accountProperties.setApiPostRatio(user.getApiDevicePostCount() / totalPostCount);
+        accountProperties.setMobilePostRatio(user.getMobileDevicePostCount() / totalPostCount);
+        accountProperties.setThirdPartyPostRatio(user.getThirdPartyDevicePostCount() / totalPostCount);
+    }
 }

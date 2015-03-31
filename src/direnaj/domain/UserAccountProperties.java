@@ -18,6 +18,12 @@ public class UserAccountProperties {
     private double spamLinkRatio;
     // the number of duplicate tweets over the number of tweets posted by the account
     private double duplicateTweetRatio;
+    
+    private double webPostRatio;
+    private double mobilePostRatio;
+    private double apiPostRatio;
+    private double thirdPartyPostRatio;
+    
     private boolean isEarlierThanMarch2007;
     private boolean isVerified;
     private boolean isProtected;
@@ -92,6 +98,38 @@ public class UserAccountProperties {
 
     public void setProtected(boolean isProtected) {
         this.isProtected = isProtected;
+    }
+
+    public double getWebPostRatio() {
+        return webPostRatio;
+    }
+
+    public void setWebPostRatio(double webPostRatio) {
+        this.webPostRatio = webPostRatio;
+    }
+
+    public double getMobilePostRatio() {
+        return mobilePostRatio;
+    }
+
+    public void setMobilePostRatio(double mobilePostRatio) {
+        this.mobilePostRatio = mobilePostRatio;
+    }
+
+    public double getApiPostRatio() {
+        return apiPostRatio;
+    }
+
+    public void setApiPostRatio(double apiPostRatio) {
+        this.apiPostRatio = apiPostRatio;
+    }
+
+    public double getThirdPartyPostRatio() {
+        return thirdPartyPostRatio;
+    }
+
+    public void setThirdPartyPostRatio(double thirdPartyPostRatio) {
+        this.thirdPartyPostRatio = thirdPartyPostRatio;
     }
 
     public BigDecimal calculateHumanProbability(BotAccountCalculationWeight botAccountCalculationWeight) {

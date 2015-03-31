@@ -55,6 +55,14 @@ public class DirenajDriverUtils {
         }
     }
 
+    public static String getSource(JSONObject tweet) throws DirenajInvalidJSONException {
+        try {
+            return tweet.getString("source");
+        } catch (JSONException je) {
+            throw new DirenajInvalidJSONException("getSource : " + je.getMessage() + tweet.toString());
+        }
+    }
+
     /**
      * @param entities
      *            Entities JSON object retrieved from Tweet JSON object

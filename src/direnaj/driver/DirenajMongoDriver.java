@@ -25,6 +25,10 @@ public class DirenajMongoDriver {
         if (!mongoDB.collectionExists("OrgBehaviourPreProcessUsers")) {
             mongoDB.createCollection("OrgBehaviourPreProcessUsers", null);
         }
+
+        if (!mongoDB.collectionExists("OrgBehaviourProcessInputData")) {
+            mongoDB.createCollection("OrgBehaviourProcessInputData", null);
+        }
     }
 
     public static DirenajMongoDriver getInstance() {
@@ -49,6 +53,10 @@ public class DirenajMongoDriver {
 
     public DBCollection getOrgBehaviorPreProcessUsers() {
         return mongoDB.getCollection("OrgBehaviourPreProcessUsers");
+    }
+
+    public DBCollection getOrgBehaviourProcessInputData() {
+        return mongoDB.getCollection("OrgBehaviourProcessInputData");
     }
 
     public Long executeCountQuery(DBCollection collection, DBObject query) {
