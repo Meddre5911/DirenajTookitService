@@ -139,7 +139,7 @@ public class DirenajDriverUtils {
             Vector<User> userMentions = new Vector<User>();
             for (int index = 0; index < userMentionLists.length(); index++) {
                 JSONObject userMention = (JSONObject) userMentionLists.get(index);
-                User user = new User(getUserId(userMention), getUserScreenName(userMention));
+                User user = new User(getUserIdStr(userMention), getUserScreenName(userMention));
                 userMentions.add(user);
             }
             return userMentions;
@@ -208,13 +208,14 @@ public class DirenajDriverUtils {
             // get user Json object
             JSONObject userJson = getUser(tweet);
             // get user domain
-            User user = new User(getUserId(userJson), getUserScreenName(userJson));
+            User user = new User(getUserIdStr(userJson), getUserScreenName(userJson));
             // set user info
             user.setFollowersCount(getUserFollowerCount(userJson));
             user.setFriendsCount(getUserFriendCount(userJson));
             user.setProtected(getUserProtectedInfo(userJson));
             user.setVerified(getUserVerifiedInfo(userJson));
             user.setCreationDate(getObjectCreationDate(userJson));
+            user.setCampaignTweetPostDate(getObjectCreationDate(tweet));
             return user;
         } catch (Exception e) {
             throw new DirenajInvalidJSONException("parseUser : " + e.getMessage());
@@ -283,7 +284,7 @@ public class DirenajDriverUtils {
      * @return userId of user
      * @throws DirenajInvalidJSONException
      */
-    public static String getUserId(JSONObject user) throws DirenajInvalidJSONException {
+    public static String getUserIdStr(JSONObject user) throws DirenajInvalidJSONException {
         try {
             return user.getString("id_str");
         } catch (Exception e) {

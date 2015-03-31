@@ -54,55 +54,6 @@
 			<input type="radio" name="operationType" value="getUserCentralities">
 			Check User Centralities<br>
 			<p />
-			<input type="radio" name="operationType" value="getHashtagTimeline">
-			Check Hashtag Timely Analysis<br>
-			<p />
-			<input type="radio" name="operationType" value="findCommunities">
-			Find Communities<br> &nbsp;&nbsp;&nbsp;&nbsp; Modularity Value
-			(must be between 0.3 and 1):&nbsp; <input type="text"
-				name="modularityValue" value="0.3" size="10"> <br>
-			&nbsp;&nbsp;&nbsp;&nbsp; Relations Should be Considered in Community
-			detection : &nbsp;&nbsp;&nbsp;&nbsp; <input type="checkbox"
-				name="graphRelation" value="Mentions">Mention &nbsp; <input
-				type="checkbox" name="graphRelation" value="Retweets">Retweet
-			&nbsp; <input type="checkbox" name="graphRelation" value="Replies">Reply<br>
-			<p />
-			
-			<input type="radio" name="operationType" value="showCommunities">
-			Show Communities<br> &nbsp;&nbsp;&nbsp;&nbsp; Modularity Value
-			(must be between 0.3 and 1):&nbsp;
-			 <input type="text" name="modularityValue" value="0.3" size="10"> <br>
-			&nbsp;&nbsp;&nbsp;&nbsp; Relations Should be Considered in Community
-			detection : &nbsp;&nbsp;&nbsp;&nbsp;
-			 
-			 <input type="checkbox" name="graphRelation" value="Mentions">Mention &nbsp;
-			 <input type="checkbox" name="graphRelation" value="Retweets">Retweet &nbsp; 
-			 <input type="checkbox" name="graphRelation" value="Replies">Reply<br>
-			 
-			 &nbsp;&nbsp;&nbsp;&nbsp; D3 Lib format For Community Display :
-			 &nbsp;&nbsp;&nbsp;&nbsp;
-			 
-			 <input type="radio" name="d3LibFormat" value="CirclePack" checked>CirclePack &nbsp;
-			 <input type="radio" name="d3LibFormat" value="HierarchicalEdgeBundle">HierarchicalEdgeBundle &nbsp; 
-			 <input type="radio" name="d3LibFormat" value="ForceDirectedGraph">ForceDirectedGraph<br>
-			
-			&nbsp;&nbsp;&nbsp;&nbsp; Apply Sentimental Analysis :
-			 &nbsp;&nbsp;&nbsp;&nbsp;
-			<input type="radio" name="classificationMethod" value="NaiveBayesUnigram">NaiveBayesUnigram &nbsp;
-			 <input type="radio" name="classificationMethod" value="NaiveBayesBigram">NaiveBayesBigram &nbsp;<br> 
-			
-			<p />
-			<input type="radio" name="operationType" value="getAllUsers">
-			Get All Users
-			<br>NOTE : Requested weights are for the probability of a user being HUMAN !!! <br>
-				&nbsp; Friend/Follower Weight   : &nbsp; <input type="text" name="friendFollowerWeight" value="0.0" size="10"><br> 
-				&nbsp; Verified Account Weight  : &nbsp; <input type="text" name="verifiedAccountWeight" value="0.0" size="10"><br> 
-				&nbsp; Protected Account Weight : &nbsp; <input type="text" name="protectedAccountWeight" value="0.0" size="10"><br> 
-				&nbsp; Creation Date Weight     : &nbsp; <input type="text" name="creationDateWeight" value="0.0" size="10"><br> 
-				&nbsp; Hashtag Ratio Weight     : &nbsp; <input type="text" name="hashtagRatioWeight" value="0.0" size="10"><br> 
-				&nbsp; URL Ratio Weight         : &nbsp; <input type="text" name="urlRatioWeight" value="0.0" size="10"><br> 
-				&nbsp; Mention Ratio Weight     : &nbsp; <input type="text" name="mentionRatioWeight" value="0.0" size="10"><br> 
-			<p />
 			
 			<input type="submit" value="Submit" name="SUB">
 		</form>

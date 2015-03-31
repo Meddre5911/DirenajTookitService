@@ -14,6 +14,7 @@ public class User implements Comparable<User> {
     private boolean isProtected;
     private boolean isVerified;
     private Date creationDate;
+    private Date campaignTweetPostDate;
     private UserAccountProperties accountProperties;
     private List<String> posts;
     private List<String> usedUrls;
@@ -157,6 +158,19 @@ public class User implements Comparable<User> {
         this.countOfHashtags += countOfHashtags;
     }
 
+    public double calculateFriendFollowerRatio() {
+        Double ratioValue = new Double(0);
+        try {
+            double totalFriendFollowerCount = getFollowersCount() + getFriendsCount();
+            if (totalFriendFollowerCount > 0) {
+                ratioValue = getFollowersCount() / totalFriendFollowerCount;
+            }
+            return ratioValue;
+        } catch (Exception e) {
+            return new Double(0);
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         try {
@@ -187,5 +201,13 @@ public class User implements Comparable<User> {
         } else {
             return 0;
         }
+    }
+
+    public Date getCampaignTweetPostDate() {
+        return campaignTweetPostDate;
+    }
+
+    public void setCampaignTweetPostDate(Date campaignTweetPostDate) {
+        this.campaignTweetPostDate = campaignTweetPostDate;
     }
 }

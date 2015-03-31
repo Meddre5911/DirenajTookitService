@@ -9,4 +9,27 @@ public class TextUtils {
         return true;
     }
 
+    public static Long getLongValue(String value) {
+        try {
+            return Long.valueOf(value);
+        } catch (Exception e) {
+            return new Long(0);
+        }
+    }
+
+    public static Integer getIntegerValue(String value) {
+        try {
+            return Integer.valueOf(value);
+        } catch (Exception e) {
+            return new Integer(0);
+        }
+    }
+
+    public static Double getDoubleValue(String value) {
+        try {
+            return Double.valueOf(value);
+        } catch (Exception e) {
+            return new Double(0);
+        }
+    }
 }

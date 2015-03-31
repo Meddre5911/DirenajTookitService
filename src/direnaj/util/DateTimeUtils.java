@@ -27,7 +27,7 @@ public class DateTimeUtils {
         return new Date();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         BigDecimal date = new BigDecimal("735543.7574768518");
         BigDecimal daysNumberUntilJan1970 = new BigDecimal("719529.0");
         BigDecimal subtract = date.subtract(daysNumberUntilJan1970);
@@ -36,5 +36,17 @@ public class DateTimeUtils {
         long longValue = dateInMiliSeconds.longValue();
         System.out.println("Long Value : " + longValue);
         System.out.println("Date : " + new Date(longValue));
+        System.out.println("Twitter Date : " + DateTimeUtils.getTwitterDate("Tue Nov 05 20:10:45 EET 2013"));
+        
+    }
+
+    public static Object subtractWeeksFromDate(Date date, int i) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public static Object addWeeksToDate(Date date, int i) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

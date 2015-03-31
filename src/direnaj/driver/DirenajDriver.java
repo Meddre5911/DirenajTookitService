@@ -19,8 +19,8 @@ import direnaj.util.CollectionUtil;
 
 public class DirenajDriver {
 
-    private String userID;
-    private String password;
+    protected String userID;
+    protected String password;
 
     public DirenajDriver(String uID, String pass) {
         this.userID = uID;

@@ -231,7 +231,7 @@ public class TestServlet extends HttpServlet {
                 UserAccountPropertyAnalyser.analyseUserAccountProperties(bulkUsersInTweets);
                 Hashtable<User, BigDecimal> userProbabilities = UserAccountPropertyAnalyser
                         .calculateProbabilityOfBeingHuman(bulkUsersInTweets, botAccountCalculationWeight);
-                ArrayList<Entry<User, BigDecimal>> sortedValues = CollectionUtil.sortValues(userProbabilities,false);
+                ArrayList<Entry<User, BigDecimal>> sortedValues = CollectionUtil.sortValues(userProbabilities, false);
 
                 request.setAttribute("sortedValues", sortedValues);
                 ServletContext context = getServletContext();
