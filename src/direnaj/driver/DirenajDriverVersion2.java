@@ -7,67 +7,34 @@ import java.util.TreeMap;
 import java.util.Vector;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 
-import direnaj.adapter.DirenajDataHandler;
 import direnaj.adapter.DirenajInvalidJSONException;
 import direnaj.domain.User;
 import direnaj.util.CollectionUtil;
 
 public class DirenajDriverVersion2 {
 
-    private int oneTimeCallLimit = 400;
-
-    private String userID;
-    private String password;
-
-    public DirenajDriverVersion2(String uID, String pass) {
-        userID = uID;
-        password = pass;
+    public DBCursor getTweets(String campaignID) throws Exception, DirenajInvalidJSONException {
+        DBCollection tweetsCollection = DirenajMongoDriver.getInstance().getTweetsCollection();
+        BasicDBObject tweetsRetrievalQuery = new BasicDBObject("campaign_id", campaignID);
+        DBCursor tweetsOfCampaign = tweetsCollection.find(tweetsRetrievalQuery);
+        return tweetsOfCampaign;
     }
 
-    public List<JSONObject> getTweets(String campaignID, int skip, int originalLimit) throws Exception,
-            DirenajInvalidJSONException {
-        Vector<JSONObject> tweets = new Vector<JSONObject>();
-        int totalLoopCount = (int) Math.ceil((double) originalLimit / oneTimeCallLimit);
-        int requestLimit = originalLimit % oneTimeCallLimit;
-
-        for (int loopCount = 0; loopCount < totalLoopCount; loopCount++) {
-            // get data from dataHandler
-            JSONObject obj = DirenajDataHandler.getData(this.userID, this.password, campaignID, skip, requestLimit);
-            JSONArray results = DirenajDriverUtils.getResults(obj);
-
-            for (int i = 0; i < results.length(); i++) {
-                try {
-                    tweets.add(DirenajDriverUtils.getTweetData(results, i));
-                } catch (JSONException e) {
-                    // FIXME - do some logging
-                    e.printStackTrace();
-                    continue;
-                }
-            }
-            skip += requestLimit * loopCount;
-            requestLimit = oneTimeCallLimit;
-        }
-        return tweets;
-    }
-
-    public Map<String, Double> getHashtagCounts(String campaignID, int skip, Long originalLimit) throws Exception,
-            DirenajInvalidJSONException {
+    public Map<String, Double> getHashtagCounts(String campaignID) throws Exception, DirenajInvalidJSONException {
         // map for hashtags
         TreeMap<String, Double> hashtagCounts = new TreeMap<>();
-        // request load balancing
-        int totalLoopCount = (int) Math.ceil((double) originalLimit / oneTimeCallLimit);
-        long requestLimit = originalLimit % oneTimeCallLimit;
 
-        for (int loopCount = 0; loopCount < totalLoopCount; loopCount++) {
-            List<JSONObject> tweets = getTweets(campaignID, skip, (int) requestLimit);
-            for (JSONObject tweet : tweets) {
+        DBCursor tweetCursor = getTweets(campaignID);
+        try {
+            while (tweetCursor.hasNext()) {
+                JSONObject tweet = new JSONObject(tweetCursor.next().toString());
                 // hashtags of a single result
                 JSONArray hashtags = DirenajDriverUtils.getHashTags(DirenajDriverUtils.getEntities(DirenajDriverUtils
                         .getTweet(tweet)));
@@ -77,24 +44,23 @@ public class DirenajDriverVersion2 {
                     CollectionUtil.incrementKeyValueInMap(hashtagCounts, tweetHashTag);
                 }
             }
-            skip += requestLimit * loopCount;
-            requestLimit = oneTimeCallLimit;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            tweetCursor.close();
         }
+
         return CollectionUtil.sortByComparator(hashtagCounts);
     }
 
-    public void saveHashtagUsers2Mongo(String campaignID, String tracedHashtag, int skip, Long originalLimit,
-            String requestId) throws Exception, DirenajInvalidJSONException {
+    public void saveHashtagUsers2Mongo(String campaignID, String tracedHashtag, String requestId) throws Exception,
+            DirenajInvalidJSONException {
         // list for user ids
         List<User> users = new Vector<>();
-        // request load balancing
-        int totalLoopCount = (int) Math.ceil((double) originalLimit / oneTimeCallLimit);
-        long requestLimit = originalLimit % oneTimeCallLimit;
-
-        for (int loopCount = 1; loopCount <= totalLoopCount; loopCount++) {
-            List<JSONObject> tweets = getTweets(campaignID, skip, (int) requestLimit);
-            for (JSONObject direnajTweetObject : tweets) {
-                // hashtags of a single result
+        DBCursor tweetCursor = getTweets(campaignID);
+        try {
+            while (tweetCursor.hasNext()) {
+                JSONObject direnajTweetObject = new JSONObject(tweetCursor.next().toString());
                 JSONObject tweetData = DirenajDriverUtils.getTweet(direnajTweetObject);
                 JSONArray hashtags = DirenajDriverUtils.getHashTags(DirenajDriverUtils.getEntities(tweetData));
                 for (int j = 0; j < hashtags.length(); j++) {
@@ -104,18 +70,19 @@ public class DirenajDriverVersion2 {
                         break;
                     }
                 }
+                users = savePreProcessUsersIfNeeded(users, requestId, false);
             }
-            skip += requestLimit * loopCount;
-            requestLimit = oneTimeCallLimit;
-
-            users = savePreProcessUsersIfNeeded(users, requestId, loopCount, totalLoopCount);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            tweetCursor.close();
         }
-        // FIXME do some logging
+        savePreProcessUsersIfNeeded(users, requestId, true);
     }
 
-    private List<User> savePreProcessUsersIfNeeded(List<User> users, String requestId, int loopCount, int totalLoopCount)
+    private List<User> savePreProcessUsersIfNeeded(List<User> users, String requestId, boolean saveAnyway)
             throws DirenajInvalidJSONException {
-        if ((loopCount == totalLoopCount) || users.size() > DirenajMongoDriver.BULK_INSERT_SIZE) {
+        if (saveAnyway || users.size() > DirenajMongoDriver.getInstance().getBulkInsertSize()) {
             DBCollection preProcessUsersCollections = DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers();
             List<DBObject> preprocessUsers = new Vector<>();
             for (User user : users) {

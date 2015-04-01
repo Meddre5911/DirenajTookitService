@@ -9,6 +9,13 @@ public class TextUtils {
         return true;
     }
 
+    public static String getNotNullValue(String value) {
+        if (isEmpty(value)) {
+            return "";
+        }
+        return value;
+    }
+
     public static Long getLongValue(String value) {
         try {
             return Long.valueOf(value);

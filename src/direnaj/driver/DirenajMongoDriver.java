@@ -8,16 +8,23 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 
+import direnaj.util.PropertiesUtil;
+
 public class DirenajMongoDriver {
-    public static final int BULK_INSERT_SIZE = 500;
 
     private static DirenajMongoDriver mongoDriver = null;
     private MongoClient mongoClient = null;
     private DB mongoDB = null;
+    private int bulkInsertSize;
 
     private DirenajMongoDriver() throws UnknownHostException {
-        mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
-        mongoDB = mongoClient.getDB("direnaj_staging");
+        String mongoServerAddress = PropertiesUtil.getInstance().getProperty("mongo.server.address");
+        String mongoServerPort = PropertiesUtil.getInstance().getProperty("mongo.server.port");
+        String mongoUsedDb = PropertiesUtil.getInstance().getProperty("mongo.usedDB");
+        
+        mongoClient = new MongoClient(new MongoClientURI("mongodb://" + mongoServerAddress + ":" + mongoServerPort));
+        mongoDB = mongoClient.getDB(mongoUsedDb);
+        bulkInsertSize = Integer.valueOf(PropertiesUtil.getInstance().getProperty("mongo.bulk.insert.size"));
 
         if (!mongoDB.collectionExists("OrgBehaviourRequests")) {
             mongoDB.createCollection("OrgBehaviourRequests", null);
@@ -65,6 +72,14 @@ public class DirenajMongoDriver {
 
     public static void main(String[] args) {
         DirenajMongoDriver.getInstance();
+    }
+
+    public int getBulkInsertSize() {
+        return bulkInsertSize;
+    }
+
+    public void setBulkInsertSize(int bulkInsertSize) {
+        this.bulkInsertSize = bulkInsertSize;
     }
 
 }

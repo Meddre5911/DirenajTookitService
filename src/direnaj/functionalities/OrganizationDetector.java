@@ -18,7 +18,6 @@ import org.neo4j.graphdb.Transaction;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.BulkWriteOperation;
-import com.mongodb.BulkWriteResult;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -31,40 +30,60 @@ import direnaj.driver.DirenajDriverVersion2;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.DirenajMongoDriverUtil;
 import direnaj.driver.DirenajNeo4jDriver;
+import direnaj.servlet.OrganizedBehaviourDetectionRequestType;
 import direnaj.twitter.UserAccountPropertyAnalyser;
 import direnaj.util.CollectionUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.TextUtils;
 
-public class OrganizationDetector {
+public class OrganizationDetector implements Runnable {
 
     private DirenajDriverVersion2 direnajDriver;
     private DirenajMongoDriver direnajMongoDriver;
-    private Long originalLimit;
-    private Integer skipValue;
     private String campaignId;
     private Integer topHashtagCount;
     private String requestDefinition;
     private String requestId;
-    private String tracedHashtag;
+    private List<String> tracedHashtagList;
+    private OrganizedBehaviourDetectionRequestType detectionRequestType;
 
-    public OrganizationDetector(String direnajUserId, String direnajPassword, String campaignId, int topHashtagCount,
-            String requestDefinition, String skip, String limit, String tracedHashtag) {
-        direnajDriver = new DirenajDriverVersion2(direnajUserId, direnajPassword);
+    public OrganizationDetector(String campaignId, int topHashtagCount, String requestDefinition, String tracedHashtag,
+            OrganizedBehaviourDetectionRequestType detectionRequestType) {
+        direnajDriver = new DirenajDriverVersion2();
         direnajMongoDriver = DirenajMongoDriver.getInstance();
-        originalLimit = getQueryLimit(campaignId, limit);
-        skipValue = TextUtils.getIntegerValue(skip);
         requestId = generateUniqueId4Request();
         this.campaignId = campaignId;
         this.topHashtagCount = topHashtagCount;
         this.requestDefinition = requestDefinition;
-        this.tracedHashtag = tracedHashtag;
+        this.tracedHashtagList = new Vector<>();
+        if (!TextUtils.isEmpty(tracedHashtag)) {
+            this.tracedHashtagList.add(tracedHashtag);
+        }
+        this.detectionRequestType = detectionRequestType;
         insertRequest2Mongo();
+    }
+
+    @Override
+    public void run() {
+        try {
+            switch (detectionRequestType) {
+            case CheckHashtagsInCampaign:
+                detectOrganizedBehaviourInHashtags();
+                break;
+            case CheckSingleHashtagInCampaign:
+                getMetricsOfUsersOfHashTag();
+                break;
+            }
+        } catch (Exception e) {
+            // FIXME do some logging
+            e.printStackTrace();
+        }
+
     }
 
     public void detectOrganizedBehaviourInHashtags() {
         try {
-            Map<String, Double> hashtagCounts = direnajDriver.getHashtagCounts(campaignId, skipValue, originalLimit);
+            Map<String, Double> hashtagCounts = direnajDriver.getHashtagCounts(campaignId);
             // FIXME doğru çalıştığı anlaşıldıktan sonra silinecek
             System.out.println("Hashtag Count Descending");
             for (Entry<String, Double> hashtag : hashtagCounts.entrySet()) {
@@ -80,8 +99,10 @@ public class OrganizationDetector {
             }
             Set<String> topHashtags = topHashtagCounts.keySet();
             for (String topHashTag : topHashtags) {
-                getMetricsOfUsersOfHashTag();
+                tracedHashtagList.add(topHashTag);
             }
+            updateRequestInMongo();
+            getMetricsOfUsersOfHashTag();
 
         } catch (Exception e) {
             // FIXME do some logging
@@ -90,26 +111,35 @@ public class OrganizationDetector {
 
     }
 
+    private void updateRequestInMongo() {
+        DBCollection organizedBehaviorCollection = direnajMongoDriver.getOrgBehaviorRequestCollection();
+        BasicDBObject findQuery = new BasicDBObject();
+        findQuery.put("_id", requestId);
+        BasicDBObject updateQuery = new BasicDBObject();
+        updateQuery.append("$set", new BasicDBObject().append("tracedHashtag", tracedHashtagList));
+        organizedBehaviorCollection.update(findQuery, updateQuery);
+    }
+
     private void insertRequest2Mongo() {
         DBCollection organizedBehaviorCollection = direnajMongoDriver.getOrgBehaviorRequestCollection();
         BasicDBObject document = new BasicDBObject();
         document.put("_id", requestId);
+        document.put("requestType", detectionRequestType.name());
         document.put("requestDefinition", requestDefinition);
         document.put("campaignId", campaignId);
         document.put("topHashtagCount", topHashtagCount);
-        document.put("skipValue", skipValue);
-        document.put("originalLimit", originalLimit);
-        document.put("tracedHashtag", tracedHashtag);
+        document.put("tracedHashtag", tracedHashtagList);
         document.put("processCompleted", Boolean.FALSE);
         organizedBehaviorCollection.insert(document);
     }
 
     public void getMetricsOfUsersOfHashTag() throws DirenajInvalidJSONException, Exception {
-        direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, skipValue, originalLimit, requestId);
-        // FIXME burayi unutma
-        saveAllUserTweets();
-        startUserAnalysis();
-
+        for (String tracedHashtag : tracedHashtagList) {
+            direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
+            // FIXME burayi unutma
+            saveAllUserTweets();
+            startUserAnalysis();
+        }
     }
 
     private void saveAllUserTweets() {
@@ -131,7 +161,8 @@ public class OrganizationDetector {
             UserAccountPropertyAnalyser.getInstance().calculateUserAccountProperties(domainUser);
             domainUsers.add(domainUser);
             userIds.add(domainUser.getUserId());
-            if ((i == preprocessUserCounts) || domainUsers.size() > DirenajMongoDriver.BULK_INSERT_SIZE) {
+            if ((i == preprocessUserCounts)
+                    || domainUsers.size() > DirenajMongoDriver.getInstance().getBulkInsertSize()) {
                 domainUsers = saveOrganizedBehaviourInputData(domainUsers);
             }
         }
@@ -143,6 +174,14 @@ public class OrganizationDetector {
         String subgraphEdgeLabel = createSubgraphByAddingEdges(userIds);
         HashMap<String, Double> userClosenessCentralities = calculateInNeo4J(userIds, subgraphEdgeLabel);
         bulkUpdateMongo4ClosenessCentrality(userClosenessCentralities);
+        clearNeo4jSubGraph(subgraphEdgeLabel);
+    }
+
+    private void clearNeo4jSubGraph(String subgraphEdgeLabel) {
+        if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
+            String deleteRelationshipCypher = "MATCH (u:User)-[r:" + subgraphEdgeLabel + "]-(t:User) DELETE r";
+            DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteRelationshipCypher, null);
+        }
     }
 
     private void bulkUpdateMongo4ClosenessCentrality(HashMap<String, Double> userClosenessCentralities) {
@@ -154,13 +193,13 @@ public class OrganizationDetector {
                     .updateOne(new BasicDBObject("$set", new BasicDBObject("closenessCentrality", entry.getValue())));
 
         }
-        BulkWriteResult result = bulkWriteOperation.execute();
+        bulkWriteOperation.execute();
     }
 
     private HashMap<String, Double> calculateInNeo4J(List<String> userIds, String subgraphEdgeLabel) {
         HashMap<String, Double> userClosenessCentralities = new HashMap<>();
         if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
-            GraphDatabaseService db = DirenajNeo4jDriver.getNeo4jService();
+            GraphDatabaseService db = DirenajNeo4jDriver.getInstance().getNeo4jService();
             Transaction tx = db.beginTx();
             try {
                 for (String userId : userIds) {
@@ -209,18 +248,7 @@ public class OrganizationDetector {
                 + "WHERE z in nodes and t in nodes " // which were found earlier
                 + "CREATE (z)<-[r2:" + newRelationName + "]-(t) RETURN 1 ";
 
-        GraphDatabaseService db = DirenajNeo4jDriver.getNeo4jService();
-        Transaction tx = db.beginTx();
-        try {
-            db.execute(cypherQuery, params);
-            tx.success();
-        } catch (Exception e) {
-            newRelationName = "";
-            tx.failure();
-            e.printStackTrace();
-        } finally {
-            tx.close();
-        }
+        DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherQuery, params);
         return newRelationName;
     }
 
@@ -232,6 +260,7 @@ public class OrganizationDetector {
             userInputData.put("requestId", requestId);
             userInputData.put("userId", user.getUserId());
             userInputData.put("userScreenName", user.getUserScreenName());
+            userInputData.put("closenessCentrality", new Double(0));
 
             userInputData.put("friendFollowerRatio", accountProperties.getFriendFollowerRatio());
             userInputData.put("urlRatio", accountProperties.getUrlRatio());
@@ -292,6 +321,13 @@ public class OrganizationDetector {
         return domainUser;
     }
 
+    /**
+     * @param campaignId
+     * @param limit
+     * @return
+     * 
+     * @deprecated
+     */
     private Long getQueryLimit(String campaignId, String limit) {
         Long originalLimit;
         if (TextUtils.isEmpty(limit)) {
@@ -313,4 +349,9 @@ public class OrganizationDetector {
         return strDate;
     }
 
+    
+    public static void main(String[] args) {
+        int i = 51 / 50;
+        System.out.println(i);
+    }
 }

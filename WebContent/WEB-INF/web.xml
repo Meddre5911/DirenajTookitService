@@ -27,6 +27,25 @@
 		<servlet-name>CommunitySentimentAnalysis</servlet-name>
 		<servlet-class>direnaj.adapter.CommunitySentimentAnalysis</servlet-class>
 	</servlet>
+	<servlet>
+		<servlet-name>MongoPaginationServlet</servlet-name>
+		<servlet-class>direnaj.servlet.MongoPaginationServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>OrganizedBehaviourDetection</servlet-name>
+		<servlet-class>direnaj.servlet.OrganizedBehaviours</servlet-class>
+	</servlet>
+
+
+
+	<servlet-mapping>
+		<servlet-name>MongoPaginationServlet</servlet-name>
+		<url-pattern>/MongoPaginationServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>OrganizedBehaviourDetection</servlet-name>
+		<url-pattern>/organizedBehaviourDetection</url-pattern>
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>DirenajService</servlet-name>
 		<url-pattern>/services</url-pattern>
