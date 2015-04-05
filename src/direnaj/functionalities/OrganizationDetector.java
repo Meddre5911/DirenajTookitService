@@ -34,6 +34,7 @@ import direnaj.servlet.OrganizedBehaviourDetectionRequestType;
 import direnaj.twitter.UserAccountPropertyAnalyser;
 import direnaj.util.CollectionUtil;
 import direnaj.util.DateTimeUtils;
+import direnaj.util.ListUtils;
 import direnaj.util.TextUtils;
 
 public class OrganizationDetector implements Runnable {
@@ -180,7 +181,7 @@ public class OrganizationDetector implements Runnable {
     private void clearNeo4jSubGraph(String subgraphEdgeLabel) {
         if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
             String deleteRelationshipCypher = "MATCH (u:User)-[r:" + subgraphEdgeLabel + "]-(t:User) DELETE r";
-            DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteRelationshipCypher, null);
+            DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteRelationshipCypher);
         }
     }
 
@@ -199,33 +200,18 @@ public class OrganizationDetector implements Runnable {
     private HashMap<String, Double> calculateInNeo4J(List<String> userIds, String subgraphEdgeLabel) {
         HashMap<String, Double> userClosenessCentralities = new HashMap<>();
         if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
-            GraphDatabaseService db = DirenajNeo4jDriver.getInstance().getNeo4jService();
-            Transaction tx = db.beginTx();
-            try {
-                for (String userId : userIds) {
-                    Map<String, Object> params = new HashMap<String, Object>();
-                    params.put("userId", userId);
-                    String closenessCalculateQuery = "MATCH (a), (b) WHERE a<>b and a.id_str = {userId} " //
-                            + "WITH length(shortestPath((a)<-[:" + subgraphEdgeLabel + "]-(b))) AS dist, a, b " //
-                            + "RETURN DISTINCT sum(1.0/dist) AS closenessCentrality, a.id_str";
-                    double closenessCentrality = 0;
-                    try {
-                        Result closenessResult = db.execute(closenessCalculateQuery, params);
-                        while (closenessResult.hasNext()) {
-                            Map<String, Object> resultMap = closenessResult.next();
-                            closenessCentrality = (double) resultMap.get("closenessCentrality");
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    userClosenessCentralities.put(userId, closenessCentrality);
-                }
-                tx.success();
-            } catch (Exception e) {
-                tx.failure();
-                e.printStackTrace();
-            } finally {
-                tx.close();
+            for (String userId : userIds) {
+                String closenessCalculateQuery = "START rel=relationship(*) " //
+                        + "WHERE has(rel.type) and rel.type='" + subgraphEdgeLabel + "'" //
+                        + "WITH rel " //
+                        + "MATCH (a), (b) WHERE a<>b and a.id_str = '" + userId + "' " //
+                        + "WITH length(shortestPath((a)<-[rel:" + subgraphEdgeLabel + "]-(b))) AS dist, a, b " //
+                        + "RETURN DISTINCT sum(1.0/dist) AS closenessCentrality";
+
+                Map<String, Object> cypherResult = DirenajNeo4jDriver.getInstance().executeSingleResultCypher(
+                        closenessCalculateQuery, ListUtils.getListOfStrings("closenessCentrality"));
+                double closenessCentrality = Double.valueOf(cypherResult.get("closenessCentrality").toString());
+                userClosenessCentralities.put(userId, closenessCentrality);
             }
         }
         return userClosenessCentralities;
@@ -242,11 +228,11 @@ public class OrganizationDetector implements Runnable {
                 + "WITH distinct nodes(p) as nodes " //   
                 + "MATCH (x)-[FOLLOWS]->(y) " // find all relationships between nodes
                 + "WHERE x in nodes and y in nodes " // which were found earlier
-                + "CREATE (x)-[r1:" + newRelationName + "]->(y) " //
+                + "CREATE (x)-[r1:" + newRelationName + " {type:" + newRelationName + "}]->(y) " //
                 + "WITH nodes " // 
                 + "MATCH (z)<-[FOLLOWS]-(t) " // find all relationships between nodes
                 + "WHERE z in nodes and t in nodes " // which were found earlier
-                + "CREATE (z)<-[r2:" + newRelationName + "]-(t) RETURN 1 ";
+                + "CREATE (z)<-[r2:" + newRelationName + " {type:" + newRelationName + "}]-(t) RETURN 1 ";
 
         DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherQuery, params);
         return newRelationName;
@@ -349,7 +335,6 @@ public class OrganizationDetector implements Runnable {
         return strDate;
     }
 
-    
     public static void main(String[] args) {
         int i = 51 / 50;
         System.out.println(i);

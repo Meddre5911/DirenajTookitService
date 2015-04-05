@@ -55,7 +55,7 @@ public class MongoPaginationServlet extends HttpServlet {
                     recordCounts = Integer.valueOf(session.getAttribute("collectionRecordCount").toString());
                 }
                 // get cursor
-                DBCursor paginatedResult = orgBehaviorRequestCollection.find().sort(new BasicDBObject("_id ", -1))
+                DBCursor paginatedResult = orgBehaviorRequestCollection.find().sort(new BasicDBObject("_id", -1))
                         .skip(pageNumber * pageDisplayLength).limit(pageDisplayLength);
                 // get objects from cursor
                 try {

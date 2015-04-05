@@ -1,21 +1,30 @@
 package direnaj.driver;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import javax.print.attribute.standard.Severity;
+import javax.ws.rs.core.MediaType;
+
+import org.apache.commons.collections15.map.HashedMap;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+
+import direnaj.util.PropertiesUtil;
 
 public class DirenajNeo4jDriver {
-    public static String NEO4J_DB_PATH = "/home/erdem/Documents/neo4j-enterprise-2.1.6/data/graph.db";
 
-    private GraphDatabaseService neo4jService;
     private static DirenajNeo4jDriver direnajNeo4jDriver;
+    private String serverRootUri;
 
     private DirenajNeo4jDriver() {
-        neo4jService = new GraphDatabaseFactory().newEmbeddedDatabase(NEO4J_DB_PATH);
-        registerShutdownHook(neo4jService);
-
+        serverRootUri = PropertiesUtil.getInstance().getProperty("neo4j.server.rootUri");
     }
 
     public static DirenajNeo4jDriver getInstance() {
@@ -25,42 +34,102 @@ public class DirenajNeo4jDriver {
         return direnajNeo4jDriver;
     }
 
-    private static void registerShutdownHook(final GraphDatabaseService graphDb) {
-        // Registers a shutdown hook for the Neo4j instance so that it
-        // shuts down nicely when the VM exits (even if you "Ctrl-C" the
-        // running application).
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                graphDb.shutdown();
-            }
-        });
+    public void startService() {
+        serverRootUri = PropertiesUtil.getInstance().getProperty("neo4j.server.rootUri");
+        WebResource resource = Client.create().resource(serverRootUri);
+        ClientResponse response = resource.get(ClientResponse.class);
+
+        System.out.println(String.format("GET on [%s], status code [%d]", serverRootUri, response.getStatus()));
+        response.close();
     }
 
-    public void setNeo4jService(GraphDatabaseService neo4jService) {
-        this.neo4jService = neo4jService;
-    }
+    public void executeCypher() {
+        final String txUri = serverRootUri + "transaction/commit";
+        WebResource resource = Client.create().resource(txUri);
 
-    public GraphDatabaseService getNeo4jService() {
-        return neo4jService;
-    }
+        String query = "Match (t:JAVA_SERVER_CALL_DENEME_erdem {id: 1}) RETURN t";
 
-    public void executeNoResultCypher(String cypherQuery, Map<String, Object> map) {
-        Transaction tx = neo4jService.beginTx();
+        String payload = "{\"statements\" : [ {\"statement\" : \"" + query + "\"} ]}";
+        ClientResponse response = resource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
+                .entity(payload).post(ClientResponse.class);
+
+        String responseEntity = response.getEntity(String.class);
+        System.out.println(String.format(
+                "POST [%s] to [%s], status code [%d], returned data: " + System.getProperty("line.separator") + "%s",
+                payload, txUri, response.getStatus(), responseEntity));
+
+        System.out.println("\n response entitiy : \n" + responseEntity);
+
         try {
-            if (map == null) {
-                neo4jService.execute(cypherQuery);
-            } else {
-                neo4jService.execute(cypherQuery, map);
-            }
-            tx.success();
-        } catch (Exception e) {
-            tx.failure();
-            // FIXME log yaz
-            System.out.println("Neo4j Failed Query : " + cypherQuery);
+            JSONObject jsonObject = new JSONObject(responseEntity);
+            JSONObject resultObject = jsonObject.getJSONArray("results").getJSONObject(0);
+            JSONArray dataArray = resultObject.getJSONArray("data");
+            Object result = dataArray.getJSONObject(0).getJSONArray("row").getJSONObject(0).get("id");
+            System.out.println("Result : " + Integer.valueOf(result.toString()));
+
+        } catch (JSONException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
-        } finally {
-            tx.close();
         }
+        //        {
+        //            "results": [
+        //              {
+        //                "columns": [
+        //                  "t"
+        //                ],
+        //                "data": [
+        //                  {
+        //                    "row": [
+        //                      {
+        //                        "id": 1
+        //                      }
+        //                    ]
+        //                  }
+        //                ]
+        //              }
+        //            ],
+        //            "errors": [
+        //              
+        //            ]
+        //          }
+        response.close();
+    }
+
+    public void executeNoResultCypher(String cypherQuery) {
+        final String txUri = serverRootUri + "transaction/commit";
+        WebResource resource = Client.create().resource(txUri);
+        String payload = "{\"statements\" : [ {\"statement\" : \"" + cypherQuery + "\"} ]}";
+        ClientResponse response = resource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
+                .entity(payload).post(ClientResponse.class);
+        response.close();
+    }
+
+    public Map<String, Object> executeSingleResultCypher(String cypherQuery, List<String> keyStrings) {
+        final String txUri = serverRootUri + "transaction/commit";
+        Map<String, Object> cypherQueryResult = new HashMap<>();
+        WebResource resource = Client.create().resource(txUri);
+        String payload = "{\"statements\" : [ {\"statement\" : \"" + cypherQuery + "\"} ]}";
+        ClientResponse response = resource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
+                .entity(payload).post(ClientResponse.class);
+        try {
+            String responseEntity = response.getEntity(String.class);
+            JSONObject jsonObject = new JSONObject(responseEntity);
+            JSONObject resultObject = jsonObject.getJSONArray("results").getJSONObject(0);
+            JSONArray dataArray = resultObject.getJSONArray("data");
+            JSONObject singleResult = dataArray.getJSONObject(0).getJSONArray("row").getJSONObject(0);
+            for (String key : keyStrings) {
+                cypherQueryResult.put(key, singleResult.get(key));
+            }
+        } catch (JSONException e) {
+            // FIXME Auto-generated catch block
+            e.printStackTrace();
+        }
+        response.close();
+        return cypherQueryResult;
+    }
+
+    public static void main(String[] args) {
+        DirenajNeo4jDriver.getInstance().startService();
+        DirenajNeo4jDriver.getInstance().executeCypher();
     }
 }

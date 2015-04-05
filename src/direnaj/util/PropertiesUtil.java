@@ -18,7 +18,7 @@ public class PropertiesUtil {
             // load a properties file
             prop.load(input);
             // get the property value and print it out
-            System.out.println(prop.getProperty("neo4j.db.path"));
+            System.out.println(prop.getProperty("neo4j.server.rootUri"));
             System.out.println(prop.getProperty("mongo.server.address"));
             System.out.println(prop.getProperty("mongo.server.port"));
             System.out.println(prop.getProperty("mongo.bulk.insert.size"));
