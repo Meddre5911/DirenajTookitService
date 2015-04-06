@@ -51,4 +51,13 @@ public class PropertiesUtil {
             return null;
         }
     }
+
+    public Integer getIntProperty(String property) {
+        try {
+            return Integer.valueOf(prop.getProperty(property));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 }

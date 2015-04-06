@@ -461,12 +461,12 @@ public class DirenajDriver {
                     domainUser.addValue2CountOfHashtags((double) usedHashtagCount);
                     domainUser.addValue2CountOfMentionedUsers((double) mentionedUserCount);
                 } catch (DirenajInvalidJSONException e) {
-                    // FIXME loglama yapilacak
+                    // XXX loglama yapilacak
                     e.printStackTrace();
                 }
             }
         } catch (Exception e) {
-            // FIXME loglama yapilacak
+            // XXX loglama yapilacak
             e.printStackTrace();
         }
     }

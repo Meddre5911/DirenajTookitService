@@ -2,6 +2,8 @@ package direnaj.driver;
 
 import java.net.UnknownHostException;
 
+import org.apache.log4j.Logger;
+
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -21,7 +23,7 @@ public class DirenajMongoDriver {
         String mongoServerAddress = PropertiesUtil.getInstance().getProperty("mongo.server.address");
         String mongoServerPort = PropertiesUtil.getInstance().getProperty("mongo.server.port");
         String mongoUsedDb = PropertiesUtil.getInstance().getProperty("mongo.usedDB");
-        
+
         mongoClient = new MongoClient(new MongoClientURI("mongodb://" + mongoServerAddress + ":" + mongoServerPort));
         mongoDB = mongoClient.getDB(mongoUsedDb);
         bulkInsertSize = Integer.valueOf(PropertiesUtil.getInstance().getProperty("mongo.bulk.insert.size"));
@@ -43,8 +45,7 @@ public class DirenajMongoDriver {
             try {
                 mongoDriver = new DirenajMongoDriver();
             } catch (UnknownHostException e) {
-                // FIXME - do some logging
-                e.printStackTrace();
+                Logger.getLogger(DirenajMongoDriver.class).error("Error in getInstance", e);
             }
         }
         return mongoDriver;

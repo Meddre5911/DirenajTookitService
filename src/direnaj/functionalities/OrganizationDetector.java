@@ -10,11 +10,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Result;
-import org.neo4j.graphdb.Transaction;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.BulkWriteOperation;
@@ -35,6 +33,7 @@ import direnaj.twitter.UserAccountPropertyAnalyser;
 import direnaj.util.CollectionUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.ListUtils;
+import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
 
 public class OrganizationDetector implements Runnable {
@@ -76,8 +75,7 @@ public class OrganizationDetector implements Runnable {
                 break;
             }
         } catch (Exception e) {
-            // FIXME do some logging
-            e.printStackTrace();
+            Logger.getLogger(OrganizationDetector.class).error("Error in OrganizationDetector run", e);
         }
 
     }
@@ -106,8 +104,7 @@ public class OrganizationDetector implements Runnable {
             getMetricsOfUsersOfHashTag();
 
         } catch (Exception e) {
-            // FIXME do some logging
-            e.printStackTrace();
+            Logger.getLogger(OrganizationDetector.class).error("Error in detectOrganizedBehaviourInHashtags", e);
         }
 
     }
@@ -220,7 +217,8 @@ public class OrganizationDetector implements Runnable {
     private String createSubgraphByAddingEdges(List<String> userIds) {
         String newRelationName = "FOLLOWS_" + requestId;
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("hopCount", 3);
+        params.put("hopCount",
+                PropertiesUtil.getInstance().getIntProperty("graphDb.closenessCentrality.calculation.hopNode"));
 
         String collectionRepresentation4UserIds = "";
         for (String userId : userIds) {

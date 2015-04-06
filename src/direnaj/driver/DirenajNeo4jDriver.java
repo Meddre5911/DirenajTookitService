@@ -8,6 +8,7 @@ import javax.print.attribute.standard.Severity;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.collections15.map.HashedMap;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -121,8 +122,7 @@ public class DirenajNeo4jDriver {
                 cypherQueryResult.put(key, singleResult.get(key));
             }
         } catch (JSONException e) {
-            // FIXME Auto-generated catch block
-            e.printStackTrace();
+            Logger.getLogger(DirenajNeo4jDriver.class).error("Error in executeSingleResultCypher", e);
         }
         response.close();
         return cypherQueryResult;

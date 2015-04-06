@@ -32,7 +32,7 @@ public class UserAccountPropertyAnalyser {
             String dateInString = "31-03-2007";
             controlDate = sdf.parse(dateInString);
         } catch (ParseException e) {
-            // FIXME loglama yapilacak
+            // XXX loglama yapilacak
             e.printStackTrace();
         }
     }
@@ -69,7 +69,6 @@ public class UserAccountPropertyAnalyser {
                     accountProperties.setFriendFollowerRatio(user.getFollowersCount() / totalFriendFollowerCount);
                 }
             } catch (ArithmeticException e) {
-                // FIXME buraya bir handling yap
             }
             accountProperties.setProtected(user.isProtected());
             accountProperties.setVerified(user.isVerified());

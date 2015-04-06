@@ -103,7 +103,7 @@ public class CommunityDetector {
             newMatrixIndice++;
         }
         // make calculation after merge
-        // FIXME dikkat edilmesi gereken nokta - biz X'teki community'nin row & column'� siliyoruz
+        // XXX dikkat edilmesi gereken nokta - biz X'teki community'nin row & column'� siliyoruz
         calculateNewMatrixAfterMerge(communityMatrix, newMatrix, matrixElement4Join, communityMapping);
         calculateNewCommunityFractions(newCommunityMapping);
         System.out.println("New Community Dimension : " + newMatrix.getColumnDimension());

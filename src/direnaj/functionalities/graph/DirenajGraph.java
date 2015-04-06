@@ -25,7 +25,7 @@ public class DirenajGraph<T> {
     private TreeMap<T, Vector<String>> vertexObjectMapping;
 
     /**
-     * FIXME istenilen Graph yapýsýna göre, burada parametrik olarak farklý graphlar yaratýlabilir
+     * XXX istenilen Graph yapï¿½sï¿½na gï¿½re, burada parametrik olarak farklï¿½ graphlar yaratï¿½labilir
      */
     public DirenajGraph() {
         graph = new SparseMultigraph<T, String>();
