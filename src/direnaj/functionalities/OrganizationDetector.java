@@ -221,10 +221,14 @@ public class OrganizationDetector implements Runnable {
         String newRelationName = "FOLLOWS_" + requestId;
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("hopCount", 3);
-        params.put("userIds", userIds);
 
+        String collectionRepresentation4UserIds = "";
+        for (String userId : userIds) {
+            collectionRepresentation4UserIds = ",\"" + userId + "\"";
+        }
+        collectionRepresentation4UserIds = collectionRepresentation4UserIds.substring(0);
         String cypherQuery = "MATCH p = (begin:User)-[r:FOLLOWS*..{hopCount}]-(end:User) " //
-                + "WHERE begin.id_str in {userIds} " //
+                + "WHERE begin.id_str in [" + collectionRepresentation4UserIds + "] " //
                 + "WITH distinct nodes(p) as nodes " //   
                 + "MATCH (x)-[FOLLOWS]->(y) " // find all relationships between nodes
                 + "WHERE x in nodes and y in nodes " // which were found earlier
@@ -234,7 +238,7 @@ public class OrganizationDetector implements Runnable {
                 + "WHERE z in nodes and t in nodes " // which were found earlier
                 + "CREATE (z)<-[r2:" + newRelationName + " {type:" + newRelationName + "}]-(t) RETURN 1 ";
 
-        DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherQuery, params);
+        DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherQuery);
         return newRelationName;
     }
 
