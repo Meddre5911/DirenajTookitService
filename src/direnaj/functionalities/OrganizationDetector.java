@@ -152,18 +152,26 @@ public class OrganizationDetector implements Runnable {
         DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
         Long preprocessUserCounts = direnajMongoDriver.executeCountQuery(orgBehaviorPreProcessUsers, requestIdObj);
         List<String> userIds = new Vector<>();
-        for (int i = 1; i <= preprocessUserCounts; i++) {
-            DBObject preProcessUser = orgBehaviorPreProcessUsers.findOne(requestIdObj);
-            User domainUser = analyzePreProcessUser(preProcessUser);
-            // do hashtag / mention / url & twitter device ratio
-            UserAccountPropertyAnalyser.getInstance().calculateUserAccountProperties(domainUser);
-            domainUsers.add(domainUser);
-            userIds.add(domainUser.getUserId());
-            if ((i == preprocessUserCounts)
-                    || domainUsers.size() > DirenajMongoDriver.getInstance().getBulkInsertSize()) {
-                domainUsers = saveOrganizedBehaviourInputData(domainUsers);
+        DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj);
+        try {
+            int i = 0;
+            while (preProcessUsers.hasNext()) {
+                i++;
+                DBObject preProcessUser = preProcessUsers.next();
+                User domainUser = analyzePreProcessUser(preProcessUser);
+                // do hashtag / mention / url & twitter device ratio
+                UserAccountPropertyAnalyser.getInstance().calculateUserAccountProperties(domainUser);
+                domainUsers.add(domainUser);
+                userIds.add(domainUser.getUserId());
+                if ((i == preprocessUserCounts)
+                        || domainUsers.size() > DirenajMongoDriver.getInstance().getBulkInsertSize()) {
+                    domainUsers = saveOrganizedBehaviourInputData(domainUsers);
+                }
             }
+        } finally {
+            preProcessUsers.close();
         }
+        orgBehaviorPreProcessUsers.remove(requestIdObj);
         calculateClosenessCentrality(userIds);
 
     }
@@ -198,6 +206,7 @@ public class OrganizationDetector implements Runnable {
         HashMap<String, Double> userClosenessCentralities = new HashMap<>();
         if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
             for (String userId : userIds) {
+                // FIXME 20150407 query'yi incele
                 String closenessCalculateQuery = "START rel=relationship(*) " //
                         + "WHERE has(rel.type) and rel.type='" + subgraphEdgeLabel + "'" //
                         + "WITH rel " //
@@ -216,16 +225,17 @@ public class OrganizationDetector implements Runnable {
 
     private String createSubgraphByAddingEdges(List<String> userIds) {
         String newRelationName = "FOLLOWS_" + requestId;
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("hopCount",
-                PropertiesUtil.getInstance().getIntProperty("graphDb.closenessCentrality.calculation.hopNode"));
-
+        int hopCount = PropertiesUtil.getInstance().getIntProperty("graphDb.closenessCentrality.calculation.hopNode");
+        // collect all userIds
         String collectionRepresentation4UserIds = "";
         for (String userId : userIds) {
             collectionRepresentation4UserIds = ",\"" + userId + "\"";
         }
+        // delete comma min the beginning
         collectionRepresentation4UserIds = collectionRepresentation4UserIds.substring(0);
-        String cypherQuery = "MATCH p = (begin:User)-[r:FOLLOWS*..{hopCount}]-(end:User) " //
+        // execute cypher query
+        // FIXME 20150407 query'yi incele
+        String cypherQuery = "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) " //
                 + "WHERE begin.id_str in [" + collectionRepresentation4UserIds + "] " //
                 + "WITH distinct nodes(p) as nodes " //   
                 + "MATCH (x)-[FOLLOWS]->(y) " // find all relationships between nodes
@@ -234,8 +244,7 @@ public class OrganizationDetector implements Runnable {
                 + "WITH nodes " // 
                 + "MATCH (z)<-[FOLLOWS]-(t) " // find all relationships between nodes
                 + "WHERE z in nodes and t in nodes " // which were found earlier
-                + "CREATE (z)<-[r2:" + newRelationName + " {type:" + newRelationName + "}]-(t) RETURN 1 ";
-
+                + "CREATE (z)<-[r2:" + newRelationName + " {type:" + newRelationName + "}]-(t)";
         DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherQuery);
         return newRelationName;
     }
