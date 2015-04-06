@@ -1,11 +1,14 @@
 package direnaj.driver;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -45,18 +48,17 @@ public class DirenajDriverVersion2 {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.getLogger(DirenajDriverVersion2.class).error("Direnaj Driver Version 2 - getHashtagCounts", e);
         } finally {
             tweetCursor.close();
         }
-
         return CollectionUtil.sortByComparator(hashtagCounts);
     }
 
     public void saveHashtagUsers2Mongo(String campaignID, String tracedHashtag, String requestId) throws Exception,
             DirenajInvalidJSONException {
         // list for user ids
-        List<User> users = new Vector<>();
+        Set<User> users = new HashSet<>();
         DBCursor tweetCursor = getTweets(campaignID);
         try {
             while (tweetCursor.hasNext()) {
@@ -73,14 +75,14 @@ public class DirenajDriverVersion2 {
                 users = savePreProcessUsersIfNeeded(users, requestId, false);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.getLogger(DirenajDriverVersion2.class).error("Direnaj Driver Version 2 - saveHashtagUsers2Mongo", e);
         } finally {
             tweetCursor.close();
         }
         savePreProcessUsersIfNeeded(users, requestId, true);
     }
 
-    private List<User> savePreProcessUsersIfNeeded(List<User> users, String requestId, boolean saveAnyway)
+    private Set<User> savePreProcessUsersIfNeeded(Set<User> users, String requestId, boolean saveAnyway)
             throws DirenajInvalidJSONException {
         if (saveAnyway || users.size() > DirenajMongoDriver.getInstance().getBulkInsertSize()) {
             DBCollection preProcessUsersCollections = DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers();
@@ -104,7 +106,7 @@ public class DirenajDriverVersion2 {
                 }
             }
             preProcessUsersCollections.insert(preprocessUsers);
-            return new Vector<User>();
+            return new HashSet<User>();
         }
         return users;
 

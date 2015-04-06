@@ -37,14 +37,28 @@ public class DateTimeUtils {
         System.out.println("Long Value : " + longValue);
         System.out.println("Date : " + new Date(longValue));
         System.out.println("Twitter Date : " + DateTimeUtils.getTwitterDate("Tue Nov 05 20:10:45 EET 2013"));
-        
+
     }
 
+    /**
+     * FIXME 20150704 - Date Time bu iki methodu hallet
+     * 
+     * @param date
+     * @param i
+     * @return
+     */
     public static Object subtractWeeksFromDate(Date date, int i) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    /**
+     * FIXME 20150704 - Date Time bu iki methodu hallet
+     * 
+     * @param date
+     * @param i
+     * @return
+     */
     public static Object addWeeksToDate(Date date, int i) {
         // TODO Auto-generated method stub
         return null;
