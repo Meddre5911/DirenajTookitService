@@ -224,6 +224,7 @@ public class DirenajDriverUtils {
             user.setVerified(getUserVerifiedInfo(userJson));
             user.setCreationDate(getObjectCreationDate(userJson));
             user.setCampaignTweetPostDate(getObjectCreationDate(tweet));
+            user.setFavoriteCount(getUserFavoriteCount(userJson));
             return user;
         } catch (Exception e) {
             throw new DirenajInvalidJSONException("parseUser : " + e.getMessage());
@@ -281,6 +282,14 @@ public class DirenajDriverUtils {
     public static Long getUserFriendCount(JSONObject user) throws DirenajInvalidJSONException {
         try {
             return user.getLong("friends_count");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static Long getUserFavoriteCount(JSONObject user) throws DirenajInvalidJSONException {
+        try {
+            return user.getLong("favourites_count");
         } catch (Exception e) {
             return null;
         }
@@ -370,7 +379,7 @@ public class DirenajDriverUtils {
     public static Date getObjectCreationDate(JSONObject object) throws DirenajInvalidJSONException {
         try {
             String createdTime = String.valueOf(object.get("created_at"));
-            return DateTimeUtils.getTwitterDateFromRateDieFormat(createdTime);
+            return DateTimeUtils.getTwitterDateFromRataDieFormat(createdTime);
         } catch (Exception e) {
             throw new DirenajInvalidJSONException("getTweetCreationDate : " + e.getMessage());
         }

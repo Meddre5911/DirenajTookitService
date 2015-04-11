@@ -206,13 +206,15 @@ public class OrganizationDetector implements Runnable {
         HashMap<String, Double> userClosenessCentralities = new HashMap<>();
         if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
             for (String userId : userIds) {
-                // FIXME 20150407 query'yi incele
-                String closenessCalculateQuery = "START rel=relationship(*) " //
-                        + "WHERE has(rel.type) and rel.type='" + subgraphEdgeLabel + "'" //
-                        + "WITH rel " //
-                        + "MATCH (a), (b) WHERE a<>b and a.id_str = '" + userId + "' " //
-                        + "WITH length(shortestPath((a)<-[rel:" + subgraphEdgeLabel + "]-(b))) AS dist, a, b " //
-                        + "RETURN DISTINCT sum(1.0/dist) AS closenessCentrality";
+
+                String closenessCalculateQuery = "START centralityNode=node:node_auto_index(calculationEdge = \""
+                        + subgraphEdgeLabel + "\")" //
+                        + "WITH centralityNode" //
+                        + "MATCH p= (centralityNode)-[r]-(:User)" // 
+                        + "WITH nodes(p) as nodes" //
+                        + "MATCH (a), (b) WHERE a<>b and a.id_str = '" + userId + "' and  b in nodes and b:User" //
+                        + "WITH length(shortestPath((a)<-[:" + subgraphEdgeLabel + "]-(b))) AS dist" //
+                        + "RETURN DISTINCT sum(1.0/dist) AS closenessCentrality"; //
 
                 Map<String, Object> cypherResult = DirenajNeo4jDriver.getInstance().executeSingleResultCypher(
                         closenessCalculateQuery, ListUtils.getListOfStrings("closenessCentrality"));
@@ -225,26 +227,26 @@ public class OrganizationDetector implements Runnable {
 
     private String createSubgraphByAddingEdges(List<String> userIds) {
         String newRelationName = "FOLLOWS_" + requestId;
+        String cypherCreateNode = "CREATE (n:ClosenessCentralityCalculator { calculationEdge : '" + newRelationName
+                + "' })";
+        DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherCreateNode);
+
         int hopCount = PropertiesUtil.getInstance().getIntProperty("graphDb.closenessCentrality.calculation.hopNode");
         // collect all userIds
         String collectionRepresentation4UserIds = "";
         for (String userId : userIds) {
             collectionRepresentation4UserIds = ",\"" + userId + "\"";
         }
-        // delete comma min the beginning
+        // delete comma in the beginning
         collectionRepresentation4UserIds = collectionRepresentation4UserIds.substring(0);
         // execute cypher query
-        // FIXME 20150407 query'yi incele
-        String cypherQuery = "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) " //
-                + "WHERE begin.id_str in [" + collectionRepresentation4UserIds + "] " //
-                + "WITH distinct nodes(p) as nodes " //   
-                + "MATCH (x)-[FOLLOWS]->(y) " // find all relationships between nodes
-                + "WHERE x in nodes and y in nodes " // which were found earlier
-                + "CREATE (x)-[r1:" + newRelationName + " {type:" + newRelationName + "}]->(y) " //
-                + "WITH nodes " // 
-                + "MATCH (z)<-[FOLLOWS]-(t) " // find all relationships between nodes
-                + "WHERE z in nodes and t in nodes " // which were found earlier
-                + "CREATE (z)<-[r2:" + newRelationName + " {type:" + newRelationName + "}]-(t)";
+        String cypherQuery = "START begin=node:node_auto_index('id_str:(" + collectionRepresentation4UserIds + ")') " //
+                + "WITH begin " + "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) " //
+                + "WITH distinct nodes(p) as nodes " //
+                + "MATCH (x)-[FOLLOWS]->(y),(n:ClosenessCentralityCalculator),(b:User) " //               
+                + "WHERE x in nodes and y in nodes and b in nodes  and n.calculationEdge = '" + newRelationName + "' " //
+                + "CREATE (x)-[r1:" + newRelationName + "]->(y),(n)-[r:CalculateCentrality]->(b)";
+
         DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherQuery);
         return newRelationName;
     }

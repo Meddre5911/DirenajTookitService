@@ -14,6 +14,7 @@ public class User implements Comparable<User> {
     private double userDegree;
     private double friendsCount;
     private double followersCount;
+    private double favoriteCount;
     private double postCount;
     private boolean isProtected;
     private boolean isVerified;
@@ -299,5 +300,13 @@ public class User implements Comparable<User> {
     public void addValue2CountOfUsedUrls(int usedUrlCountInPost) {
         usedUrlCount += usedUrlCountInPost;
 
+    }
+
+    public double getFavoriteCount() {
+        return favoriteCount;
+    }
+
+    public void setFavoriteCount(double favoriteCount) {
+        this.favoriteCount = favoriteCount;
     }
 }

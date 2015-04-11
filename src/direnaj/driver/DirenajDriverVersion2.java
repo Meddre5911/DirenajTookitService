@@ -98,6 +98,7 @@ public class DirenajDriverVersion2 {
                     preprocessUser.put("userScreenName", user.getUserScreenName());
                     preprocessUser.put("friendCount", user.getFriendsCount());
                     preprocessUser.put("followerCount", user.getFollowersCount());
+                    preprocessUser.put("favoriteCount", user.getFavoriteCount());
                     preprocessUser.put("isProtected", user.isProtected());
                     preprocessUser.put("isVerified", user.isVerified());
                     preprocessUser.put("creationDate", user.getCreationDate());
