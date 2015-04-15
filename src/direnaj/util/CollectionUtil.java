@@ -53,7 +53,7 @@ public class CollectionUtil {
         // Sort list with comparator, to compare the Map values
         Collections.sort(list, new Comparator<Map.Entry<String, Double>>() {
             public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) {
-                return (o1.getValue()).compareTo(o2.getValue());
+                return (o2.getValue()).compareTo(o1.getValue());
             }
         });
         // Convert sorted map back to a Map
@@ -74,8 +74,9 @@ public class CollectionUtil {
         }
     }
 
-    public static TreeMap<String, Double> discardOtherElementsOfMap(Map<String, Double> map, int discardElementsAfter) {
-        TreeMap<String, Double> newMap = new TreeMap<>();
+    public static LinkedHashMap<String, Double> discardOtherElementsOfMap(Map<String, Double> map,
+            int discardElementsAfter) {
+        LinkedHashMap<String, Double> newMap = new LinkedHashMap<>();
         Set<String> keySet = map.keySet();
         int counter = 0;
         for (String key : keySet) {

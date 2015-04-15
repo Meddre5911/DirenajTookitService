@@ -1,9 +1,10 @@
 package direnaj.driver;
 
+import java.util.Date;
+
 import com.mongodb.DBObject;
 
 import direnaj.domain.User;
-import direnaj.util.DateTimeUtils;
 
 public class DirenajMongoDriverUtil {
 
@@ -14,8 +15,8 @@ public class DirenajMongoDriverUtil {
         user.setFavoriteCount((double) preProcessUser.get("favoriteCount"));
         user.setProtected((boolean) preProcessUser.get("isProtected"));
         user.setVerified((boolean) preProcessUser.get("isVerified"));
-        user.setCreationDate(DateTimeUtils.getTwitterDate((String) preProcessUser.get("creationDate")));
-        user.setCampaignTweetPostDate(DateTimeUtils.getTwitterDate((String) preProcessUser.get("postCreationDate")));
+        user.setCreationDate((Date) preProcessUser.get("creationDate"));
+        user.setCampaignTweetPostDate((Date) preProcessUser.get("postCreationDate"));
         return user;
     }
 

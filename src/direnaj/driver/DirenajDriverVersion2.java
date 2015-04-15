@@ -66,16 +66,19 @@ public class DirenajDriverVersion2 {
                 JSONObject tweetData = DirenajDriverUtils.getTweet(direnajTweetObject);
                 JSONArray hashtags = DirenajDriverUtils.getHashTags(DirenajDriverUtils.getEntities(tweetData));
                 for (int j = 0; j < hashtags.length(); j++) {
-                    String tweetHashTag = hashtags.getJSONObject(j).get("text").toString().toLowerCase(Locale.US);
-                    if (tracedHashtag.equals(tweetHashTag)) {
-                        users.add(DirenajDriverUtils.parseUser(tweetData));
-                        break;
+                    try {
+                        String tweetHashTag = hashtags.getJSONObject(j).get("text").toString().toLowerCase(Locale.US);
+                        if (tracedHashtag.equals(tweetHashTag)) {
+                            users.add(DirenajDriverUtils.parseUser(tweetData));
+                            break;
+                        }
+                    } catch (Exception e) {
+                        Logger.getLogger(DirenajDriverVersion2.class).error(
+                                "Direnaj Driver Version 2 - saveHashtagUsers2Mongo", e);
                     }
+                    users = savePreProcessUsersIfNeeded(users, requestId, false);
                 }
-                users = savePreProcessUsersIfNeeded(users, requestId, false);
             }
-        } catch (Exception e) {
-            Logger.getLogger(DirenajDriverVersion2.class).error("Direnaj Driver Version 2 - saveHashtagUsers2Mongo", e);
         } finally {
             tweetCursor.close();
         }

@@ -11,7 +11,7 @@ import org.joda.time.DateTime;
 public class DateTimeUtils {
 
     public static Date getTwitterDate(String date) throws Exception {
-        final String TWITTER = "EEE MMM dd HH:mm:ss ZZZZZ yyyy";
+        final String TWITTER = "EEE MMM dd HH:mm:ss ZZZZZ yyyy"; // Example : Thu Nov 03 11:37:45 +0000 2011
         SimpleDateFormat sf = new SimpleDateFormat(TWITTER, Locale.ENGLISH);
         sf.setLenient(false);
         return sf.parse(date);
@@ -26,29 +26,29 @@ public class DateTimeUtils {
         return new Date(longValue);
     }
 
-    public static BigDecimal getRataDieFormat4Date(Date date) {
+    public static double getRataDieFormat4Date(Date date) {
         BigDecimal time = new BigDecimal(date.getTime());
         BigDecimal divide = time.divide(new BigDecimal("86400000"), 10, RoundingMode.CEILING);
         BigDecimal daysNumberUntilJan1970 = new BigDecimal("719529.0");
         BigDecimal actualDate = daysNumberUntilJan1970.add(divide);
-        return actualDate;
+        return actualDate.doubleValue();
     }
 
     public static Date getLocalDate() {
         return new Date();
     }
 
-    public static BigDecimal subtractWeeksFromDate(Date date, int i) {
+    public static double subtractWeeksFromDate(Date date, int i) {
         DateTime dateTime = new DateTime(date);
-        dateTime.minusWeeks(i);
-        Date dateAfterProcess = dateTime.toDate();
+        DateTime minusWeeks = dateTime.minusWeeks(i);
+        Date dateAfterProcess = minusWeeks.toDate();
         return getRataDieFormat4Date(dateAfterProcess);
     }
 
-    public static BigDecimal addWeeksToDate(Date date, int i) {
+    public static double addWeeksToDate(Date date, int i) {
         DateTime dateTime = new DateTime(date);
-        dateTime.plusWeeks(i);
-        Date dateAfterProcess = dateTime.toDate();
+        DateTime plusWeeks = dateTime.plusWeeks(i);
+        Date dateAfterProcess = plusWeeks.toDate();
         return getRataDieFormat4Date(dateAfterProcess);
     }
 

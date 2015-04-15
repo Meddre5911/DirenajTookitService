@@ -3,14 +3,15 @@ package direnaj.functionalities;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -83,18 +84,12 @@ public class OrganizationDetector implements Runnable {
     public void detectOrganizedBehaviourInHashtags() {
         try {
             Map<String, Double> hashtagCounts = direnajDriver.getHashtagCounts(campaignId);
-            // FIXME doğru çalıştığı anlaşıldıktan sonra silinecek
-            System.out.println("Hashtag Count Descending");
-            for (Entry<String, Double> hashtag : hashtagCounts.entrySet()) {
-                System.out.println(hashtag.getKey() + " - " + hashtag.getValue());
-            }
             // get hashtag users
-            TreeMap<String, Double> topHashtagCounts = CollectionUtil.discardOtherElementsOfMap(hashtagCounts,
+            LinkedHashMap<String, Double> topHashtagCounts = CollectionUtil.discardOtherElementsOfMap(hashtagCounts,
                     topHashtagCount);
-            // FIXME doğru çalıştığı anlaşıldıktan sonra silinecek
-            System.out.println("Top Hashtags Descending");
+            Logger.getLogger(OrganizationDetector.class).debug("Top Hashtags Descending");
             for (Entry<String, Double> hashtag : topHashtagCounts.entrySet()) {
-                System.out.println(hashtag.getKey() + " - " + hashtag.getValue());
+                Logger.getLogger(OrganizationDetector.class).debug(hashtag.getKey() + " - " + hashtag.getValue());
             }
             Set<String> topHashtags = topHashtagCounts.keySet();
             for (String topHashTag : topHashtags) {
@@ -102,7 +97,6 @@ public class OrganizationDetector implements Runnable {
             }
             updateRequestInMongo();
             getMetricsOfUsersOfHashTag();
-
         } catch (Exception e) {
             Logger.getLogger(OrganizationDetector.class).error("Error in detectOrganizedBehaviourInHashtags", e);
         }
@@ -118,6 +112,18 @@ public class OrganizationDetector implements Runnable {
         organizedBehaviorCollection.update(findQuery, updateQuery);
     }
 
+    private void changeRequestStatusInMongo(boolean requestStatus) {
+        DBCollection organizedBehaviorCollection = direnajMongoDriver.getOrgBehaviorRequestCollection();
+        BasicDBObject findQuery = new BasicDBObject();
+        findQuery.put("_id", requestId);
+        BasicDBObject updateQuery = new BasicDBObject();
+        updateQuery.append(
+                "$set",
+                new BasicDBObject().append("processCompleted", requestStatus).append("statusChangeTime",
+                        DateTimeUtils.getLocalDate()));
+        organizedBehaviorCollection.update(findQuery, updateQuery);
+    }
+
     private void insertRequest2Mongo() {
         DBCollection organizedBehaviorCollection = direnajMongoDriver.getOrgBehaviorRequestCollection();
         BasicDBObject document = new BasicDBObject();
@@ -128,6 +134,7 @@ public class OrganizationDetector implements Runnable {
         document.put("topHashtagCount", topHashtagCount);
         document.put("tracedHashtag", tracedHashtagList);
         document.put("processCompleted", Boolean.FALSE);
+        document.put("statusChangeTime", DateTimeUtils.getLocalDate());
         organizedBehaviorCollection.insert(document);
     }
 
@@ -137,6 +144,7 @@ public class OrganizationDetector implements Runnable {
             // FIXME burayi unutma
             saveAllUserTweets();
             startUserAnalysis();
+            changeRequestStatusInMongo(true);
         }
     }
 
@@ -173,7 +181,6 @@ public class OrganizationDetector implements Runnable {
         }
         orgBehaviorPreProcessUsers.remove(requestIdObj);
         calculateClosenessCentrality(userIds);
-
     }
 
     private void calculateClosenessCentrality(List<String> userIds) {
@@ -186,7 +193,7 @@ public class OrganizationDetector implements Runnable {
     private void clearNeo4jSubGraph(String subgraphEdgeLabel) {
         if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
             String deleteRelationshipCypher = "MATCH (u:User)-[r:" + subgraphEdgeLabel + "]-(t:User) DELETE r";
-            DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteRelationshipCypher);
+            DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteRelationshipCypher, "");
         }
     }
 
@@ -197,12 +204,11 @@ public class OrganizationDetector implements Runnable {
         for (Map.Entry<String, Double> entry : userClosenessCentralities.entrySet()) {
             bulkWriteOperation.find(new BasicDBObject("requestId", requestId).append("userId", entry.getKey()))
                     .updateOne(new BasicDBObject("$set", new BasicDBObject("closenessCentrality", entry.getValue())));
-
         }
         bulkWriteOperation.execute();
     }
 
-    private HashMap<String, Double> calculateInNeo4J(List<String> userIds, String subgraphEdgeLabel) {
+    public HashMap<String, Double> calculateInNeo4J(List<String> userIds, String subgraphEdgeLabel) {
         HashMap<String, Double> userClosenessCentralities = new HashMap<>();
         if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
             for (String userId : userIds) {
@@ -218,36 +224,54 @@ public class OrganizationDetector implements Runnable {
 
                 Map<String, Object> cypherResult = DirenajNeo4jDriver.getInstance().executeSingleResultCypher(
                         closenessCalculateQuery, ListUtils.getListOfStrings("closenessCentrality"));
-                double closenessCentrality = Double.valueOf(cypherResult.get("closenessCentrality").toString());
+                double closenessCentrality = 0d;
+                if (cypherResult.containsKey("closenessCentrality")) {
+                    closenessCentrality = Double.valueOf(cypherResult.get("closenessCentrality").toString());
+                }
                 userClosenessCentralities.put(userId, closenessCentrality);
             }
         }
         return userClosenessCentralities;
     }
 
-    private String createSubgraphByAddingEdges(List<String> userIds) {
+    public String createSubgraphByAddingEdges(List<String> userIds) {
         String newRelationName = "FOLLOWS_" + requestId;
         String cypherCreateNode = "CREATE (n:ClosenessCentralityCalculator { calculationEdge : '" + newRelationName
                 + "' })";
-        DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherCreateNode);
+        DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherCreateNode, "");
 
         int hopCount = PropertiesUtil.getInstance().getIntProperty("graphDb.closenessCentrality.calculation.hopNode");
         // collect all userIds
         String collectionRepresentation4UserIds = "";
+        JSONArray array = new JSONArray();
         for (String userId : userIds) {
-            collectionRepresentation4UserIds = ",\"" + userId + "\"";
+            collectionRepresentation4UserIds = ",'" + userId + "'";
+            array.put(userId);
         }
         // delete comma in the beginning
-        collectionRepresentation4UserIds = collectionRepresentation4UserIds.substring(0);
+        collectionRepresentation4UserIds = collectionRepresentation4UserIds.substring(1);
         // execute cypher query
-        String cypherQuery = "START begin=node:node_auto_index('id_str:(" + collectionRepresentation4UserIds + ")') " //
-                + "WITH begin " + "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) " //
+//        String cypherQuery = "START begin=node:node_auto_index('id_str:(" + collectionRepresentation4UserIds + ")') " //
+//                + "WITH begin " // 
+//                + "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) " //
+//                + "WITH distinct nodes(p) as nodes " //
+//                + "MATCH (x)-[:FOLLOWS]->(y),(n:ClosenessCentralityCalculator{calculationEdge: '" + newRelationName + "' }) " //               
+//                + "WHERE x in nodes and y in nodes " //
+//                + "CREATE (n)-[:CalculateCentrality]->(x)-[r1:" + newRelationName + "]->(y)<-[:CalculateCentrality]-(n)";
+        
+        
+        String cypherQuery =  "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) "
+                + "WHERE begin.id_str IN {id_str} " //
                 + "WITH distinct nodes(p) as nodes " //
-                + "MATCH (x)-[FOLLOWS]->(y),(n:ClosenessCentralityCalculator),(b:User) " //               
-                + "WHERE x in nodes and y in nodes and b in nodes  and n.calculationEdge = '" + newRelationName + "' " //
-                + "CREATE (x)-[r1:" + newRelationName + "]->(y),(n)-[r:CalculateCentrality]->(b)";
-
-        DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherQuery);
+                + "MATCH (x)-[:FOLLOWS]->(y),(n:ClosenessCentralityCalculator{calculationEdge: \"" + newRelationName + "\" }) " //               
+                + "WHERE x in nodes and y in nodes " //
+                + "CREATE (n)-[:CalculateCentrality]->(x)-[r1:" + newRelationName + "]->(y)<-[:CalculateCentrality]-(n)";
+        
+        String params = "id_str:\""+ array.toString() +"\"";
+                
+                
+         
+        DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherQuery, params);
         return newRelationName;
     }
 
@@ -284,6 +308,7 @@ public class OrganizationDetector implements Runnable {
         DBCollection tweetsCollection = direnajMongoDriver.getTweetsCollection();
         // parse user
         User domainUser = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
+        // get tweets of users in an interval of two weeks
         BasicDBObject tweetsRetrievalQuery = new BasicDBObject("tweet.user.id_str", domainUser.getUserId())
                 .append("tweet.created_at",
                         new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(
@@ -343,7 +368,7 @@ public class OrganizationDetector implements Runnable {
     private String generateUniqueId4Request() {
         // get current time
         SimpleDateFormat sdfDate = new SimpleDateFormat("yyyyMMddHHmmssSS");
-        Date now = new Date();
+        Date now = DateTimeUtils.getLocalDate();
         String strDate = sdfDate.format(now);
         return strDate;
     }

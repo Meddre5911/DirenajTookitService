@@ -42,7 +42,7 @@ public class OrganizedBehaviours extends HttpServlet {
         try {
             String realUserId = PropertiesUtil.getInstance().getProperty("direnajUserId");
             String realPassword = PropertiesUtil.getInstance().getProperty("direnajPassword");
-            if (!realUserId.equals(userId) || realPassword.equals(password)) {
+            if (!realUserId.equals(userId) || !realPassword.equals(password)) {
                 retHtmlStr += "Wrong UserName - Password <br>";
             } else {
                 int topHashTagCount = TextUtils.getIntegerValue(request.getParameter("topHashtagCount"));

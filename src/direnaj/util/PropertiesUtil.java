@@ -18,12 +18,17 @@ public class PropertiesUtil {
             // load a properties file
             prop.load(input);
             // get the property value and print it out
+            System.out.println(prop.getProperty("direnajUserId"));
+            System.out.println(prop.getProperty("direnajPassword"));
             System.out.println(prop.getProperty("neo4j.server.rootUri"));
             System.out.println(prop.getProperty("mongo.server.address"));
             System.out.println(prop.getProperty("mongo.server.port"));
             System.out.println(prop.getProperty("mongo.bulk.insert.size"));
             System.out.println(prop.getProperty("mongo.usedDB"));
+            System.out.println(prop.getProperty("graphDb.closenessCentrality.calculation.hopNode"));
 
+            
+            
         } catch (IOException ex) {
             ex.printStackTrace();
         } finally {

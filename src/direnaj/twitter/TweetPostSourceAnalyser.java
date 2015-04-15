@@ -4,8 +4,8 @@ public class TweetPostSourceAnalyser {
 
     public static TweetPostSource getTweetSource(String tweetPostSource) {
         // FIXME check tweet source 
-        
-        return null;
+
+        return TweetPostSource.THIRDPARTY;
 
     }
 

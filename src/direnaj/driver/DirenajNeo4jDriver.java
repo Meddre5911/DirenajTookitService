@@ -96,12 +96,18 @@ public class DirenajNeo4jDriver {
         response.close();
     }
 
-    public void executeNoResultCypher(String cypherQuery) {
+    public void executeNoResultCypher(String cypherQuery, String params) {
+        System.out.println("Cypher Query");
+        System.out.println(cypherQuery);
         final String txUri = serverRootUri + "transaction/commit";
         WebResource resource = Client.create().resource(txUri);
-        String payload = "{\"statements\" : [ {\"statement\" : \"" + cypherQuery + "\"} ]}";
+        String payload = "{\"statements\" : [ {\"statement\" : \"" + cypherQuery + "\",\"parameters\": {" + params
+                + "}}]}";
         ClientResponse response = resource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
                 .entity(payload).post(ClientResponse.class);
+        System.out.println(String.format(
+                "POST [%s] to [%s], status code [%d], returned data: " + System.getProperty("line.separator") + "%s",
+                payload, txUri, response.getStatus(), response.getEntity(String.class)));
         response.close();
     }
 
@@ -112,6 +118,9 @@ public class DirenajNeo4jDriver {
         String payload = "{\"statements\" : [ {\"statement\" : \"" + cypherQuery + "\"} ]}";
         ClientResponse response = resource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
                 .entity(payload).post(ClientResponse.class);
+        System.out.println(String.format(
+                "POST [%s] to [%s], status code [%d], returned data: " + System.getProperty("line.separator") + "%s",
+                payload, txUri, response.getStatus(), response.getEntity(String.class)));
         try {
             String responseEntity = response.getEntity(String.class);
             JSONObject jsonObject = new JSONObject(responseEntity);
@@ -122,7 +131,8 @@ public class DirenajNeo4jDriver {
                 cypherQueryResult.put(key, singleResult.get(key));
             }
         } catch (JSONException e) {
-            Logger.getLogger(DirenajNeo4jDriver.class).error("Error in executeSingleResultCypher", e);
+            Logger.getLogger(DirenajNeo4jDriver.class).error("Error in executeSingleResultCypher");
+            //            Logger.getLogger(DirenajNeo4jDriver.class).error("Error in executeSingleResultCypher", e);
         }
         response.close();
         return cypherQueryResult;

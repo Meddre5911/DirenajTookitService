@@ -30,13 +30,17 @@ public class DirenajMongoDriver {
 
         if (!mongoDB.collectionExists("OrgBehaviourRequests")) {
             mongoDB.createCollection("OrgBehaviourRequests", null);
+            Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourRequests is created");
+
         }
         if (!mongoDB.collectionExists("OrgBehaviourPreProcessUsers")) {
             mongoDB.createCollection("OrgBehaviourPreProcessUsers", null);
+            Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourPreProcessUsers is created");
         }
 
         if (!mongoDB.collectionExists("OrgBehaviourProcessInputData")) {
             mongoDB.createCollection("OrgBehaviourProcessInputData", null);
+            Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourProcessInputData is created");
         }
     }
 
@@ -45,7 +49,7 @@ public class DirenajMongoDriver {
             try {
                 mongoDriver = new DirenajMongoDriver();
             } catch (UnknownHostException e) {
-                Logger.getLogger(DirenajMongoDriver.class).error("Error in getInstance", e);
+                Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).error("Error in getInstance", e);
             }
         }
         return mongoDriver;
@@ -71,16 +75,16 @@ public class DirenajMongoDriver {
         return collection.count(query);
     }
 
-    public static void main(String[] args) {
-        DirenajMongoDriver.getInstance();
-    }
-
     public int getBulkInsertSize() {
         return bulkInsertSize;
     }
 
     public void setBulkInsertSize(int bulkInsertSize) {
         this.bulkInsertSize = bulkInsertSize;
+    }
+
+    public static void main(String[] args) {
+        DirenajMongoDriver.getInstance();
     }
 
 }

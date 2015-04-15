@@ -379,7 +379,11 @@ public class DirenajDriverUtils {
     public static Date getObjectCreationDate(JSONObject object) throws DirenajInvalidJSONException {
         try {
             String createdTime = String.valueOf(object.get("created_at"));
-            return DateTimeUtils.getTwitterDateFromRataDieFormat(createdTime);
+            try{
+                return DateTimeUtils.getTwitterDate(createdTime);
+            } catch(Exception e){
+                return DateTimeUtils.getTwitterDateFromRataDieFormat(createdTime);
+            }
         } catch (Exception e) {
             throw new DirenajInvalidJSONException("getTweetCreationDate : " + e.getMessage());
         }
