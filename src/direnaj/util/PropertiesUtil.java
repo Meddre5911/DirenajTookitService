@@ -14,7 +14,8 @@ public class PropertiesUtil {
         prop = new Properties();
         InputStream input = null;
         try {
-            input = new FileInputStream("/var/lib/tomcat7/toolkitConfig/toolkitConfig.properties");
+//            input = new FileInputStream("/var/lib/tomcat7/toolkitConfig/toolkitConfig.properties");´
+            input = new FileInputStream("/data/direnaj/toolkitConfig.properties");
             // load a properties file
             prop.load(input);
             // get the property value and print it out

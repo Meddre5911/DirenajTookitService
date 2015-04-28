@@ -101,8 +101,8 @@ public class DirenajNeo4jDriver {
         System.out.println(cypherQuery);
         final String txUri = serverRootUri + "transaction/commit";
         WebResource resource = Client.create().resource(txUri);
-        String payload = "{\"statements\" : [ {\"statement\" : \"" + cypherQuery + "\",\"parameters\": {" + params
-                + "}}]}";
+        String payload = "{\"statements\" : [ {\"statement\" : \"" + cypherQuery + "\",\"parameters\": " + params
+                + "}]}";
         ClientResponse response = resource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
                 .entity(payload).post(ClientResponse.class);
         System.out.println(String.format(
@@ -111,11 +111,12 @@ public class DirenajNeo4jDriver {
         response.close();
     }
 
-    public Map<String, Object> executeSingleResultCypher(String cypherQuery, List<String> keyStrings) {
+    public Map<String, Object> executeSingleResultCypher(String cypherQuery, String queryParams, List<String> keyStrings) {
         final String txUri = serverRootUri + "transaction/commit";
         Map<String, Object> cypherQueryResult = new HashMap<>();
         WebResource resource = Client.create().resource(txUri);
-        String payload = "{\"statements\" : [ {\"statement\" : \"" + cypherQuery + "\"} ]}";
+        String payload = "{\"statements\" : [ {\"statement\" : \"" + cypherQuery + "\",\"parameters\": " + queryParams
+                + "} ]}";
         ClientResponse response = resource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
                 .entity(payload).post(ClientResponse.class);
         System.out.println(String.format(
@@ -123,6 +124,7 @@ public class DirenajNeo4jDriver {
                 payload, txUri, response.getStatus(), response.getEntity(String.class)));
         try {
             String responseEntity = response.getEntity(String.class);
+            System.out.println("Response Entity : " + responseEntity);
             JSONObject jsonObject = new JSONObject(responseEntity);
             JSONObject resultObject = jsonObject.getJSONArray("results").getJSONObject(0);
             JSONArray dataArray = resultObject.getJSONArray("data");

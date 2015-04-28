@@ -25,6 +25,7 @@ public class DirenajMongoDriver {
         String mongoUsedDb = PropertiesUtil.getInstance().getProperty("mongo.usedDB");
 
         mongoClient = new MongoClient(new MongoClientURI("mongodb://" + mongoServerAddress + ":" + mongoServerPort));
+        
         mongoDB = mongoClient.getDB(mongoUsedDb);
         bulkInsertSize = Integer.valueOf(PropertiesUtil.getInstance().getProperty("mongo.bulk.insert.size"));
 
