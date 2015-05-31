@@ -193,7 +193,7 @@ public class OrganizationDetector implements Runnable {
     private void clearNeo4jSubGraph(String subgraphEdgeLabel) {
         if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
             String deleteRelationshipCypher = "MATCH (u:User)-[r:" + subgraphEdgeLabel + "]-(t:User) DELETE r";
-            DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteRelationshipCypher, "");
+            DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteRelationshipCypher, "{}");
         }
     }
 
@@ -213,17 +213,27 @@ public class OrganizationDetector implements Runnable {
         if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
             for (String userId : userIds) {
 
-                String closenessCalculateQuery = "START centralityNode=node:node_auto_index(calculationEdge = \""
-                        + subgraphEdgeLabel + "\")" //
-                        + "WITH centralityNode" //
-                        + "MATCH p= (centralityNode)-[r]-(:User)" // 
-                        + "WITH nodes(p) as nodes" //
-                        + "MATCH (a), (b) WHERE a<>b and a.id_str = '" + userId + "' and  b in nodes and b:User" //
-                        + "WITH length(shortestPath((a)<-[:" + subgraphEdgeLabel + "]-(b))) AS dist" //
+                String closenessCalculateQuery = "START centralityNode=node:node_auto_index(calculationEdge = {calculationEdge}) " //
+                        + "WITH centralityNode " //
+                        + "MATCH p= (centralityNode)-[r]-(:User) " // 
+                        + "WITH nodes(p) as nodes " //
+                        + "MATCH (a), (b) WHERE a<>b and a.id_str = {userId} and  b in nodes and b:User " //
+                        + "WITH length(shortestPath((a)<-[:" + subgraphEdgeLabel + "]-(b))) AS dist " //
                         + "RETURN DISTINCT sum(1.0/dist) AS closenessCentrality"; //
 
+                String queryParams = "{}";
+                try {
+                    JSONObject queryParamsJson = new JSONObject();
+                    queryParamsJson.put("userId", userId);
+                    queryParamsJson.put("calculationEdge", subgraphEdgeLabel);
+                    queryParams = queryParamsJson.toString();
+                } catch (JSONException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+
                 Map<String, Object> cypherResult = DirenajNeo4jDriver.getInstance().executeSingleResultCypher(
-                        closenessCalculateQuery, ListUtils.getListOfStrings("closenessCentrality"));
+                        closenessCalculateQuery, queryParams, ListUtils.getListOfStrings("closenessCentrality"));
                 double closenessCentrality = 0d;
                 if (cypherResult.containsKey("closenessCentrality")) {
                     closenessCentrality = Double.valueOf(cypherResult.get("closenessCentrality").toString());
@@ -238,7 +248,7 @@ public class OrganizationDetector implements Runnable {
         String newRelationName = "FOLLOWS_" + requestId;
         String cypherCreateNode = "CREATE (n:ClosenessCentralityCalculator { calculationEdge : '" + newRelationName
                 + "' })";
-        DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherCreateNode, "");
+        DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherCreateNode, "{}");
 
         int hopCount = PropertiesUtil.getInstance().getIntProperty("graphDb.closenessCentrality.calculation.hopNode");
         // collect all userIds
@@ -251,26 +261,37 @@ public class OrganizationDetector implements Runnable {
         // delete comma in the beginning
         collectionRepresentation4UserIds = collectionRepresentation4UserIds.substring(1);
         // execute cypher query
-//        String cypherQuery = "START begin=node:node_auto_index('id_str:(" + collectionRepresentation4UserIds + ")') " //
-//                + "WITH begin " // 
-//                + "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) " //
-//                + "WITH distinct nodes(p) as nodes " //
-//                + "MATCH (x)-[:FOLLOWS]->(y),(n:ClosenessCentralityCalculator{calculationEdge: '" + newRelationName + "' }) " //               
-//                + "WHERE x in nodes and y in nodes " //
-//                + "CREATE (n)-[:CalculateCentrality]->(x)-[r1:" + newRelationName + "]->(y)<-[:CalculateCentrality]-(n)";
-        
-        
-        String cypherQuery =  "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) "
+        //        String cypherQuery = "START begin=node:node_auto_index('id_str:(" + collectionRepresentation4UserIds + ")') " //
+        //                + "WITH begin " // 
+        //                + "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) " //
+        //                + "WITH distinct nodes(p) as nodes " //
+        //                + "MATCH (x)-[:FOLLOWS]->(y),(n:ClosenessCentralityCalculator{calculationEdge: '" + newRelationName + "' }) " //               
+        //                + "WHERE x in nodes and y in nodes " //
+        //                + "CREATE (n)-[:CalculateCentrality]->(x)-[r1:" + newRelationName + "]->(y)<-[:CalculateCentrality]-(n)";
+
+        String cypherQuery = "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) "
                 + "WHERE begin.id_str IN {id_str} " //
                 + "WITH distinct nodes(p) as nodes " //
-                + "MATCH (x)-[:FOLLOWS]->(y),(n:ClosenessCentralityCalculator{calculationEdge: \"" + newRelationName + "\" }) " //               
+                + "MATCH (n:ClosenessCentralityCalculator),(z:User) " //               
+                + "WHERE  n.calculationEdge = {calculationEdge} and z in nodes " //
+                + "CREATE UNIQUE (n)-[:CalculateCentrality]->(z) "
+                + "WITH nodes " //
+                + "MATCH (x)-[:FOLLOWS]->(y) " //               
                 + "WHERE x in nodes and y in nodes " //
-                + "CREATE (n)-[:CalculateCentrality]->(x)-[r1:" + newRelationName + "]->(y)<-[:CalculateCentrality]-(n)";
-        
-        String params = "id_str:\""+ array.toString() +"\"";
-                
-                
-         
+                + "CREATE UNIQUE (x)-[r1:" + newRelationName + "]->(y)";
+
+        String params = "";
+        try {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("id_str", array);
+            jsonObject.put("calculationEdge", newRelationName);
+            params = jsonObject.toString();
+        } catch (JSONException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        System.out.println("Params :" + params);
+
         DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherQuery, params);
         return newRelationName;
     }
