@@ -26,9 +26,6 @@ public class PropertiesUtil {
             System.out.println(prop.getProperty("mongo.bulk.insert.size"));
             System.out.println(prop.getProperty("mongo.usedDB"));
             System.out.println(prop.getProperty("graphDb.closenessCentrality.calculation.hopNode"));
-
-            
-            
         } catch (IOException ex) {
             ex.printStackTrace();
         } finally {

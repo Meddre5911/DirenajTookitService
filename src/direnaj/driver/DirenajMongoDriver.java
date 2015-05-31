@@ -25,19 +25,18 @@ public class DirenajMongoDriver {
         String mongoUsedDb = PropertiesUtil.getInstance().getProperty("mongo.usedDB");
 
         mongoClient = new MongoClient(new MongoClientURI("mongodb://" + mongoServerAddress + ":" + mongoServerPort));
+        
         mongoDB = mongoClient.getDB(mongoUsedDb);
         bulkInsertSize = Integer.valueOf(PropertiesUtil.getInstance().getProperty("mongo.bulk.insert.size"));
 
         if (!mongoDB.collectionExists("OrgBehaviourRequests")) {
             mongoDB.createCollection("OrgBehaviourRequests", null);
             Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourRequests is created");
-
         }
         if (!mongoDB.collectionExists("OrgBehaviourPreProcessUsers")) {
             mongoDB.createCollection("OrgBehaviourPreProcessUsers", null);
             Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourPreProcessUsers is created");
         }
-
         if (!mongoDB.collectionExists("OrgBehaviourProcessInputData")) {
             mongoDB.createCollection("OrgBehaviourProcessInputData", null);
             Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourProcessInputData is created");
