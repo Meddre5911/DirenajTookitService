@@ -4,10 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.print.attribute.standard.Severity;
 import javax.ws.rs.core.MediaType;
 
-import org.apache.commons.collections15.map.HashedMap;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -119,22 +117,22 @@ public class DirenajNeo4jDriver {
                 + "} ]}";
         ClientResponse response = resource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
                 .entity(payload).post(ClientResponse.class);
+        String responseEntity = response.getEntity(String.class);
         System.out.println(String.format(
                 "POST [%s] to [%s], status code [%d], returned data: " + System.getProperty("line.separator") + "%s",
-                payload, txUri, response.getStatus(), response.getEntity(String.class)));
+                payload, txUri, response.getStatus(), responseEntity));
         try {
-            String responseEntity = response.getEntity(String.class);
             System.out.println("Response Entity : " + responseEntity);
             JSONObject jsonObject = new JSONObject(responseEntity);
             JSONObject resultObject = jsonObject.getJSONArray("results").getJSONObject(0);
             JSONArray dataArray = resultObject.getJSONArray("data");
-            JSONObject singleResult = dataArray.getJSONObject(0).getJSONArray("row").getJSONObject(0);
+            Object result = dataArray.getJSONObject(0).getJSONArray("row").get(0);
             for (String key : keyStrings) {
-                cypherQueryResult.put(key, singleResult.get(key));
+                cypherQueryResult.put(key, result);
             }
         } catch (JSONException e) {
-            Logger.getLogger(DirenajNeo4jDriver.class).error("Error in executeSingleResultCypher");
-            //            Logger.getLogger(DirenajNeo4jDriver.class).error("Error in executeSingleResultCypher", e);
+            //            Logger.getLogger(DirenajNeo4jDriver.class).error("Error in executeSingleResultCypher");
+            Logger.getLogger(DirenajNeo4jDriver.class).error("Error in executeSingleResultCypher", e);
         }
         response.close();
         return cypherQueryResult;
