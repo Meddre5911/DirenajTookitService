@@ -54,7 +54,7 @@ $(document).ready(function() {
 </script>
 
 <form action="">
-<input type="hidden" name="retrievedRequestId" value="<%=request.getParameter("requestId")%>">
+<input type="hidden" name="retrievedRequestId" id="retrievedRequestId" value="<%=request.getParameter("requestId")%>">
 
 <h2 >Organized Behaviour Detection Requests Input Data<br><br></h2>
 <table width="70%" style="border: 3px;background: rgb(243, 244, 248);"><tr><td>

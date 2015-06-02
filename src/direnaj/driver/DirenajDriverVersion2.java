@@ -33,7 +33,6 @@ public class DirenajDriverVersion2 {
     public Map<String, Double> getHashtagCounts(String campaignID) throws Exception, DirenajInvalidJSONException {
         // map for hashtags
         TreeMap<String, Double> hashtagCounts = new TreeMap<>();
-
         DBCursor tweetCursor = getTweets(campaignID);
         try {
             while (tweetCursor.hasNext()) {
@@ -105,6 +104,8 @@ public class DirenajDriverVersion2 {
                     preprocessUser.put("isProtected", user.isProtected());
                     preprocessUser.put("isVerified", user.isVerified());
                     preprocessUser.put("creationDate", user.getCreationDate());
+                    // FIXME bu property'nin aynı hashtag için birden fazla kez atılmış tweet için kullanılabilmesi lazım,
+                    // ona gore degisikligi yap
                     preprocessUser.put("postCreationDate", user.getCampaignTweetPostDate());
                     preprocessUsers.add(preprocessUser);
                 }

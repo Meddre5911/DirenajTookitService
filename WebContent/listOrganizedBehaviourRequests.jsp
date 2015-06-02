@@ -28,16 +28,15 @@ $(document).ready(function() {
             aoData.push( { "name": "pageType", "value": "requestListPagination" } );
           },
         "aoColumns": [
-//             { "mData": "_id", 
-//               "mRender": function ( data, type, row ) {
-//                		if(row[6]=='false'){
-//                			return row[0];
-//                		}else {
-// 	            	  return '<a href=/listUsersInOrganizedBehaviourRequests.jsp?pageType=requestInputData&requestId="'+row[0]+'">'+row[0]+'</a>';
-//                		}
-//                }	
-//             },
-            { "mData": "_id" },
+            { "mData": "_id", 
+              "mRender": function ( data, type, row ) {
+               		if(row.processCompleted==false){
+               			return data;
+               		}else {
+	            	  return '<a href=listUsersInOrganizedBehaviourRequests.jsp?pageType=requestInputData&requestId='+data+'>'+data+'</a>';
+               		}
+               }
+            },
             { "mData": "requestType" },
             { "mData": "requestDefinition" },
             { "mData": "campaignId" },

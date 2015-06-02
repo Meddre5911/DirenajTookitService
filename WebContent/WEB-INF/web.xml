@@ -35,9 +35,15 @@
 		<servlet-name>OrganizedBehaviourDetection</servlet-name>
 		<servlet-class>direnaj.servlet.OrganizedBehaviours</servlet-class>
 	</servlet>
-
-
-
+	<servlet>
+		<servlet-name>ListOrganizedBehaviourRequest</servlet-name>
+		<jsp-file>/listOrganizedBehaviourRequests.jsp</jsp-file>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>ListOrganizedBehaviourRequest</servlet-name>
+		<url-pattern>/listOrganizedBehaviourRequest</url-pattern>
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>MongoPaginationServlet</servlet-name>
 		<url-pattern>/MongoPaginationServlet</url-pattern>

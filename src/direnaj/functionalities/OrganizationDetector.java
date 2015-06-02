@@ -144,8 +144,8 @@ public class OrganizationDetector implements Runnable {
             // FIXME burayi unutma
             saveAllUserTweets();
             startUserAnalysis();
-            changeRequestStatusInMongo(true);
         }
+        changeRequestStatusInMongo(true);
     }
 
     private void saveAllUserTweets() {
@@ -179,8 +179,8 @@ public class OrganizationDetector implements Runnable {
         } finally {
             preProcessUsers.close();
         }
-        orgBehaviorPreProcessUsers.remove(requestIdObj);
         calculateClosenessCentrality(userIds);
+        orgBehaviorPreProcessUsers.remove(requestIdObj);
     }
 
     private void calculateClosenessCentrality(List<String> userIds) {
