@@ -194,6 +194,24 @@ public class OrganizationDetector implements Runnable {
         if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
             String deleteRelationshipCypher = "MATCH (u:User)-[r:" + subgraphEdgeLabel + "]-(t:User) DELETE r";
             DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteRelationshipCypher, "{}");
+            // delete Centrality Calculator Node and its relations
+            String params = "";
+            try {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("calculationEdge", subgraphEdgeLabel);
+                params = jsonObject.toString();
+            } catch (JSONException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            // delete relationships
+            String deleteCentralitycalculatorRelationShips = "MATCH (n:ClosenessCentralityCalculator)-[r]-(u:User) "
+                    + "WHERE  n.calculationEdge = {calculationEdge} DELETE r";
+            DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteCentralitycalculatorRelationShips, params);
+            // delete node
+            String deleteCentralitycalculatorNode = "MATCH (n:ClosenessCentralityCalculator) "
+                    + "WHERE  n.calculationEdge = {calculationEdge} DELETE n";
+            DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteCentralitycalculatorNode, params);
         }
     }
 
@@ -274,8 +292,7 @@ public class OrganizationDetector implements Runnable {
                 + "WITH distinct nodes(p) as nodes " //
                 + "MATCH (n:ClosenessCentralityCalculator),(z:User) " //               
                 + "WHERE  n.calculationEdge = {calculationEdge} and z in nodes " //
-                + "CREATE UNIQUE (n)-[:CalculateCentrality]->(z) "
-                + "WITH nodes " //
+                + "CREATE UNIQUE (n)-[:CalculateCentrality]->(z) " + "WITH nodes " //
                 + "MATCH (x)-[:FOLLOWS]->(y) " //               
                 + "WHERE x in nodes and y in nodes " //
                 + "CREATE UNIQUE (x)-[r1:" + newRelationName + "]->(y)";
