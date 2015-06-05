@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -63,8 +64,7 @@ public class MongoPaginationServlet extends HttpServlet {
                         jsonArray.put(new JSONObject(paginatedResult.next().toString()));
                     }
                 } catch (JSONException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
                 }
 
             } else if ("requestInputData".equals(pageType)) {
@@ -87,8 +87,7 @@ public class MongoPaginationServlet extends HttpServlet {
                         jsonArray.put(new JSONObject(paginatedResult.next().toString()));
                     }
                 } catch (JSONException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
                 }
 
             }

@@ -42,7 +42,6 @@ public class MatrixDeneme {
         m.walkInRowOrder(new DefaultRealMatrixPreservingVisitor() {
             @Override
             public void visit(int row, int column, double value) {
-                // TODO Auto-generated method stub
                 super.visit(row, column, value);
                 System.out.println(value);
             }

@@ -58,7 +58,7 @@ public class DirenajDriver {
                 // to be populated in any case, to catch the 'bad tweets' of
                 // direnaj
                 tweets.add("bad tweet : " + DirenajDriverUtils.getTweetData(results, i).toString());
-                // TODO : what if the line above throws an exception?
+                // XXX : what if the line above throws an exception?
                 continue;
             }
         }
@@ -104,7 +104,7 @@ public class DirenajDriver {
                 // array
                 // to be populated in any case, to catch the 'bad tweets' of
                 // direnaj
-                // TODO : what if the line above throws an exception?
+                // XXX : what if the line above throws an exception?
                 continue;
             }
         }
@@ -280,7 +280,7 @@ public class DirenajDriver {
     }
 
     /**
-     * FIXME bu siniftaki cogu method'da buna benzer yapilar var, Refactor et.
+     * XXX bu siniftaki cogu method'da buna benzer yapilar var, Refactor et.
      */
     private void getDistinctMentionCounts(String campaignID, int skip, int limit, Hashtable<User, Integer> mentionCounts)
             throws Exception, DirenajInvalidJSONException {

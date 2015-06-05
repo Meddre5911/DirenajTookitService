@@ -141,7 +141,7 @@ public class OrganizationDetector implements Runnable {
     public void getMetricsOfUsersOfHashTag() throws DirenajInvalidJSONException, Exception {
         for (String tracedHashtag : tracedHashtagList) {
             direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
-            // FIXME burayi unutma
+            // FIXME 20150604
             saveAllUserTweets();
             startUserAnalysis();
         }
@@ -149,7 +149,6 @@ public class OrganizationDetector implements Runnable {
     }
 
     private void saveAllUserTweets() {
-        // TODO Auto-generated method stub
 
     }
 
@@ -201,8 +200,8 @@ public class OrganizationDetector implements Runnable {
                 jsonObject.put("calculationEdge", subgraphEdgeLabel);
                 params = jsonObject.toString();
             } catch (JSONException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                Logger.getLogger(OrganizationDetector.class).error("Error in OrganizationDetector clearNeo4jSubGraph.",
+                        e);
             }
             // delete relationships
             String deleteCentralitycalculatorRelationShips = "MATCH (n:ClosenessCentralityCalculator)-[r]-(u:User) "
@@ -246,8 +245,8 @@ public class OrganizationDetector implements Runnable {
                     queryParamsJson.put("calculationEdge", subgraphEdgeLabel);
                     queryParams = queryParamsJson.toString();
                 } catch (JSONException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    Logger.getLogger(OrganizationDetector.class).error(
+                            "Error in OrganizationDetector calculateInNeo4J.", e);
                 }
 
                 Map<String, Object> cypherResult = DirenajNeo4jDriver.getInstance().executeSingleResultCypher(
@@ -304,8 +303,8 @@ public class OrganizationDetector implements Runnable {
             jsonObject.put("calculationEdge", newRelationName);
             params = jsonObject.toString();
         } catch (JSONException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Logger.getLogger(OrganizationDetector.class).error(
+                    "Error in OrganizationDetector createSubgraphByAddingEdges.", e);
         }
         System.out.println("Params :" + params);
 
@@ -334,7 +333,7 @@ public class OrganizationDetector implements Runnable {
 
             userInputData.put("isProtected", user.isProtected());
             userInputData.put("isVerified", user.isVerified());
-            userInputData.put("creationDate", user.getCreationDate());
+            userInputData.put("creationDate", user.getCreationDate().toString());
             allUserInputData.add(userInputData);
         }
         direnajMongoDriver.getOrgBehaviourProcessInputData().insert(allUserInputData);
@@ -347,12 +346,10 @@ public class OrganizationDetector implements Runnable {
         // parse user
         User domainUser = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
         // get tweets of users in an interval of two weeks
-        BasicDBObject tweetsRetrievalQuery = new BasicDBObject("tweet.user.id_str", domainUser.getUserId())
-                .append("tweet.created_at",
-                        new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(
-                                domainUser.getCampaignTweetPostDate(), 2)))
-                .append("tweet.created_at",
-                        new BasicDBObject("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(), 2)));
+        BasicDBObject tweetsRetrievalQuery = new BasicDBObject("tweet.user.id_str", domainUser.getUserId()).append(
+                "tweet.created_at",
+                new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(), 2))
+                        .append("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(), 2)));
 
         DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery);
         try {
@@ -361,7 +358,7 @@ public class OrganizationDetector implements Runnable {
                 JSONObject tweet = DirenajDriverUtils.getTweet(tweetData);
                 JSONObject entities = DirenajDriverUtils.getEntities(tweet);
                 String tweetPostSource = DirenajDriverUtils.getSource(tweet);
-                // FIXME burasi sonradan kullanılacak
+                // FIXME 20150604 burasi sonradan kullanılacak
                 String tweetText = DirenajDriverUtils.getSingleTweetText(tweetData);
 
                 int usedHashtagCount = DirenajDriverUtils.getHashTags(entities).length();

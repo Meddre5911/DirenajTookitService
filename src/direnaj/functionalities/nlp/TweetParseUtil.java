@@ -12,8 +12,8 @@ import direnaj.util.TextUtils;
 
 public class TweetParseUtil {
     /**
-     * FIXME burada https'i de g�z �n�nde tutmak laz�m Birden fazla url bulma
-     * olay�na da bak
+     * XXX burada https'i de goz onunde tutmak lazim. Birden fazla url bulma
+     * olayina da bak.
      * 
      * @param tweetText
      * @return

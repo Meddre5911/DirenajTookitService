@@ -76,24 +76,20 @@ public class CommunityInspectorOntology {
 
             @Override
             public Integer setValue(Integer value) {
-                // TODO Auto-generated method stub
                 return 1;
             }
 
             @Override
             public Integer getValue() {
-                // TODO Auto-generated method stub
                 return 1;
             }
 
             @Override
             public String getKey() {
-                // TODO Auto-generated method stub
                 return topic;
             }
         });
 
-        // TODO Auto-generated method stub
         return arrayList;
     }
 

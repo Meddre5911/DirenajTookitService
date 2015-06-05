@@ -1,7 +1,6 @@
 package direnaj.functionalities.classification.naiveBayes;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -107,7 +106,6 @@ public class NaiveClassifier {
                         }
                     }
                 } catch (Exception e) {
-                    // TODO: handle exception
                 }
                 unigramLaplaceProbabilities.put(sentiment.name(), unigramWords);
             }
@@ -142,7 +140,6 @@ public class NaiveClassifier {
                         }
                     }
                 } catch (Exception e) {
-                    // TODO: handle exception
                 }
             }
             bigramLaplaceProbabilities.put(sentiment.name(), bigramWords);

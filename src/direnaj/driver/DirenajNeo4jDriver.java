@@ -67,8 +67,7 @@ public class DirenajNeo4jDriver {
             System.out.println("Result : " + Integer.valueOf(result.toString()));
 
         } catch (JSONException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Logger.getLogger(DirenajNeo4jDriver.class).error("Error in DirenajNeo4jDriver.", e);
         }
         //        {
         //            "results": [

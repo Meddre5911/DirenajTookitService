@@ -16,12 +16,10 @@ public class MongoTester {
         DBObject preProcessUser = DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers()
                 .findOne(new BasicDBObject("userId", "1632442946"));
         User domainUser = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
-        BasicDBObject tweetsRetrievalQuery = new BasicDBObject("tweet.user.id_str", domainUser.getUserId())
-                .append("tweet.created_at",
-                        new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(
-                                domainUser.getCampaignTweetPostDate(), 2)))
-                .append("tweet.created_at",
-                        new BasicDBObject("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(), 2)));
+        BasicDBObject tweetsRetrievalQuery = new BasicDBObject("tweet.user.id_str", domainUser.getUserId()).append(
+                "tweet.created_at",
+                new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(), 2))
+                        .append("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(), 2)));
 
         DBCursor tweetsOfUser = DirenajMongoDriver.getInstance().getTweetsCollection().find(tweetsRetrievalQuery);
         try {

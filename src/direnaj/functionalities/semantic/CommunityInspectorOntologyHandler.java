@@ -71,7 +71,7 @@ public class CommunityInspectorOntologyHandler {
                 postIndv.addProperty(CommunityInspectorOntologyVocabulary.INTERESTED_IN_PROP, tweetTopicIndividual);
             }
         } catch (JWNLException e) {
-            // TODO Auto-generated catch block
+            // XXX Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -86,7 +86,7 @@ public class CommunityInspectorOntologyHandler {
                 userIndv.addProperty(CommunityInspectorOntologyVocabulary.INTERESTED_IN_PROP, userInterestedTopic);
             }
         } catch (JWNLException e) {
-            // TODO Auto-generated catch block
+            // XXX Auto-generated catch block
             e.printStackTrace();
         }
 
@@ -102,7 +102,7 @@ public class CommunityInspectorOntologyHandler {
                 communityIndv.addProperty(CommunityInspectorOntologyVocabulary.INTERESTED_IN_PROP, topicIndv);
             }
         } catch (JWNLException e) {
-            // TODO Auto-generated catch block
+            // XXX Auto-generated catch block
             e.printStackTrace();
         }
     }

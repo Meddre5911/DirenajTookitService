@@ -54,7 +54,6 @@ public class UserAccountPropertyAnalyser {
             String dateInString = "31-03-2007";
             controlDate = sdf.parse(dateInString);
         } catch (ParseException e) {
-            // FIXME loglama yapilacak
             e.printStackTrace();
         }
 
@@ -100,7 +99,6 @@ public class UserAccountPropertyAnalyser {
                 shortenURLServices.add(names.getString(i));
             }
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return shortenURLServices;

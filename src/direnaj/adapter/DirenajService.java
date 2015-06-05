@@ -37,7 +37,6 @@ public class DirenajService extends HttpServlet {
      */
     public DirenajService() {
         super();
-        // TODO Auto-generated constructor stub
     }
 
 	/**
@@ -142,7 +141,7 @@ public class DirenajService extends HttpServlet {
 			
 			
 		} catch (DirenajInvalidJSONException e) {
-			// TODO Auto-generated catch block
+			// XXX Auto-generated catch block
 			e.printStackTrace();
 		} catch (Exception e) {
             printout.println(e.getMessage());
@@ -156,7 +155,6 @@ public class DirenajService extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
 	}
 
 }

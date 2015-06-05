@@ -48,8 +48,8 @@ public class DirenajDataHandler {
 		System.out.println("Response Code : " + responseCode);
  
 		// we only handle http 200 now, 
-		// TODO 401 handling would also be fine
-		// TODO handle other response codes
+		// XXX 401 handling would also be fine
+		// XXX handle other response codes
 		if (responseCode==200) {
 			
 			

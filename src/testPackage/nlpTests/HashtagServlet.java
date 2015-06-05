@@ -54,7 +54,7 @@ public class HashtagServlet extends HttpServlet {
             RequestDispatcher dispatcher = context.getRequestDispatcher("/hashtagDetailedList.jsp");
             dispatcher.forward(request, resp);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
+            // XXX Auto-generated catch block
             e.printStackTrace();
         }
 
