@@ -3,6 +3,22 @@
 <head>
 <title>Test Web App for Direnaj</title>
 <link rel="stylesheet" href="./css/styles.css" type="text/css" />
+
+<script>
+	function disableField() {
+		if (document.getElementById('All').checked == true) {
+			document.getElementById('tracedHashtag').value = '';
+			document.getElementById('tracedHashtag').disabled = true;
+			document.getElementById('topHashtagCount').disabled = false;
+		} else if (document.getElementById('Single').checked == true) {
+			document.getElementById('tracedHashtag').disabled = false;
+			document.getElementById('topHashtagCount').value = '';
+			document.getElementById('topHashtagCount').disabled = true;
+		}
+	}
+</script>
+
+
 </head>
 <body>
 	<table class="title">
@@ -22,25 +38,15 @@
 			<p />
 			
 			<br>
-			<input type="radio" name="operationType" value="CheckHashtagsInCampaign" checked>
-			Check Hashtags In Campaign<br>
-			
-			Campaign Id : <input type="text" name="campaignId" value="" size="20"><br>
-			Top Hashtag Count : <input type="text" name="topHashtagCount" value="" size="20"><br>
-			Definition : <input type="text" name="organizedHashtagDefinition" value="" size="20"><br>
-
-			<p />
-			
+			<input type="radio" name="operationType" value="CheckHashtagsInCampaign" id="All" onClick="disableField();" checked>Check Hashtags In Campaign<br>
+			<input type="radio" name="operationType" value="CheckSingleHashtagInCampaign" onClick="disableField();" id="Single">Check Single Hashtags In Campaign<br>
 			<br>
-			<input type="radio" name="operationType" value="CheckSingleHashtagInCampaign">
-			Check Single Hashtag In Campaign<br>
-			
-			Campaign Id : <input type="text" name="campaignId" value="" size="20"><br>
-			Hashtag : <input type="text" name="tracedHashtag" value="" size="20"><br>
-			Definition : <input type="text" name="organizedHashtagDefinition" value="" size="20"><br>
+			Campaign Id :<br> <input type="text" name="campaignId" value="" size="20"><br>
+			Top Hashtag Count :<br> <input type="text" name="topHashtagCount" id="topHashtagCount" value="" size="20"><br>
+			Definition :<br> <input type="text" name="organizedHashtagDefinition" value="" size="20"><br>
+			Hashtag : <br><input type="text" name="tracedHashtag" id="tracedHashtag" value="" size="20" disabled><br>
 
-			<p />
-			
+			<p />			
 			<input type="submit" value="Submit" name="SUB">
 		</form>
 
