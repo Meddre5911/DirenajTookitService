@@ -178,8 +178,7 @@ public class UserAccountPropertyAnalyser {
         accountProperties.setUrlRatio(user.getUsedUrlCount() / totalPostCount);
         accountProperties.setHashtagRatio(user.getCountOfHashtags() / totalPostCount);
         accountProperties.setMentionRatio(user.getCountOfMentionedUsers() / totalPostCount);
-        accountProperties.setWebPostRatio(user.getWebDevicePostCount() / totalPostCount);
-        accountProperties.setApiPostRatio(user.getApiDevicePostCount() / totalPostCount);
+        accountProperties.setTwitterPostRatio(user.getTwitterDevicePostCount() / totalPostCount);
         accountProperties.setMobilePostRatio(user.getMobileDevicePostCount() / totalPostCount);
         accountProperties.setThirdPartyPostRatio(user.getThirdPartyDevicePostCount() / totalPostCount);
     }

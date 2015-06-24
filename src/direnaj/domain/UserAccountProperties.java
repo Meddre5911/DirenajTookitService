@@ -19,9 +19,8 @@ public class UserAccountProperties {
     // the number of duplicate tweets over the number of tweets posted by the account
     private double duplicateTweetRatio;
     
-    private double webPostRatio;
+    private double twitterPostRatio;
     private double mobilePostRatio;
-    private double apiPostRatio;
     private double thirdPartyPostRatio;
     
     private boolean isEarlierThanMarch2007;
@@ -100,12 +99,12 @@ public class UserAccountProperties {
         this.isProtected = isProtected;
     }
 
-    public double getWebPostRatio() {
-        return webPostRatio;
+    public double getTwitterPostRatio() {
+        return twitterPostRatio;
     }
 
-    public void setWebPostRatio(double webPostRatio) {
-        this.webPostRatio = webPostRatio;
+    public void setTwitterPostRatio(double webPostRatio) {
+        this.twitterPostRatio = webPostRatio;
     }
 
     public double getMobilePostRatio() {
@@ -114,14 +113,6 @@ public class UserAccountProperties {
 
     public void setMobilePostRatio(double mobilePostRatio) {
         this.mobilePostRatio = mobilePostRatio;
-    }
-
-    public double getApiPostRatio() {
-        return apiPostRatio;
-    }
-
-    public void setApiPostRatio(double apiPostRatio) {
-        this.apiPostRatio = apiPostRatio;
     }
 
     public double getThirdPartyPostRatio() {

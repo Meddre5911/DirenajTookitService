@@ -23,9 +23,8 @@ public class User implements Comparable<User> {
     private UserAccountProperties accountProperties;
     private List<String> posts;
     private List<String> usedUrls;
-    private double webDevicePostCount;
     private double mobileDevicePostCount;
-    private double apiDevicePostCount;
+    private double twitterDevicePostCount;
     private double thirdPartyDevicePostCount;
     private double usedUrlCount;
 
@@ -188,14 +187,6 @@ public class User implements Comparable<User> {
         this.postCount = postCount;
     }
 
-    public double getWebDevicePostCount() {
-        return webDevicePostCount;
-    }
-
-    public void setWebDevicePostCount(double webDevicePostCount) {
-        this.webDevicePostCount = webDevicePostCount;
-    }
-
     public double getMobileDevicePostCount() {
         return mobileDevicePostCount;
     }
@@ -204,12 +195,12 @@ public class User implements Comparable<User> {
         this.mobileDevicePostCount = mobileDevicePostCount;
     }
 
-    public double getApiDevicePostCount() {
-        return apiDevicePostCount;
+    public double getTwitterDevicePostCount() {
+        return twitterDevicePostCount;
     }
 
-    public void setApiDevicePostCount(double apiDevicePostCount) {
-        this.apiDevicePostCount = apiDevicePostCount;
+    public void setTwitterDevicePostCount(double apiDevicePostCount) {
+        this.twitterDevicePostCount = apiDevicePostCount;
     }
 
     public double getThirdPartyDevicePostCount() {
@@ -245,17 +236,18 @@ public class User implements Comparable<User> {
         }
     }
 
+    /**
+     * 
+     * @param tweetPostSource
+     */
     public void incrementPostDeviceCount(String tweetPostSource) {
-        TweetPostSource tweetSource = TweetPostSourceAnalyser.getTweetSource(tweetPostSource);
+        TweetPostSource tweetSource = TweetPostSourceAnalyser.getInstance().getTweetSource(tweetPostSource);
         switch (tweetSource) {
-        case WEB:
-            webDevicePostCount++;
-            break;
         case MOBILE:
             mobileDevicePostCount++;
             break;
-        case API:
-            apiDevicePostCount++;
+        case TWITTER:
+            twitterDevicePostCount++;
             break;
         case THIRDPARTY:
         default:

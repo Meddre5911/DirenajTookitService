@@ -11,6 +11,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
+
 import direnaj.functionalities.OrganizationDetector;
 import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
@@ -32,7 +34,7 @@ public class OrganizedBehaviours extends HttpServlet {
         String password = params.get("pass")[0];
         String operationType = params.get("operationType")[0];
         String campaignId = request.getParameter("campaignId");
-        System.out.println(operationType);
+        Logger.getLogger(OrganizedBehaviours.class).debug("Operation type : " + operationType);
 
         // getting parameters from html form
         String retHtmlStr = "<!DOCTYPE html>\n" + "<html>\n" + "<head><title>Direnaj Test Center</title></head>\n"

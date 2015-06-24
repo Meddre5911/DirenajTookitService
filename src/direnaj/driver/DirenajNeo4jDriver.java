@@ -37,8 +37,8 @@ public class DirenajNeo4jDriver {
         serverRootUri = PropertiesUtil.getInstance().getProperty("neo4j.server.rootUri");
         WebResource resource = Client.create().resource(serverRootUri);
         ClientResponse response = resource.get(ClientResponse.class);
-
-        System.out.println(String.format("GET on [%s], status code [%d]", serverRootUri, response.getStatus()));
+        Logger.getLogger(DirenajNeo4jDriver.class).debug(
+                String.format("GET on [%s], status code [%d]", serverRootUri, response.getStatus()));
         response.close();
     }
 
@@ -53,18 +53,19 @@ public class DirenajNeo4jDriver {
                 .entity(payload).post(ClientResponse.class);
 
         String responseEntity = response.getEntity(String.class);
-        System.out.println(String.format(
-                "POST [%s] to [%s], status code [%d], returned data: " + System.getProperty("line.separator") + "%s",
-                payload, txUri, response.getStatus(), responseEntity));
+        Logger.getLogger(DirenajNeo4jDriver.class).debug(
+                String.format(
+                        "POST [%s] to [%s], status code [%d], returned data: " + System.getProperty("line.separator")
+                                + "%s", payload, txUri, response.getStatus(), responseEntity));
 
-        System.out.println("\n response entitiy : \n" + responseEntity);
+        Logger.getLogger(DirenajNeo4jDriver.class).debug("\n response entitiy : \n" + responseEntity);
 
         try {
             JSONObject jsonObject = new JSONObject(responseEntity);
             JSONObject resultObject = jsonObject.getJSONArray("results").getJSONObject(0);
             JSONArray dataArray = resultObject.getJSONArray("data");
             Object result = dataArray.getJSONObject(0).getJSONArray("row").getJSONObject(0).get("id");
-            System.out.println("Result : " + Integer.valueOf(result.toString()));
+            Logger.getLogger(DirenajNeo4jDriver.class).debug("Result : " + Integer.valueOf(result.toString()));
 
         } catch (JSONException e) {
             Logger.getLogger(DirenajNeo4jDriver.class).error("Error in DirenajNeo4jDriver.", e);
@@ -94,17 +95,18 @@ public class DirenajNeo4jDriver {
     }
 
     public void executeNoResultCypher(String cypherQuery, String params) {
-        System.out.println("Cypher Query");
-        System.out.println(cypherQuery);
+        Logger.getLogger(DirenajNeo4jDriver.class).debug("Cypher Query");
+        Logger.getLogger(DirenajNeo4jDriver.class).debug(cypherQuery);
         final String txUri = serverRootUri + "transaction/commit";
         WebResource resource = Client.create().resource(txUri);
         String payload = "{\"statements\" : [ {\"statement\" : \"" + cypherQuery + "\",\"parameters\": " + params
                 + "}]}";
         ClientResponse response = resource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
                 .entity(payload).post(ClientResponse.class);
-        System.out.println(String.format(
-                "POST [%s] to [%s], status code [%d], returned data: " + System.getProperty("line.separator") + "%s",
-                payload, txUri, response.getStatus(), response.getEntity(String.class)));
+        Logger.getLogger(DirenajNeo4jDriver.class).debug(
+                String.format(
+                        "POST [%s] to [%s], status code [%d], returned data: " + System.getProperty("line.separator")
+                                + "%s", payload, txUri, response.getStatus(), response.getEntity(String.class)));
         response.close();
     }
 
@@ -117,11 +119,12 @@ public class DirenajNeo4jDriver {
         ClientResponse response = resource.accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
                 .entity(payload).post(ClientResponse.class);
         String responseEntity = response.getEntity(String.class);
-        System.out.println(String.format(
-                "POST [%s] to [%s], status code [%d], returned data: " + System.getProperty("line.separator") + "%s",
-                payload, txUri, response.getStatus(), responseEntity));
+        Logger.getLogger(DirenajNeo4jDriver.class).debug(
+                String.format(
+                        "POST [%s] to [%s], status code [%d], returned data: " + System.getProperty("line.separator")
+                                + "%s", payload, txUri, response.getStatus(), responseEntity));
         try {
-            System.out.println("Response Entity : " + responseEntity);
+            Logger.getLogger(DirenajNeo4jDriver.class).debug("Response Entity : " + responseEntity);
             JSONObject jsonObject = new JSONObject(responseEntity);
             JSONObject resultObject = jsonObject.getJSONArray("results").getJSONObject(0);
             JSONArray dataArray = resultObject.getJSONArray("data");

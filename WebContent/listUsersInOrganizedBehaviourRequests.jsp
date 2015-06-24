@@ -33,12 +33,15 @@ $(document).ready(function() {
         "aoColumns": [
             { "mData": "requestId"},
             { "mData": "userId" },
-            { "mData": "userScreenName" },
+            { "mData": "userScreenName",
+            	  "mRender": function ( data, type, row ) {
+	            	  return '<a href=https://twitter.com/'+data+' target="_blank">'+data+'</a>';
+               }
+            },
             { "mData": "closenessCentrality" },
             { "mData": "postThirdPartyDeviceRatio" },
-            { "mData": "postApiDeviceRatio" },
             { "mData": "postMobileDeviceRatio" },
-            { "mData": "postWebDeviceRatio" },
+            { "mData": "postTwitterDeviceRatio" },
             { "mData": "friendFollowerRatio" },
             { "mData": "hashtagRatio" },
             { "mData": "mentionRatio" },
@@ -66,9 +69,8 @@ $(document).ready(function() {
                 <th>User Screen Name</th>
                 <th>Closeness Centrality</th>
                 <th>Third Party Device Ratio</th>
-                <th>Api Device Ratio</th>
                 <th>Mobile Device Ratio</th>
-                <th>Web Device Ratio</th>
+                <th>Twitter Device Ratio</th>
                 <th>Friend Follower Ratio</th>
                 <th>Hashtag Ratio</th>
                 <th>Mention Ratio</th>

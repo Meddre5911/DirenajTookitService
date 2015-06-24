@@ -306,8 +306,7 @@ public class OrganizationDetector implements Runnable {
             Logger.getLogger(OrganizationDetector.class).error(
                     "Error in OrganizationDetector createSubgraphByAddingEdges.", e);
         }
-        System.out.println("Params :" + params);
-
+        Logger.getLogger(OrganizationDetector.class).debug("Params :" + params);
         DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherQuery, params);
         return newRelationName;
     }
@@ -326,9 +325,8 @@ public class OrganizationDetector implements Runnable {
             userInputData.put("urlRatio", accountProperties.getUrlRatio());
             userInputData.put("hashtagRatio", accountProperties.getHashtagRatio());
             userInputData.put("mentionRatio", accountProperties.getMentionRatio());
-            userInputData.put("postWebDeviceRatio", accountProperties.getWebPostRatio());
+            userInputData.put("postTwitterDeviceRatio", accountProperties.getTwitterPostRatio());
             userInputData.put("postMobileDeviceRatio", accountProperties.getMobilePostRatio());
-            userInputData.put("postApiDeviceRatio", accountProperties.getApiPostRatio());
             userInputData.put("postThirdPartyDeviceRatio", accountProperties.getThirdPartyPostRatio());
 
             userInputData.put("isProtected", user.isProtected());
@@ -408,8 +406,4 @@ public class OrganizationDetector implements Runnable {
         return strDate;
     }
 
-    public static void main(String[] args) {
-        int i = 51 / 50;
-        System.out.println(i);
-    }
 }
