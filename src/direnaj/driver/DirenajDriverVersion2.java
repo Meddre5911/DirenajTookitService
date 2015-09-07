@@ -30,6 +30,14 @@ public class DirenajDriverVersion2 {
         return tweetsOfCampaign;
     }
 
+    /**
+     * FIXME - Bu direk Mongo'ya count atilarak yapilsa, daha dogru olur sanki
+     * 
+     * @param campaignID
+     * @return
+     * @throws Exception
+     * @throws DirenajInvalidJSONException
+     */
     public Map<String, Double> getHashtagCounts(String campaignID) throws Exception, DirenajInvalidJSONException {
         // map for hashtags
         TreeMap<String, Double> hashtagCounts = new TreeMap<>();

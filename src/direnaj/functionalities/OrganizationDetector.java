@@ -95,6 +95,7 @@ public class OrganizationDetector implements Runnable {
             for (String topHashTag : topHashtags) {
                 tracedHashtagList.add(topHashTag);
             }
+            // update found hashtags
             updateRequestInMongo();
             getMetricsOfUsersOfHashTag();
         } catch (Exception e) {
@@ -186,7 +187,7 @@ public class OrganizationDetector implements Runnable {
         String subgraphEdgeLabel = createSubgraphByAddingEdges(userIds);
         HashMap<String, Double> userClosenessCentralities = calculateInNeo4J(userIds, subgraphEdgeLabel);
         bulkUpdateMongo4ClosenessCentrality(userClosenessCentralities);
-        clearNeo4jSubGraph(subgraphEdgeLabel);
+        // clearNeo4jSubGraph(subgraphEdgeLabel);
     }
 
     private void clearNeo4jSubGraph(String subgraphEdgeLabel) {
@@ -267,7 +268,7 @@ public class OrganizationDetector implements Runnable {
                 + "' })";
         DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherCreateNode, "{}");
 
-        int hopCount = PropertiesUtil.getInstance().getIntProperty("graphDb.closenessCentrality.calculation.hopNode");
+        int hopCount = PropertiesUtil.getInstance().getIntProperty("graphDb.closenessCentrality.calculation.hopNode", 2);
         // collect all userIds
         String collectionRepresentation4UserIds = "";
         JSONArray array = new JSONArray();
@@ -291,7 +292,8 @@ public class OrganizationDetector implements Runnable {
                 + "WITH distinct nodes(p) as nodes " //
                 + "MATCH (n:ClosenessCentralityCalculator),(z:User) " //               
                 + "WHERE  n.calculationEdge = {calculationEdge} and z in nodes " //
-                + "CREATE UNIQUE (n)-[:CalculateCentrality]->(z) " + "WITH nodes " //
+                + "CREATE UNIQUE (n)-[:CalculateCentrality]->(z) " //
+                + "WITH nodes " //
                 + "MATCH (x)-[:FOLLOWS]->(y) " //               
                 + "WHERE x in nodes and y in nodes " //
                 + "CREATE UNIQUE (x)-[r1:" + newRelationName + "]->(y)";
@@ -358,7 +360,6 @@ public class OrganizationDetector implements Runnable {
                 String tweetPostSource = DirenajDriverUtils.getSource(tweet);
                 // FIXME 20150604 burasi sonradan kullanılacak
                 String tweetText = DirenajDriverUtils.getSingleTweetText(tweetData);
-
                 int usedHashtagCount = DirenajDriverUtils.getHashTags(entities).length();
                 List<String> urlStrings = DirenajDriverUtils.getUrlStrings(entities);
                 int mentionedUserCount = DirenajDriverUtils.getUserMentions(entities).length();

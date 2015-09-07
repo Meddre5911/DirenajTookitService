@@ -5,13 +5,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.ws.rs.core.MediaType;
-
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-
-import direnaj.driver.DirenajNeo4jDriver;
 import direnaj.functionalities.OrganizationDetector;
 import direnaj.servlet.OrganizedBehaviourDetectionRequestType;
 import direnaj.util.ListUtils;

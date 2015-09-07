@@ -42,8 +42,8 @@ public class OrganizedBehaviours extends HttpServlet {
                 + "</b> | Operation : <b>" + operationType + "</b> </p><hr>\n";
 
         try {
-            String realUserId = PropertiesUtil.getInstance().getProperty("direnajUserId");
-            String realPassword = PropertiesUtil.getInstance().getProperty("direnajPassword");
+            String realUserId = PropertiesUtil.getInstance().getProperty("direnajUserId", null);
+            String realPassword = PropertiesUtil.getInstance().getProperty("direnajPassword", null);
             if (!realUserId.equals(userId) || !realPassword.equals(password)) {
                 retHtmlStr += "Wrong UserName - Password <br>";
             } else {

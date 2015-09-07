@@ -49,19 +49,23 @@ public class PropertiesUtil {
         return propertiesUtil;
     }
 
-    public String getProperty(String property) {
+    public String getProperty(String property, String defaultValue) {
         try {
-            return prop.getProperty(property);
+            String foundProperty = prop.getProperty(property);
+            if (TextUtils.isEmpty(foundProperty)) {
+                foundProperty = defaultValue;
+            }
+            return foundProperty;
         } catch (Exception e) {
-            return null;
+            return defaultValue;
         }
     }
 
-    public Integer getIntProperty(String property) {
+    public Integer getIntProperty(String property, Integer defaultValue) {
         try {
             return Integer.valueOf(prop.getProperty(property));
         } catch (Exception e) {
-            return null;
+            return defaultValue;
         }
     }
 
