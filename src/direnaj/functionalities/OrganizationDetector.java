@@ -47,9 +47,10 @@ public class OrganizationDetector implements Runnable {
     private String requestId;
     private List<String> tracedHashtagList;
     private OrganizedBehaviourDetectionRequestType detectionRequestType;
+    private boolean disableGraphAnalysis;
 
     public OrganizationDetector(String campaignId, int topHashtagCount, String requestDefinition, String tracedHashtag,
-            OrganizedBehaviourDetectionRequestType detectionRequestType) {
+            OrganizedBehaviourDetectionRequestType detectionRequestType, boolean disableGraphAnalysis) {
         direnajDriver = new DirenajDriverVersion2();
         direnajMongoDriver = DirenajMongoDriver.getInstance();
         requestId = generateUniqueId4Request();
@@ -61,6 +62,7 @@ public class OrganizationDetector implements Runnable {
             this.tracedHashtagList.add(tracedHashtag);
         }
         this.detectionRequestType = detectionRequestType;
+        this.disableGraphAnalysis = disableGraphAnalysis;
         insertRequest2Mongo();
     }
 
@@ -179,7 +181,9 @@ public class OrganizationDetector implements Runnable {
         } finally {
             preProcessUsers.close();
         }
-        calculateClosenessCentrality(userIds);
+        if (!disableGraphAnalysis) {
+            calculateClosenessCentrality(userIds);
+        }
         orgBehaviorPreProcessUsers.remove(requestIdObj);
     }
 
@@ -268,7 +272,8 @@ public class OrganizationDetector implements Runnable {
                 + "' })";
         DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherCreateNode, "{}");
 
-        int hopCount = PropertiesUtil.getInstance().getIntProperty("graphDb.closenessCentrality.calculation.hopNode", 2);
+        int hopCount = PropertiesUtil.getInstance()
+                .getIntProperty("graphDb.closenessCentrality.calculation.hopNode", 2);
         // collect all userIds
         String collectionRepresentation4UserIds = "";
         JSONArray array = new JSONArray();

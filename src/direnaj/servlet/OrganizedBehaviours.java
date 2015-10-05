@@ -50,9 +50,11 @@ public class OrganizedBehaviours extends HttpServlet {
                 int topHashTagCount = TextUtils.getIntegerValue(request.getParameter("topHashtagCount"));
                 String tracedHashtag = TextUtils.getNotNullValue(request.getParameter("tracedHashtag"));
                 String organizedHashtagDefinition = request.getParameter("organizedHashtagDefinition");
+                boolean disableGraphAnalysis = !TextUtils.isEmpty(request.getParameter("disableGraphDb"));
+
                 OrganizationDetector organizationDetector = new OrganizationDetector(campaignId, topHashTagCount,
                         organizedHashtagDefinition, tracedHashtag,
-                        OrganizedBehaviourDetectionRequestType.valueOf(operationType));
+                        OrganizedBehaviourDetectionRequestType.valueOf(operationType), disableGraphAnalysis);
                 new Thread(organizationDetector).start();
                 forwardRequest(request, response, "/listOrganizedBehaviourRequests.jsp");
                 return;

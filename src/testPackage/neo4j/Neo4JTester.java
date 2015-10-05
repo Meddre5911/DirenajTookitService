@@ -12,12 +12,12 @@ import direnaj.util.ListUtils;
 public class Neo4JTester {
     public static void main(String[] args) {
         OrganizationDetector detector = new OrganizationDetector("erdem_deneme_8", 5, "Neo4JDeneme", "",
-                OrganizedBehaviourDetectionRequestType.CheckHashtagsInCampaign);
+                OrganizedBehaviourDetectionRequestType.CheckHashtagsInCampaign, false);
         //        List<String> userIds = ListUtils.getListOfStrings("1195");
         List<String> userIds = ListUtils.getListOfStrings("2801612613");
-        
-//        String subgraphEdgeLabel = detector.createSubgraphByAddingEdges(userIds);
-        
+
+        //        String subgraphEdgeLabel = detector.createSubgraphByAddingEdges(userIds);
+
         String subgraphEdgeLabel = "FOLLOWS_20150531170641728";
         System.out.println("SubGraph Label : " + subgraphEdgeLabel);
 
