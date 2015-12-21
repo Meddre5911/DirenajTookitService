@@ -98,6 +98,7 @@ public class DirenajDriverVersion2 {
             DBCollection preProcessUsersCollections = DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers();
             List<DBObject> preprocessUsers = new Vector<>();
             for (User user : users) {
+            	// FIXME her user icin DB'ye gitmek sikinti yaratabilir. Bir incele
                 BasicDBObject duplicateUserControlQuery = new BasicDBObject("requestId", requestId).append("userId",
                         user.getUserId());
                 DBObject duplicateRecord = preProcessUsersCollections.findOne(duplicateUserControlQuery);

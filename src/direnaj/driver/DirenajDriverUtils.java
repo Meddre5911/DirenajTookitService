@@ -389,4 +389,12 @@ public class DirenajDriverUtils {
         }
     }
 
+	public static String getTweetId(JSONObject tweet) throws DirenajInvalidJSONException {
+		try {
+            return tweet.get("id_str").toString();
+        } catch (Exception e) {
+            throw new DirenajInvalidJSONException("getTweetId : " + e.getMessage());
+        }
+	}
+
 }

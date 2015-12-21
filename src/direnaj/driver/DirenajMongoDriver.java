@@ -41,6 +41,22 @@ public class DirenajMongoDriver {
             mongoDB.createCollection("OrgBehaviourProcessInputData", null);
             Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourProcessInputData is created");
         }
+        if (!mongoDB.collectionExists("OrgBehaviourCosSimilarity_TF")) {
+        	mongoDB.createCollection("OrgBehaviourCosSimilarity_TF", null);
+        	Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourCosSimilarity_TF is created");
+        }
+        if (!mongoDB.collectionExists("OrgBehaviourCosSimilarity_IDF")) {
+        	mongoDB.createCollection("OrgBehaviourCosSimilarity_IDF", null);
+        	Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourCosSimilarity_IDF is created");
+        }
+        if (!mongoDB.collectionExists("OrgBehaviourTweetSimilarity")) {
+        	mongoDB.createCollection("OrgBehaviourTweetSimilarity", null);
+        	Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourTweetSimilarity is created");
+        }
+        if (!mongoDB.collectionExists("OrgBehaviourUserTweetIds")) {
+        	mongoDB.createCollection("OrgBehaviourUserTweetIds", null);
+        	Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourUserTweetIds is created");
+        }
     }
 
     public static DirenajMongoDriver getInstance() {
@@ -68,6 +84,19 @@ public class DirenajMongoDriver {
 
     public DBCollection getOrgBehaviourProcessInputData() {
         return mongoDB.getCollection("OrgBehaviourProcessInputData");
+    }
+    
+    public DBCollection getOrgBehaviourCosSimilarityTF() {
+    	return mongoDB.getCollection("OrgBehaviourCosSimilarity_TF");
+    }
+    public DBCollection getOrgBehaviourProcessCosSimilarityIDF() {
+    	return mongoDB.getCollection("OrgBehaviourCosSimilarity_IDF");
+    }
+    public DBCollection getOrgBehaviourProcessTweetSimilarity() {
+    	return mongoDB.getCollection("OrgBehaviourTweetSimilarity");
+    }
+    public DBCollection getOrgBehaviourUserTweetIds() {
+    	return mongoDB.getCollection("OrgBehaviourUserTweetIds");
     }
 
     public Long executeCountQuery(DBCollection collection, DBObject query) {

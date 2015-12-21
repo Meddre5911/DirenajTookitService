@@ -32,6 +32,12 @@ public class TweetPostSourceAnalyser {
         mobileRegexList.add("iPad");
     }
 
+    /**
+     * FIXME burasi dogru calisiyor mu ? Kontrol edilecek.
+     * 
+     * @param tweetPostSource
+     * @return
+     */
     public TweetPostSource getTweetSource(String tweetPostSource) {
         // lower
         tweetPostSource = tweetPostSource.toLowerCase(Locale.US);

@@ -1,6 +1,7 @@
 package direnaj.domain;
 
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
@@ -23,6 +24,8 @@ public class User implements Comparable<User> {
     private UserAccountProperties accountProperties;
     private List<String> posts;
     private List<String> usedUrls;
+    private List<String> allTweetIds;
+    private List<String> hashtagTweetIds;
     private double mobileDevicePostCount;
     private double twitterDevicePostCount;
     private double thirdPartyDevicePostCount;
@@ -38,14 +41,16 @@ public class User implements Comparable<User> {
     private double countOfHashtags;
 
     public User(String userId, String screenName) {
-        posts = new Vector<String>();
-        usedUrls = new Vector<String>();
+        posts =new LinkedList<String>();
+        usedUrls = new LinkedList<String>();
         friendsCount = 0L;
         followersCount = 0L;
         countOfMentionedUsers = 0L;
         countOfHashtags = 0L;
         setUserId(userId);
         setUserScreenName(screenName);
+        allTweetIds = new LinkedList<String>();
+        hashtagTweetIds = new LinkedList<String>();
     }
 
     public String getUserId() {
@@ -301,4 +306,20 @@ public class User implements Comparable<User> {
     public void setFavoriteCount(double favoriteCount) {
         this.favoriteCount = favoriteCount;
     }
+
+	public List<String> getAllTweetIds() {
+		return allTweetIds;
+	}
+
+	public void setAllTweetIds(List<String> allTweetIds) {
+		this.allTweetIds = allTweetIds;
+	}
+
+	public List<String> getHashtagTweetIds() {
+		return hashtagTweetIds;
+	}
+
+	public void setHashtagTweetIds(List<String> hashtagTweetIds) {
+		this.hashtagTweetIds = hashtagTweetIds;
+	}
 }
