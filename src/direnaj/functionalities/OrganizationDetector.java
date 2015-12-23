@@ -4,7 +4,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -24,11 +26,13 @@ import com.mongodb.DBObject;
 import direnaj.adapter.DirenajInvalidJSONException;
 import direnaj.domain.User;
 import direnaj.domain.UserAccountProperties;
+import direnaj.domain.UserTweets;
 import direnaj.driver.DirenajDriverUtils;
 import direnaj.driver.DirenajDriverVersion2;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.DirenajMongoDriverUtil;
 import direnaj.driver.DirenajNeo4jDriver;
+import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.servlet.OrganizedBehaviourDetectionRequestType;
 import direnaj.twitter.UserAccountPropertyAnalyser;
 import direnaj.util.CollectionUtil;
@@ -38,6 +42,7 @@ import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
 
 public class OrganizationDetector implements Runnable {
+
 
 	private String campaignId;
 	private OrganizedBehaviourDetectionRequestType detectionRequestType;
@@ -184,12 +189,11 @@ public class OrganizationDetector implements Runnable {
 	}
 
 	public void getMetricsOfUsersOfHashTag() throws DirenajInvalidJSONException, Exception {
+		// FIXME burayi tek bir hashtag icin olacak sekilde degistirecez
 		for (String tracedHashtag : tracedHashtagList) {
 			tracedSingleHashtag = tracedHashtag;
 			direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
-			// FIXME 20150604
-			saveAllUserTweets();
-			startUserAnalysis();
+			saveData4UserAnalysis();
 
 		}
 		calculateTweetSimilarities();
@@ -198,6 +202,40 @@ public class OrganizationDetector implements Runnable {
 	}
 
 	private void calculateTweetSimilarities() {
+		List<DBObject> tweetTfValues = new LinkedList<>();
+		// get tweets first
+		DBObject requestIdObj = new BasicDBObject("requestId", requestId);
+		DBCursor tweetsOfRequest = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().find(requestIdObj);
+		try {
+			int i = 0;
+			while (tweetsOfRequest.hasNext()) {
+				i++;
+				DBObject userTweetObj = tweetsOfRequest.next();
+				String tweetText = TextUtils.getNotNullValue(userTweetObj.get(MongoCollectionFieldNames.MONGO_TWEET_TEXT));
+				String[] tweetWords = tweetText.split(" ");
+				HashMap<String, Float> wordCounts = new HashMap<>();
+				float tweetWordCount = (float) tweetWords.length;
+				for (String word : tweetWords) {
+					word = word.toLowerCase(Locale.US);
+					Float wordCount = 0f;
+					if (wordCounts.containsKey(word)) {
+						wordCount = wordCounts.get(word);
+					}
+					wordCounts.put(word, ++wordCount);
+				}
+				for (Entry<String, Float> wordCount : wordCounts.entrySet()) {
+					DBObject tweetWordTfValue = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
+					tweetWordTfValue.put(MongoCollectionFieldNames.MONGO_TWEET_ID,
+							TextUtils.getNotNullValue(userTweetObj.get(MongoCollectionFieldNames.MONGO_TWEET_ID)));
+					tweetWordTfValue.put(MongoCollectionFieldNames.MONGO_WORD, wordCount.getKey());
+					tweetWordTfValue.put(MongoCollectionFieldNames.MONGO_WORD_TF, wordCount.getValue()/tweetWordCount);
+					tweetTfValues.add(tweetWordTfValue);
+				}
+			}
+			DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().insert(tweetTfValues);
+		} finally {
+			tweetsOfRequest.close();
+		}
 
 	}
 
@@ -232,6 +270,7 @@ public class OrganizationDetector implements Runnable {
 		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery);
 		try {
 			while (tweetsOfUser.hasNext()) {
+				UserTweets userTweet = new UserTweets();
 				JSONObject tweetData = new JSONObject(tweetsOfUser.next().toString());
 				JSONObject tweet = DirenajDriverUtils.getTweet(tweetData);
 				String tweetId = DirenajDriverUtils.getTweetId(tweet);
@@ -249,10 +288,13 @@ public class OrganizationDetector implements Runnable {
 				domainUser.addValue2CountOfHashtags((double) usedHashtagCount);
 				domainUser.addValue2CountOfMentionedUsers((double) mentionedUserCount);
 				domainUser.incrementPostDeviceCount(tweetPostSource);
-				domainUser.getAllTweetIds().add(tweetId);
+				// get user tweet data
 				if (tweetText.contains(tracedSingleHashtag)) {
-					domainUser.getHashtagTweetIds().add(tweetId);
+					userTweet.setHashtagTweet(true);
 				}
+				userTweet.setTweetText(tweetText);
+				userTweet.setTweetId(tweetId);
+				domainUser.getAllUserTweets().add(userTweet);
 			}
 		} catch (JSONException e) {
 			Logger.getLogger(OrganizationDetector.class.getSimpleName()).error("analyzePreProcessUser method error", e);
@@ -357,13 +399,9 @@ public class OrganizationDetector implements Runnable {
 		organizedBehaviorCollection.insert(document);
 	}
 
-	private void saveAllUserTweets() {
-
-	}
-
 	private List<User> saveOrganizedBehaviourInputData(List<User> domainUsers) {
 		List<DBObject> allUserInputData = new Vector<>();
-		List<DBObject> userTweetIdsData = new Vector<>();
+		List<DBObject> userTweetsData = new Vector<>();
 		for (User user : domainUsers) {
 			// first init user account properties
 			UserAccountProperties accountProperties = user.getAccountProperties();
@@ -385,26 +423,24 @@ public class OrganizationDetector implements Runnable {
 			userInputData.put("isVerified", user.isVerified());
 			userInputData.put("creationDate", user.getCreationDate().toString());
 			allUserInputData.add(userInputData);
-			// init tweet ids for user
-			BasicDBObject userTweetIdData = new BasicDBObject();
-			userTweetIdData.put("requestId", requestId);
-			userTweetIdData.put("userId", user.getUserId());
-			userTweetIdData.put("tweetType", "ALL");
-			userTweetIdData.put("allTweetIds",user.getAllTweetIds());
-			userTweetIdsData.add(userTweetIdData);
-			BasicDBObject userHashtagTweetIdData = new BasicDBObject();
-			userHashtagTweetIdData.put("requestId", requestId);
-			userHashtagTweetIdData.put("userId", user.getUserId());
-			userHashtagTweetIdData.put("tweetType", "HASHTAG");
-			userHashtagTweetIdData.put("allTweetIds",user.getHashtagTweetIds());
-			userTweetIdsData.add(userHashtagTweetIdData);
+
+			for (UserTweets userTweet : user.getAllUserTweets()) {
+				// init tweet ids for user
+				BasicDBObject userTweetData = new BasicDBObject();
+				userTweetData.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
+				userTweetData.put(MongoCollectionFieldNames.MONGO_USER_ID, user.getUserId());
+				userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_ID, userTweet.getTweetId());
+				userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_TEXT, userTweet.getTweetText());
+				userTweetData.put(MongoCollectionFieldNames.MONGO_IS_HASHTAG_TWEET, userTweet.isHashtagTweet());
+				userTweetsData.add(userTweetData);
+			}
 		}
 		direnajMongoDriver.getOrgBehaviourProcessInputData().insert(allUserInputData);
-		direnajMongoDriver.getOrgBehaviourUserTweetIds().insert(userTweetIdsData);
+		direnajMongoDriver.getOrgBehaviourTweetsOfRequest().insert(userTweetsData);
 		return new Vector<User>();
 	}
 
-	private void startUserAnalysis() throws Exception {
+	private void saveData4UserAnalysis() throws Exception {
 		List<User> domainUsers = new Vector<User>();
 		DBObject requestIdObj = new BasicDBObject("requestId", requestId);
 		// get total user count for detection

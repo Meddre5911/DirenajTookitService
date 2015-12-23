@@ -7,7 +7,7 @@ import com.mongodb.DBObject;
 import direnaj.domain.User;
 
 public class DirenajMongoDriverUtil {
-
+	
     public static User parsePreProcessUsers(DBObject preProcessUser) throws Exception {
         User user = new User((String) preProcessUser.get("userId"), (String) preProcessUser.get("userScreenName"));
         user.setFollowersCount((double) preProcessUser.get("followerCount"));

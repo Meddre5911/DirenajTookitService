@@ -53,9 +53,9 @@ public class DirenajMongoDriver {
         	mongoDB.createCollection("OrgBehaviourTweetSimilarity", null);
         	Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourTweetSimilarity is created");
         }
-        if (!mongoDB.collectionExists("OrgBehaviourUserTweetIds")) {
-        	mongoDB.createCollection("OrgBehaviourUserTweetIds", null);
-        	Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourUserTweetIds is created");
+        if (!mongoDB.collectionExists("OrgBehaviourTweetsOfRequest")) {
+        	mongoDB.createCollection("OrgBehaviourTweetsOfRequest", null);
+        	Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourTweetsOfRequest is created");
         }
     }
 
@@ -95,8 +95,8 @@ public class DirenajMongoDriver {
     public DBCollection getOrgBehaviourProcessTweetSimilarity() {
     	return mongoDB.getCollection("OrgBehaviourTweetSimilarity");
     }
-    public DBCollection getOrgBehaviourUserTweetIds() {
-    	return mongoDB.getCollection("OrgBehaviourUserTweetIds");
+    public DBCollection getOrgBehaviourTweetsOfRequest() {
+    	return mongoDB.getCollection("OrgBehaviourTweetsOfRequest");
     }
 
     public Long executeCountQuery(DBCollection collection, DBObject query) {
