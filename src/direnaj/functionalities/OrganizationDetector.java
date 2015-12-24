@@ -43,7 +43,6 @@ import direnaj.util.TextUtils;
 
 public class OrganizationDetector implements Runnable {
 
-
 	private String campaignId;
 	private OrganizedBehaviourDetectionRequestType detectionRequestType;
 	private DirenajDriverVersion2 direnajDriver;
@@ -202,41 +201,129 @@ public class OrganizationDetector implements Runnable {
 	}
 
 	private void calculateTweetSimilarities() {
+		// FIXME 20151224 Mongo icin gerekecek index'leri sonradan tanımlamayi
+		// unutma
+		calculateTFValues();
+		calculateIDFValues();
+		calculateTFIDFValues();
+		calculateSimilarities();
+
+	}
+
+	private void calculateTFIDFValues() {
+		List<DBObject> allTweetTFIdfValues = new LinkedList<>();
+		DBObject queryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
+		List<String> allTweetIds = (List<String>) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
+				.findOne(queryObj).get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
+		for (String tweetId : allTweetIds) {
+			BasicDBObject tweetTFIdfValues = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId)
+					.append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
+			DBObject tfQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId)
+					.append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
+			DBCursor wordTFValues = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().find(tfQueryObj);
+			try {
+				while (wordTFValues.hasNext()) {
+					DBObject wordTFObj = wordTFValues.next();
+					String word = (String) wordTFObj.get(MongoCollectionFieldNames.MONGO_WORD);
+					tweetTFIdfValues.append(MongoCollectionFieldNames.MONGO_WORD, word);
+					double wordTfValue = (double) wordTFObj.get(MongoCollectionFieldNames.MONGO_WORD_TF);
+					DBObject idfQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId)
+							.append(MongoCollectionFieldNames.MONGO_WORD, word);
+					double wordIdfValue = (double) DirenajMongoDriver.getInstance()
+							.getOrgBehaviourProcessCosSimilarityIDF().findOne(idfQueryObj)
+							.get(MongoCollectionFieldNames.MONGO_WORD_IDF);
+					double wordTfIdfValue = wordIdfValue * wordTfValue;
+					DBObject tfIdfValues = new BasicDBObject(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_VALUE,
+							wordTfIdfValue).append(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_VALUE_SQUARE,
+									wordTfIdfValue * wordTfIdfValue);
+					tweetTFIdfValues.put(MongoCollectionFieldNames.MONGO_WORD_TF_IDF, tfIdfValues);
+					allTweetTFIdfValues.add(tweetTFIdfValues);
+				}
+				allTweetTFIdfValues = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+						DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityTF_IDF(),
+						allTweetTFIdfValues, false);
+
+			} finally {
+				wordTFValues.close();
+			}
+		}
+		DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+				DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityTF_IDF(), allTweetTFIdfValues,
+				true);
+	}
+
+	private void calculateIDFValues() {
+		List<DBObject> wordIdfValues = new LinkedList<>();
+		DBObject queryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
+		double totalTweetCount = (double) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
+				.findOne(queryObj).get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
+		List<String> distinctWords = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF()
+				.distinct(MongoCollectionFieldNames.MONGO_WORD, queryObj);
+		for (String word : distinctWords) {
+			BasicDBObject wordCountQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId)
+					.append(MongoCollectionFieldNames.MONGO_WORD, word);
+			long wordCount = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().count(wordCountQueryObj);
+			double idfValue = 1d + Math.log(totalTweetCount / (double) wordCount);
+			wordCountQueryObj.append(MongoCollectionFieldNames.MONGO_WORD_IDF, idfValue);
+			wordIdfValues.add(wordCountQueryObj);
+			wordIdfValues = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+					DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityIDF(), wordIdfValues, false);
+		}
+		DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+				DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityIDF(), wordIdfValues, false);
+
+	}
+
+	private void calculateTFValues() {
 		List<DBObject> tweetTfValues = new LinkedList<>();
+		List<String> allTweetIds = new LinkedList<>();
 		// get tweets first
-		DBObject requestIdObj = new BasicDBObject("requestId", requestId);
+		DBObject requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
 		DBCursor tweetsOfRequest = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().find(requestIdObj);
 		try {
-			int i = 0;
+			double totalTweetCount = 0;
 			while (tweetsOfRequest.hasNext()) {
-				i++;
+				totalTweetCount++;
 				DBObject userTweetObj = tweetsOfRequest.next();
-				String tweetText = TextUtils.getNotNullValue(userTweetObj.get(MongoCollectionFieldNames.MONGO_TWEET_TEXT));
+				String tweetText = TextUtils
+						.getNotNullValue(userTweetObj.get(MongoCollectionFieldNames.MONGO_TWEET_TEXT));
 				String[] tweetWords = tweetText.split(" ");
-				HashMap<String, Float> wordCounts = new HashMap<>();
-				float tweetWordCount = (float) tweetWords.length;
+				HashMap<String, Double> wordCounts = new HashMap<>();
+				double tweetWordCount = (double) tweetWords.length;
 				for (String word : tweetWords) {
 					word = word.toLowerCase(Locale.US);
-					Float wordCount = 0f;
+					double wordCount = 0d;
 					if (wordCounts.containsKey(word)) {
 						wordCount = wordCounts.get(word);
 					}
 					wordCounts.put(word, ++wordCount);
 				}
-				for (Entry<String, Float> wordCount : wordCounts.entrySet()) {
-					DBObject tweetWordTfValue = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
-					tweetWordTfValue.put(MongoCollectionFieldNames.MONGO_TWEET_ID,
-							TextUtils.getNotNullValue(userTweetObj.get(MongoCollectionFieldNames.MONGO_TWEET_ID)));
+				for (Entry<String, Double> wordCount : wordCounts.entrySet()) {
+					DBObject tweetWordTfValue = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
+							requestId);
+					String tweetId = TextUtils
+							.getNotNullValue(userTweetObj.get(MongoCollectionFieldNames.MONGO_TWEET_ID));
+					tweetWordTfValue.put(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
+					allTweetIds.add(tweetId);
 					tweetWordTfValue.put(MongoCollectionFieldNames.MONGO_WORD, wordCount.getKey());
-					tweetWordTfValue.put(MongoCollectionFieldNames.MONGO_WORD_TF, wordCount.getValue()/tweetWordCount);
+					tweetWordTfValue.put(MongoCollectionFieldNames.MONGO_WORD_TF,
+							wordCount.getValue() / tweetWordCount);
 					tweetTfValues.add(tweetWordTfValue);
 				}
+				if (totalTweetCount % DirenajMongoDriver.getInstance().getBulkInsertSize() == 0) {
+					tweetTfValues = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+							DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF(), tweetTfValues, false);
+				}
 			}
-			DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().insert(tweetTfValues);
+			DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+					DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF(), tweetTfValues, true);
+			DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
+					.insert(new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId)
+							.append(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT, totalTweetCount)
+							.append(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS, allTweetIds));
 		} finally {
 			tweetsOfRequest.close();
 		}
-
 	}
 
 	@Override
