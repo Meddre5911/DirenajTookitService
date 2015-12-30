@@ -13,7 +13,7 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_WORD_TF = "TF";
 	public static final String MONGO_WORD_IDF = "IDF";
 
-	public static final String MONGO_WORD_TF_IDF = "TF_IDF";
+	public static final String MONGO_WORD_TF_IDF = "WORD_TF_IDF";
 	public static final String MONGO_WORD_TF_IDF_VALUE = "TF_IDF_Value";
 	public static final String MONGO_WORD_TF_IDF_VALUE_SQUARE = "TF_IDF_Value_Square";
 
