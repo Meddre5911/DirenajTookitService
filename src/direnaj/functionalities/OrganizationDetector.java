@@ -1,6 +1,7 @@
 package direnaj.functionalities;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -275,8 +276,8 @@ public class OrganizationDetector implements Runnable {
 	}
 
 	private void calculateTFValues() {
-		List<DBObject> tweetTfValues = new LinkedList<>();
-		List<String> allTweetIds = new LinkedList<>();
+		List<DBObject> tweetTfValues = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
+		List<String> allTweetIds = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		// get tweets first
 		DBObject requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
 		DBCursor tweetsOfRequest = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().find(requestIdObj);

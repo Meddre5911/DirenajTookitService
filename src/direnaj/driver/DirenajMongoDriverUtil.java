@@ -1,5 +1,6 @@
 package direnaj.driver;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,7 +29,7 @@ public class DirenajMongoDriverUtil {
 		if (dbObjects.size() > 0
 				&& (saveAnyway || dbObjects.size() >= DirenajMongoDriver.getInstance().getBulkInsertSize())) {
 			dbCollection.insert(dbObjects);
-			return new LinkedList<DBObject>();
+			return new ArrayList<DBObject>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		}
 		return dbObjects;
 	}
