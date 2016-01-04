@@ -13,11 +13,12 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_WORD_TF = "TF";
 	public static final String MONGO_WORD_IDF = "IDF";
 
-	public static final String MONGO_WORD_TF_IDF = "WORD_TF_IDF";
+	public static final String MONGO_WORD_TF_IDF_LIST = "WORD_TF_IDF_LIST";
 	public static final String MONGO_WORD_TF_IDF_VALUE = "TF_IDF_Value";
 	public static final String MONGO_WORD_TF_IDF_VALUE_SQUARE = "TF_IDF_Value_Square";
 
 	public static final String MONGO_TOTAL_TWEET_COUNT = "TotalTweetCount";
 	public static final String MONGO_ALL_TWEET_IDS = "AllTweetIds";
+	public static final String MONGO_TWEET_WORDS = "TweetWords";
 
 }
