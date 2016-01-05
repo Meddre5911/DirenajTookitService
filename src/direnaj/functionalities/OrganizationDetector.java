@@ -2,7 +2,6 @@ package direnaj.functionalities;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -37,6 +36,7 @@ import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.servlet.OrganizedBehaviourDetectionRequestType;
 import direnaj.twitter.UserAccountPropertyAnalyser;
 import direnaj.util.CollectionUtil;
+import direnaj.util.CosineSimilarityUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.ListUtils;
 import direnaj.util.PropertiesUtil;
@@ -212,28 +212,61 @@ public class OrganizationDetector implements Runnable {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	private void calculateSimilarities() {
 		ArrayList<String> allTweetIds = (ArrayList<String>) DirenajMongoDriver.getInstance()
 				.getOrgBehaviourTweetsShortInfo().findOne(requestIdObj)
 				.get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
 		ArrayList<String> allTweetIdsClone = (ArrayList<String>) allTweetIds.clone();
-
+		List<DBObject> tweetSimilarityWithOtherTweets = new ArrayList<>(
+				DirenajMongoDriver.getInstance().getBulkInsertSize());
 		for (String queryTweetId : allTweetIds) {
 			BasicDBObject queryTweetTFIdfQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestId).append(MongoCollectionFieldNames.MONGO_TWEET_ID, queryTweetId);
-			BasicDBObject queryTweetTfIdfValues = (BasicDBObject) DirenajMongoDriver.getInstance()
+			BasicDBObject tweetTfIdfValueObject = (BasicDBObject) DirenajMongoDriver.getInstance()
 					.getOrgBehaviourProcessCosSimilarityTF_IDF().findOne(queryTweetTFIdfQueryObj);
-			ArrayList<String> queryTweetWords = (ArrayList<String>) queryTweetTfIdfValues
+			ArrayList<String> queryTweetWords = (ArrayList<String>) tweetTfIdfValueObject
 					.get(MongoCollectionFieldNames.MONGO_TWEET_WORDS);
-			BasicDBObject tfIdfList = (BasicDBObject) queryTweetTfIdfValues.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_LIST);
-			Collection<Object> values = tfIdfList.values();
+			List<BasicDBObject> tfIdfList = (List<BasicDBObject>) tweetTfIdfValueObject
+					.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_LIST);
+			Map<String, Double> tweetWordTfIdfMap = (Map<String, Double>) tweetTfIdfValueObject
+					.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_HASHMAP);
+			double tweetVectorLength = CosineSimilarityUtil.calculateVectorLength(tfIdfList);
+			Map<String, Double> similarityOfTweetWithOtherTweets = CosineSimilarityUtil
+					.getEmptyMap4SimilarityDecisionTree();
 			for (String tweetId : allTweetIdsClone) {
+				BasicDBObject comparedTweetTFIdfValueObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
+						requestId).append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
+				BasicDBObject queryTfIdfValues = (BasicDBObject) DirenajMongoDriver.getInstance()
+						.getOrgBehaviourProcessCosSimilarityTF_IDF().findOne(comparedTweetTFIdfValueObj);
+				List<BasicDBObject> comparedTfIdfList = (List<BasicDBObject>) queryTfIdfValues
+						.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_LIST);
 
+				Map<String, Double> comparedTweetWordTfIdfMap = (Map<String, Double>) comparedTweetTFIdfValueObj
+						.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_HASHMAP);
+
+				double comparedTweetVectorLength = CosineSimilarityUtil
+						.calculateVectorLengthBasedOnComparedWordList(queryTweetWords, comparedTfIdfList);
+				double dotProduct = CosineSimilarityUtil.calculateDotProduct(queryTweetWords, tweetWordTfIdfMap,
+						comparedTweetWordTfIdfMap);
+				CosineSimilarityUtil.findTweetSimilarityRange(similarityOfTweetWithOtherTweets, dotProduct,
+						tweetVectorLength, comparedTweetVectorLength);
 			}
+			queryTweetTFIdfQueryObj.append(MongoCollectionFieldNames.MONGO_TWEET_SIMILARITY_WITH_OTHER_TWEETS,
+					similarityOfTweetWithOtherTweets);
+			tweetSimilarityWithOtherTweets.add(queryTweetTFIdfQueryObj);
+			DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+					DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity(),
+					tweetSimilarityWithOtherTweets, false);
+
 		}
+		DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+				DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity(),
+				tweetSimilarityWithOtherTweets, true);
 
 	}
 
+	@SuppressWarnings("unchecked")
 	private void calculateTFIDFValues() {
 		// in tweetTfIdf Collect,on a record format is like
 		// "requestId, tweetId, [word, tf*Idf, (tf*Idf)^2] dizi halinde
@@ -249,6 +282,7 @@ public class OrganizationDetector implements Runnable {
 					.append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
 			DBCursor wordTFValues = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().find(tfQueryObj);
 			List<DBObject> wordTfIdfValuesList = new ArrayList<>(20);
+			HashMap<String, Double> wordTfIdfHashMap = new HashMap<>();
 			try {
 				while (wordTFValues.hasNext()) {
 					// get word idf value
@@ -267,9 +301,11 @@ public class OrganizationDetector implements Runnable {
 							.append(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_VALUE, wordTfIdfValue)
 							.append(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_VALUE_SQUARE,
 									wordTfIdfValue * wordTfIdfValue);
+					wordTfIdfHashMap.put(word, wordTfIdfValue);
 					wordTfIdfValuesList.add(tfIdfValues);
 				}
 				tweetTFIdfValues.put(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_LIST, wordTfIdfValuesList);
+				tweetTFIdfValues.put(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_HASHMAP, wordTfIdfHashMap);
 				tweetTFIdfValues.put(MongoCollectionFieldNames.MONGO_TWEET_WORDS, tweetWords);
 				allTweetTFIdfValues.add(tweetTFIdfValues);
 				allTweetTFIdfValues = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
@@ -284,6 +320,7 @@ public class OrganizationDetector implements Runnable {
 				true);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void calculateIDFValues() {
 		List<DBObject> wordIdfValues = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		double totalTweetCount = (double) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
