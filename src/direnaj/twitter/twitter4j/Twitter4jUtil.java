@@ -16,7 +16,9 @@ public class Twitter4jUtil {
 
 	public static void saveTweetsOfUser(User user) {
 		try {
+			System.out.println("Earliest Tweets");
 			getEarliestTweets(user);
+			System.out.println("Recent Tweets");
 			getRecentTweets(user);
 		} catch (TwitterException e) {
 			Logger.getLogger(Twitter4jUtil.class.getSimpleName()).error("Twitter4jUtil saveTweetsOfUser", e);
@@ -40,8 +42,8 @@ public class Twitter4jUtil {
 			saveTweets(userTimeline);
 			// Status To JSON String
 			int arraySize = userTimeline.size();
-			if (arraySize == 200) {
-				Date tweetCreationDate = userTimeline.get(199).getCreatedAt();
+			if (arraySize >= 199) {
+				Date tweetCreationDate = userTimeline.get(198).getCreatedAt();
 				if (tweetCreationDate.after(lowestDate)) {
 					paging.setPage(++pageNumber);
 					isEarlierTweetsRemaining = true;
@@ -70,8 +72,8 @@ public class Twitter4jUtil {
 			saveTweets(userTimeline);
 			// Status To JSON String
 			int arraySize = userTimeline.size();
-			if (arraySize == 200) {
-				Date tweetCreationDate = userTimeline.get(199).getCreatedAt();
+			if (arraySize >= 199) {
+				Date tweetCreationDate = userTimeline.get(198).getCreatedAt();
 				if (tweetCreationDate.before(highestDate)) {
 					paging.setPage(++pageNumber);
 					isRecentTweetsRemaining = true;
@@ -85,7 +87,8 @@ public class Twitter4jUtil {
 
 	private static void saveTweets(ResponseList<Status> userTimeline) {
 		JSONArray jsonArray = new JSONArray(userTimeline);
-		System.out.println("JSON : " + jsonArray.toString());
+		String str = jsonArray.toString();
+		System.out.println("JSON : \n" + str + "\n");
 	}
 	
 	public static void main(String[] args) throws Exception {
