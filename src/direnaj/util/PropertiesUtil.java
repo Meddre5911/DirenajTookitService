@@ -16,7 +16,8 @@ public class PropertiesUtil {
         prop = new Properties();
         InputStream input = null;
         try {
-            input = new FileInputStream("/var/lib/tomcat7/toolkitConfig/toolkitConfig.properties");
+            input = new FileInputStream("/home/erdem/git/DirenajToolkitService/propertyFiles/toolkitConfig.properties");
+//            input = new FileInputStream("/var/lib/tomcat7/toolkitConfig/toolkitConfig.properties");
             //            input = new FileInputStream("/data/direnaj/toolkitConfig.properties");
             // load a properties file
             prop.load(input);
@@ -28,7 +29,6 @@ public class PropertiesUtil {
             Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("mongo.server.port"));
             Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("mongo.bulk.insert.size"));
             Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("mongo.usedDB"));
-            System.out.println(prop.getProperty("graphDb.closenessCentrality.calculation.hopNode"));
         } catch (IOException ex) {
             ex.printStackTrace();
         } finally {

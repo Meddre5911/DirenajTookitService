@@ -44,12 +44,26 @@ public class DateTimeUtils {
         Date dateAfterProcess = minusWeeks.toDate();
         return getRataDieFormat4Date(dateAfterProcess);
     }
+    
+    public static Date subtractWeeksFromDateInDateFormat(Date date, int i) {
+        DateTime dateTime = new DateTime(date);
+        DateTime minusWeeks = dateTime.minusWeeks(i);
+        Date dateAfterProcess = minusWeeks.toDate();
+        return date;
+    }
 
     public static double addWeeksToDate(Date date, int i) {
         DateTime dateTime = new DateTime(date);
         DateTime plusWeeks = dateTime.plusWeeks(i);
         Date dateAfterProcess = plusWeeks.toDate();
         return getRataDieFormat4Date(dateAfterProcess);
+    }
+    
+    public static Date addWeeksToDateInDateFormat(Date date, int i) {
+        DateTime dateTime = new DateTime(date);
+        DateTime plusWeeks = dateTime.plusWeeks(i);
+        Date dateAfterProcess = plusWeeks.toDate();
+        return dateAfterProcess;
     }
 
     public static void main(String[] args) throws Exception {

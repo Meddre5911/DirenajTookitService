@@ -35,6 +35,7 @@ import direnaj.driver.DirenajNeo4jDriver;
 import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.servlet.OrganizedBehaviourDetectionRequestType;
 import direnaj.twitter.UserAccountPropertyAnalyser;
+import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.util.CollectionUtil;
 import direnaj.util.CosineSimilarityUtil;
 import direnaj.util.DateTimeUtils;
@@ -194,6 +195,7 @@ public class OrganizationDetector implements Runnable {
 		for (String tracedHashtag : tracedHashtagList) {
 			tracedSingleHashtag = tracedHashtag;
 			direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
+			collectTweetsOfAllUsers(requestId);
 			saveData4UserAnalysis();
 
 		}
@@ -202,6 +204,30 @@ public class OrganizationDetector implements Runnable {
 		removePreProcessUsers();
 	}
 
+
+	public  void collectTweetsOfAllUsers(String requestId) {
+		// get initial objects
+		DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
+		// get pre process users
+		DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj);
+		try {
+			while (preProcessUsers.hasNext()) {
+				DBObject preProcessUser = preProcessUsers.next();
+				try {
+					User user = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
+					Twitter4jUtil.saveTweetsOfUser(user);
+
+				} catch (Exception e) {
+					Logger.getLogger(OrganizationDetector.class.getSimpleName())
+							.error("Twitter4jUtil-collectTweetsOfAllUsers", e);
+				}
+			}
+		} finally {
+			preProcessUsers.close();
+		}
+	}
+	
+	
 	private void calculateTweetSimilarities() {
 		// FIXME 20151224 Mongo icin gerekecek index'leri sonradan tanımlamayi
 		// unutma

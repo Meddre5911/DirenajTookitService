@@ -37,4 +37,6 @@ public interface MongoCollectionFieldNames {
 	// represents similarity between sqrt(3)/2 & 1
 	public static final String MOST_SIMILAR = "MOST_SIMILAR";
 
+	// user variables
+	public static final String MONGO_USER_POST_TWEET_ID = "postTweetId";
 }

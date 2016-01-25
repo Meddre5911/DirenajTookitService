@@ -9,300 +9,309 @@ import direnaj.twitter.TweetPostSourceAnalyser;
 
 public class User implements Comparable<User> {
 
-    private String userId;
-    private String userScreenName;
-    private double userDegree;
-    private double friendsCount;
-    private double followersCount;
-    private double favoriteCount;
-    private double postCount;
-    private boolean isProtected;
-    private boolean isVerified;
-    private Date creationDate;
-    private Date campaignTweetPostDate;
-    private UserAccountProperties accountProperties;
-    private List<String> posts;
-    private List<String> usedUrls;
-    private List<UserTweets> allUserTweets;
-    private double mobileDevicePostCount;
-    private double twitterDevicePostCount;
-    private double thirdPartyDevicePostCount;
-    private double usedUrlCount;
+	private String userId;
+	private String userScreenName;
+	private double userDegree;
+	private double friendsCount;
+	private double followersCount;
+	private double favoriteCount;
+	private double postCount;
+	private boolean isProtected;
+	private boolean isVerified;
+	private Date creationDate;
+	private Date campaignTweetPostDate;
+	private String campaignTweetId;
+	private UserAccountProperties accountProperties;
+	private List<String> posts;
+	private List<String> usedUrls;
+	private List<UserTweets> allUserTweets;
+	private double mobileDevicePostCount;
+	private double twitterDevicePostCount;
+	private double thirdPartyDevicePostCount;
+	private double usedUrlCount;
 
-    /**
-     * count of Mentioned Users in all posted tweets
-     */
-    private double countOfMentionedUsers;
-    /**
-     * count of Hashtags in all posted tweets
-     */
-    private double countOfHashtags;
+	/**
+	 * count of Mentioned Users in all posted tweets
+	 */
+	private double countOfMentionedUsers;
+	/**
+	 * count of Hashtags in all posted tweets
+	 */
+	private double countOfHashtags;
 
-    public User(String userId, String screenName) {
-        posts =new LinkedList<String>();
-        usedUrls = new LinkedList<String>();
-        friendsCount = 0L;
-        followersCount = 0L;
-        countOfMentionedUsers = 0L;
-        countOfHashtags = 0L;
-        setUserId(userId);
-        setUserScreenName(screenName);
-        setAllUserTweets(new LinkedList<UserTweets>());
-    }
+	public User(String userId, String screenName) {
+		posts = new LinkedList<String>();
+		usedUrls = new LinkedList<String>();
+		friendsCount = 0L;
+		followersCount = 0L;
+		countOfMentionedUsers = 0L;
+		countOfHashtags = 0L;
+		setUserId(userId);
+		setUserScreenName(screenName);
+		setAllUserTweets(new LinkedList<UserTweets>());
+	}
 
-    public String getUserId() {
-        return userId;
-    }
+	public String getUserId() {
+		return userId;
+	}
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
 
-    public String getUserScreenName() {
-        return userScreenName;
-    }
+	public String getUserScreenName() {
+		return userScreenName;
+	}
 
-    public void setUserScreenName(String userScreenName) {
-        this.userScreenName = userScreenName;
-    }
+	public void setUserScreenName(String userScreenName) {
+		this.userScreenName = userScreenName;
+	}
 
-    public List<String> getPosts() {
-        return posts;
-    }
+	public List<String> getPosts() {
+		return posts;
+	}
 
-    public void addPost(String post) {
-        posts.add(post);
-    }
+	public void addPost(String post) {
+		posts.add(post);
+	}
 
-    public void addPostsToUser(List<String> otherPosts) {
-        if (otherPosts != null) {
-            posts.addAll(otherPosts);
-        }
-    }
+	public void addPostsToUser(List<String> otherPosts) {
+		if (otherPosts != null) {
+			posts.addAll(otherPosts);
+		}
+	}
 
-    public double getUserDegree() {
-        return userDegree;
-    }
+	public double getUserDegree() {
+		return userDegree;
+	}
 
-    public void setUserDegree(double userDegree) {
-        this.userDegree = userDegree;
-    }
+	public void setUserDegree(double userDegree) {
+		this.userDegree = userDegree;
+	}
 
-    public double getFriendsCount() {
-        return friendsCount;
-    }
+	public double getFriendsCount() {
+		return friendsCount;
+	}
 
-    public void setFriendsCount(double friendsCount) {
-        this.friendsCount = friendsCount;
-    }
+	public void setFriendsCount(double friendsCount) {
+		this.friendsCount = friendsCount;
+	}
 
-    public double getFollowersCount() {
-        return followersCount;
-    }
+	public String getCampaignTweetId() {
+		return campaignTweetId;
+	}
 
-    public void setFollowersCount(double followersCount) {
-        this.followersCount = followersCount;
-    }
+	public void setCampaignTweetId(String campaignTweetId) {
+		this.campaignTweetId = campaignTweetId;
+	}
 
-    public boolean isProtected() {
-        return isProtected;
-    }
+	public double getFollowersCount() {
+		return followersCount;
+	}
 
-    public void setProtected(boolean isProtected) {
-        this.isProtected = isProtected;
-    }
+	public void setFollowersCount(double followersCount) {
+		this.followersCount = followersCount;
+	}
 
-    public boolean isVerified() {
-        return isVerified;
-    }
+	public boolean isProtected() {
+		return isProtected;
+	}
 
-    public void setVerified(boolean isVerified) {
-        this.isVerified = isVerified;
-    }
+	public void setProtected(boolean isProtected) {
+		this.isProtected = isProtected;
+	}
 
-    public Date getCreationDate() {
-        return creationDate;
-    }
+	public boolean isVerified() {
+		return isVerified;
+	}
 
-    public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
-    }
+	public void setVerified(boolean isVerified) {
+		this.isVerified = isVerified;
+	}
 
-    public UserAccountProperties getAccountProperties() {
-        if (accountProperties == null) {
-            accountProperties = new UserAccountProperties();
-        }
-        return accountProperties;
-    }
+	public Date getCreationDate() {
+		return creationDate;
+	}
 
-    public void setAccountProperties(UserAccountProperties accountProperties) {
-        this.accountProperties = accountProperties;
-    }
+	public void setCreationDate(Date creationDate) {
+		this.creationDate = creationDate;
+	}
 
-    public List<String> getUsedUrls() {
-        return usedUrls;
-    }
+	public UserAccountProperties getAccountProperties() {
+		if (accountProperties == null) {
+			accountProperties = new UserAccountProperties();
+		}
+		return accountProperties;
+	}
 
-    public void addUrlsToUser(List<String> otherUrls) {
-        if (otherUrls != null) {
-            usedUrls.addAll(otherUrls);
-        }
-    }
+	public void setAccountProperties(UserAccountProperties accountProperties) {
+		this.accountProperties = accountProperties;
+	}
 
-    public double getCountOfMentionedUsers() {
-        return countOfMentionedUsers;
-    }
+	public List<String> getUsedUrls() {
+		return usedUrls;
+	}
 
-    public void setCountOfMentionedUsers(double countOfMentionedUsers) {
-        this.countOfMentionedUsers = countOfMentionedUsers;
-    }
+	public void addUrlsToUser(List<String> otherUrls) {
+		if (otherUrls != null) {
+			usedUrls.addAll(otherUrls);
+		}
+	}
 
-    public double getCountOfHashtags() {
-        return countOfHashtags;
-    }
+	public double getCountOfMentionedUsers() {
+		return countOfMentionedUsers;
+	}
 
-    public void setCountOfHashtags(double countOfHashtags) {
-        this.countOfHashtags = countOfHashtags;
-    }
+	public void setCountOfMentionedUsers(double countOfMentionedUsers) {
+		this.countOfMentionedUsers = countOfMentionedUsers;
+	}
 
-    public void addValue2CountOfMentionedUsers(double countOfMentionedUsers) {
-        this.countOfMentionedUsers += countOfMentionedUsers;
-    }
+	public double getCountOfHashtags() {
+		return countOfHashtags;
+	}
 
-    public void addValue2CountOfHashtags(double countOfHashtags) {
-        this.countOfHashtags += countOfHashtags;
-    }
+	public void setCountOfHashtags(double countOfHashtags) {
+		this.countOfHashtags = countOfHashtags;
+	}
 
-    public Date getCampaignTweetPostDate() {
-        return campaignTweetPostDate;
-    }
+	public void addValue2CountOfMentionedUsers(double countOfMentionedUsers) {
+		this.countOfMentionedUsers += countOfMentionedUsers;
+	}
 
-    public void setCampaignTweetPostDate(Date campaignTweetPostDate) {
-        this.campaignTweetPostDate = campaignTweetPostDate;
-    }
+	public void addValue2CountOfHashtags(double countOfHashtags) {
+		this.countOfHashtags += countOfHashtags;
+	}
 
-    public double getPostCount() {
-        return postCount;
-    }
+	public Date getCampaignTweetPostDate() {
+		return campaignTweetPostDate;
+	}
 
-    public void setPostCount(double postCount) {
-        this.postCount = postCount;
-    }
+	public void setCampaignTweetPostDate(Date campaignTweetPostDate) {
+		this.campaignTweetPostDate = campaignTweetPostDate;
+	}
 
-    public double getMobileDevicePostCount() {
-        return mobileDevicePostCount;
-    }
+	public double getPostCount() {
+		return postCount;
+	}
 
-    public void setMobileDevicePostCount(double mobileDevicePostCount) {
-        this.mobileDevicePostCount = mobileDevicePostCount;
-    }
+	public void setPostCount(double postCount) {
+		this.postCount = postCount;
+	}
 
-    public double getTwitterDevicePostCount() {
-        return twitterDevicePostCount;
-    }
+	public double getMobileDevicePostCount() {
+		return mobileDevicePostCount;
+	}
 
-    public void setTwitterDevicePostCount(double apiDevicePostCount) {
-        this.twitterDevicePostCount = apiDevicePostCount;
-    }
+	public void setMobileDevicePostCount(double mobileDevicePostCount) {
+		this.mobileDevicePostCount = mobileDevicePostCount;
+	}
 
-    public double getThirdPartyDevicePostCount() {
-        return thirdPartyDevicePostCount;
-    }
+	public double getTwitterDevicePostCount() {
+		return twitterDevicePostCount;
+	}
 
-    public void setThirdPartyDevicePostCount(double thirdPartyDevicePostCount) {
-        this.thirdPartyDevicePostCount = thirdPartyDevicePostCount;
-    }
+	public void setTwitterDevicePostCount(double apiDevicePostCount) {
+		this.twitterDevicePostCount = apiDevicePostCount;
+	}
 
-    public double getUsedUrlCount() {
-        return usedUrlCount;
-    }
+	public double getThirdPartyDevicePostCount() {
+		return thirdPartyDevicePostCount;
+	}
 
-    public void setUsedUrlCount(double usedUrlCount) {
-        this.usedUrlCount = usedUrlCount;
-    }
+	public void setThirdPartyDevicePostCount(double thirdPartyDevicePostCount) {
+		this.thirdPartyDevicePostCount = thirdPartyDevicePostCount;
+	}
 
-    public void incrementPostCount() {
-        postCount++;
-    }
+	public double getUsedUrlCount() {
+		return usedUrlCount;
+	}
 
-    public double calculateFriendFollowerRatio() {
-        Double ratioValue = new Double(0);
-        try {
-            double totalFriendFollowerCount = getFollowersCount() + getFriendsCount();
-            if (totalFriendFollowerCount > 0) {
-                ratioValue = getFollowersCount() / totalFriendFollowerCount;
-            }
-            return ratioValue;
-        } catch (Exception e) {
-            return new Double(0);
-        }
-    }
+	public void setUsedUrlCount(double usedUrlCount) {
+		this.usedUrlCount = usedUrlCount;
+	}
 
-    /**
-     * 
-     * @param tweetPostSource
-     */
-    public void incrementPostDeviceCount(String tweetPostSource) {
-        TweetPostSource tweetSource = TweetPostSourceAnalyser.getInstance().getTweetSource(tweetPostSource);
-        switch (tweetSource) {
-        case MOBILE:
-            mobileDevicePostCount++;
-            break;
-        case TWITTER:
-            twitterDevicePostCount++;
-            break;
-        case THIRDPARTY:
-        default:
-            thirdPartyDevicePostCount++;
-            break;
-        }
+	public void incrementPostCount() {
+		postCount++;
+	}
 
-    }
+	public double calculateFriendFollowerRatio() {
+		Double ratioValue = new Double(0);
+		try {
+			double totalFriendFollowerCount = getFollowersCount() + getFriendsCount();
+			if (totalFriendFollowerCount > 0) {
+				ratioValue = getFollowersCount() / totalFriendFollowerCount;
+			}
+			return ratioValue;
+		} catch (Exception e) {
+			return new Double(0);
+		}
+	}
 
-    @Override
-    public boolean equals(Object obj) {
-        try {
-            boolean isEqual = false;
-            if (obj instanceof User) {
-                User user = (User) obj;
-                if (this.userId.equalsIgnoreCase(user.getUserId())) {
-                    isEqual = true;
-                }
-            }
-            return isEqual;
-        } catch (Exception e) {
-            return false;
-        }
-    }
+	/**
+	 * 
+	 * @param tweetPostSource
+	 */
+	public void incrementPostDeviceCount(String tweetPostSource) {
+		TweetPostSource tweetSource = TweetPostSourceAnalyser.getInstance().getTweetSource(tweetPostSource);
+		switch (tweetSource) {
+		case MOBILE:
+			mobileDevicePostCount++;
+			break;
+		case TWITTER:
+			twitterDevicePostCount++;
+			break;
+		case THIRDPARTY:
+		default:
+			thirdPartyDevicePostCount++;
+			break;
+		}
 
-    public int hashCode() {
-        return (int) (Double.valueOf(userId) % 1000);
-    }
+	}
 
-    @Override
-    public int compareTo(User o) {
-        Double result = Double.valueOf(userId) - Double.valueOf(o.getUserId());
-        if (result > 0d) {
-            return 1;
-        } else if (result < 0d) {
-            return -1;
-        } else {
-            return 0;
-        }
-    }
+	@Override
+	public boolean equals(Object obj) {
+		try {
+			boolean isEqual = false;
+			if (obj instanceof User) {
+				User user = (User) obj;
+				if (this.userId.equalsIgnoreCase(user.getUserId())) {
+					isEqual = true;
+				}
+			}
+			return isEqual;
+		} catch (Exception e) {
+			return false;
+		}
+	}
 
-    public void addValue2CountOfUsedUrls(int usedUrlCountInPost) {
-        usedUrlCount += usedUrlCountInPost;
+	public int hashCode() {
+		return (int) (Double.valueOf(userId) % 1000);
+	}
 
-    }
+	@Override
+	public int compareTo(User o) {
+		Double result = Double.valueOf(userId) - Double.valueOf(o.getUserId());
+		if (result > 0d) {
+			return 1;
+		} else if (result < 0d) {
+			return -1;
+		} else {
+			return 0;
+		}
+	}
 
-    public double getFavoriteCount() {
-        return favoriteCount;
-    }
+	public void addValue2CountOfUsedUrls(int usedUrlCountInPost) {
+		usedUrlCount += usedUrlCountInPost;
 
-    public void setFavoriteCount(double favoriteCount) {
-        this.favoriteCount = favoriteCount;
-    }
+	}
+
+	public double getFavoriteCount() {
+		return favoriteCount;
+	}
+
+	public void setFavoriteCount(double favoriteCount) {
+		this.favoriteCount = favoriteCount;
+	}
 
 	public List<UserTweets> getAllUserTweets() {
 		return allUserTweets;

@@ -2,7 +2,6 @@ package direnaj.driver;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 
 import com.mongodb.DBCollection;
@@ -21,6 +20,7 @@ public class DirenajMongoDriverUtil {
 		user.setVerified((boolean) preProcessUser.get("isVerified"));
 		user.setCreationDate((Date) preProcessUser.get("creationDate"));
 		user.setCampaignTweetPostDate((Date) preProcessUser.get("postCreationDate"));
+		user.setCampaignTweetId((String) preProcessUser.get(MongoCollectionFieldNames.MONGO_USER_POST_TWEET_ID));
 		return user;
 	}
 
