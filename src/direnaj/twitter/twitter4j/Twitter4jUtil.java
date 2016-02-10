@@ -1,10 +1,19 @@
 package direnaj.twitter.twitter4j;
 
+import java.lang.reflect.Type;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.mongodb.DBObject;
 import com.mongodb.util.JSON;
 
@@ -16,15 +25,20 @@ import twitter4j.Paging;
 import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.TwitterException;
+import twitter4j.json.DataObjectFactory;
 
 public class Twitter4jUtil {
 
 	public static void saveTweetsOfUser(User user) {
 		try {
-			System.out.println("Earliest Tweets");
 			getEarliestTweets(user);
-			System.out.println("Recent Tweets");
+			Logger.getLogger(Twitter4jUtil.class.getSimpleName())
+					.debug("Earliest Tweets has been collected for User Name :" + user.getUserScreenName()
+							+ ", User Id :" + user.getUserId());
 			getRecentTweets(user);
+			Logger.getLogger(Twitter4jUtil.class.getSimpleName())
+					.debug("Recent Tweets has been collected for User Name :" + user.getUserScreenName() + ", User Id :"
+							+ user.getUserId());
 		} catch (TwitterException e) {
 			Logger.getLogger(Twitter4jUtil.class.getSimpleName()).error("Twitter4jUtil saveTweetsOfUser", e);
 			e.printStackTrace();
@@ -92,9 +106,18 @@ public class Twitter4jUtil {
 	}
 
 	private static void saveTweets(ResponseList<Status> userTimeline) {
-		JSONArray jsonArray = new JSONArray(userTimeline);
-		String str = jsonArray.toString();
-		List<DBObject> mongoDbObject = (List<DBObject>) JSON.parse(str);
+		// serialize Date in object in RataDie Format
+		JsonSerializer<Date> ser = new JsonSerializer<Date>() {
+			@Override
+			public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
+				return src == null ? null : new JsonPrimitive(DateTimeUtils.getRataDieFormat4Date(src));
+			}
+		};
+		// get json of object
+		Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, ser).create();
+		String json = gson.toJson(userTimeline);
+		// save object to db
+		List<DBObject> mongoDbObject = (List<DBObject>) JSON.parse(json);
 		DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().insert(mongoDbObject);
 	}
 

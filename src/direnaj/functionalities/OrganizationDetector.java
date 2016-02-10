@@ -204,8 +204,7 @@ public class OrganizationDetector implements Runnable {
 		removePreProcessUsers();
 	}
 
-
-	public  void collectTweetsOfAllUsers(String requestId) {
+	public void collectTweetsOfAllUsers(String requestId) {
 		// get initial objects
 		DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
 		// get pre process users
@@ -226,12 +225,12 @@ public class OrganizationDetector implements Runnable {
 			preProcessUsers.close();
 		}
 	}
-	
-	
+
 	private void calculateTweetSimilarities() {
 		// FIXME 20151224 Mongo icin gerekecek index'leri sonradan tanımlamayi
 		// unutma
-		// FIXME 20160204 Yeni tweet yapısını kurduktan sonra buralarda düzeltme yapmamız gerekebilir
+		// FIXME 20160204 Yeni tweet yapısını kurduktan sonra buralarda düzeltme
+		// yapmamız gerekebilir
 		calculateTFValues();
 		calculateIDFValues();
 		calculateTFIDFValues();
@@ -442,16 +441,15 @@ public class OrganizationDetector implements Runnable {
 
 	private User analyzePreProcessUser(DBObject preProcessUser) throws Exception {
 		// get collection
-		DBCollection tweetsCollection = direnajMongoDriver.getTweetsCollection();
+		DBCollection tweetsCollection = direnajMongoDriver.getOrgBehaviourUserTweets();
 		// parse user
 		User domainUser = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
 		// get tweets of users in an interval of two weeks
-		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("tweet.user.id_str", domainUser.getUserId()).append(
+		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId())).append(
 				"tweet.created_at",
 				new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(), 2))
 						.append("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(), 2)));
 
-		// FIXME 20160204 - Yeni Tweet collection'lari yapildiktan sonra burayı düzelteceğiz
 		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery);
 		try {
 			while (tweetsOfUser.hasNext()) {
