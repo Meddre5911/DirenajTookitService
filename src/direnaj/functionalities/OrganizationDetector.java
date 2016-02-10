@@ -231,6 +231,7 @@ public class OrganizationDetector implements Runnable {
 	private void calculateTweetSimilarities() {
 		// FIXME 20151224 Mongo icin gerekecek index'leri sonradan tanımlamayi
 		// unutma
+		// FIXME 20160204 Yeni tweet yapısını kurduktan sonra buralarda düzeltme yapmamız gerekebilir
 		calculateTFValues();
 		calculateIDFValues();
 		calculateTFIDFValues();
@@ -450,6 +451,7 @@ public class OrganizationDetector implements Runnable {
 				new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(), 2))
 						.append("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(), 2)));
 
+		// FIXME 20160204 - Yeni Tweet collection'lari yapildiktan sonra burayı düzelteceğiz
 		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery);
 		try {
 			while (tweetsOfUser.hasNext()) {

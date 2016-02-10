@@ -67,6 +67,10 @@ public class DirenajMongoDriver {
 			mongoDB.createCollection("OrgBehaviourTweetsShortInfo", null);
 			Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourTweetsShortInfo is created");
 		}
+		if (!mongoDB.collectionExists("OrgBehaviourUserTweets")) {
+			mongoDB.createCollection("OrgBehaviourUserTweets", null);
+			Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourUserTweets is created");
+		}
 	}
 
 	public static DirenajMongoDriver getInstance() {
@@ -118,6 +122,10 @@ public class DirenajMongoDriver {
 
 	public DBCollection getOrgBehaviourTweetsShortInfo() {
 		return mongoDB.getCollection("OrgBehaviourTweetsShortInfo");
+	}
+
+	public DBCollection getOrgBehaviourUserTweets() {
+		return mongoDB.getCollection("OrgBehaviourUserTweets");
 	}
 
 	public Long executeCountQuery(DBCollection collection, DBObject query) {

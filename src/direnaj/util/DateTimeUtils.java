@@ -49,7 +49,7 @@ public class DateTimeUtils {
         DateTime dateTime = new DateTime(date);
         DateTime minusWeeks = dateTime.minusWeeks(i);
         Date dateAfterProcess = minusWeeks.toDate();
-        return date;
+        return dateAfterProcess;
     }
 
     public static double addWeeksToDate(Date date, int i) {

@@ -1,10 +1,15 @@
 package direnaj.twitter.twitter4j;
 
 import java.util.Date;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import com.mongodb.DBObject;
+import com.mongodb.util.JSON;
+
 import direnaj.domain.User;
+import direnaj.driver.DirenajMongoDriver;
 import direnaj.util.DateTimeUtils;
 import twitter4j.JSONArray;
 import twitter4j.Paging;
@@ -30,12 +35,12 @@ public class Twitter4jUtil {
 		Date lowestDate = DateTimeUtils.subtractWeeksFromDateInDateFormat(user.getCampaignTweetPostDate(), 2);
 		// first collect earlier tweets
 		int pageNumber = 1;
-		boolean isEarlierTweetsRemaining = false;
 		Paging paging = new Paging();
 		paging.setCount(200);
 		paging.setMaxId(Long.valueOf(user.getCampaignTweetId()));
 		paging.setPage(pageNumber);
 		for (int i = 0; i < 20; i++) {
+			boolean isEarlierTweetsRemaining = false;
 			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
 					.getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE)
 					.getUserTimeline(Long.valueOf(user.getUserId()), paging);
@@ -47,6 +52,7 @@ public class Twitter4jUtil {
 				if (tweetCreationDate.after(lowestDate)) {
 					paging.setPage(++pageNumber);
 					isEarlierTweetsRemaining = true;
+					System.out.println("Increasing Page Number");
 				}
 			}
 			if (!isEarlierTweetsRemaining) {
@@ -60,12 +66,12 @@ public class Twitter4jUtil {
 		Date highestDate = DateTimeUtils.addWeeksToDateInDateFormat(user.getCampaignTweetPostDate(), 2);
 		// first collect earlier tweets
 		int pageNumber = 1;
-		boolean isRecentTweetsRemaining = false;
 		Paging paging = new Paging();
 		paging.setCount(200);
 		paging.setSinceId(Long.valueOf(user.getCampaignTweetId()));
 		paging.setPage(pageNumber);
 		for (int i = 0; i < 20; i++) {
+			boolean isRecentTweetsRemaining = false;
 			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
 					.getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE)
 					.getUserTimeline(Long.valueOf(user.getUserId()), paging);
@@ -88,14 +94,14 @@ public class Twitter4jUtil {
 	private static void saveTweets(ResponseList<Status> userTimeline) {
 		JSONArray jsonArray = new JSONArray(userTimeline);
 		String str = jsonArray.toString();
-		System.out.println("JSON : \n" + str + "\n");
+		List<DBObject> mongoDbObject = (List<DBObject>) JSON.parse(str);
+		DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().insert(mongoDbObject);
 	}
-	
+
 	public static void main(String[] args) throws Exception {
-		User user = new User("78555806","Meddre5911");
+		User user = new User("78555806", "Meddre5911");
 		user.setCampaignTweetPostDate(DateTimeUtils.getTwitterDate("Mon Jan 04 09:18:39 +0000 2016"));
 		user.setCampaignTweetId("683940594016718800");
 		Twitter4jUtil.saveTweetsOfUser(user);
 	}
-
 }
