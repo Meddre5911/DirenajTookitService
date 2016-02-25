@@ -300,7 +300,7 @@ public class User implements Comparable<User> {
 		}
 	}
 
-	public void addValue2CountOfUsedUrls(int usedUrlCountInPost) {
+	public void addValue2CountOfUsedUrls(double usedUrlCountInPost) {
 		usedUrlCount += usedUrlCountInPost;
 
 	}

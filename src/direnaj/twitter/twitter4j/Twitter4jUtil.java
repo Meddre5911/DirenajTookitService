@@ -1,7 +1,6 @@
 package direnaj.twitter.twitter4j;
 
 import java.lang.reflect.Type;
-import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -9,7 +8,6 @@ import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
@@ -20,12 +18,10 @@ import com.mongodb.util.JSON;
 import direnaj.domain.User;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.util.DateTimeUtils;
-import twitter4j.JSONArray;
 import twitter4j.Paging;
 import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.TwitterException;
-import twitter4j.json.DataObjectFactory;
 
 public class Twitter4jUtil {
 
@@ -116,6 +112,8 @@ public class Twitter4jUtil {
 		// get json of object
 		Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, ser).create();
 		String json = gson.toJson(userTimeline);
+		// System.out.println(json+ "\n");
+
 		// save object to db
 		List<DBObject> mongoDbObject = (List<DBObject>) JSON.parse(json);
 		DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().insert(mongoDbObject);

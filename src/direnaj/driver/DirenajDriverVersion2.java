@@ -116,7 +116,7 @@ public class DirenajDriverVersion2 {
                     // FIXME 20150604 bu property'nin aynı hashtag için birden fazla kez atılmış tweet için kullanılabilmesi lazım,
                     // ona gore degisikligi yap
                     preprocessUser.put("postCreationDate", user.getCampaignTweetPostDate());
-                    preprocessUser.put(MongoCollectionFieldNames.MONGO_USER_POST_TWEET_ID, user.getCampaignTweetPostDate());
+                    preprocessUser.put(MongoCollectionFieldNames.MONGO_USER_POST_TWEET_ID, user.getCampaignTweetId());
                     preprocessUsers.add(preprocessUser);
                 }
             }

@@ -17,6 +17,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BulkWriteOperation;
 import com.mongodb.DBCollection;
@@ -27,7 +28,6 @@ import direnaj.adapter.DirenajInvalidJSONException;
 import direnaj.domain.User;
 import direnaj.domain.UserAccountProperties;
 import direnaj.domain.UserTweets;
-import direnaj.driver.DirenajDriverUtils;
 import direnaj.driver.DirenajDriverVersion2;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.DirenajMongoDriverUtil;
@@ -42,6 +42,8 @@ import direnaj.util.DateTimeUtils;
 import direnaj.util.ListUtils;
 import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
+import twitter4j.Status;
+import twitter4j.json.DataObjectFactory;
 
 public class OrganizationDetector implements Runnable {
 
@@ -56,6 +58,14 @@ public class OrganizationDetector implements Runnable {
 	private List<String> tracedHashtagList;
 	private String tracedSingleHashtag;
 	private DBObject requestIdObj;
+
+	public OrganizationDetector(String requestId,boolean disableGraphAnalysis, String tracedHashtag) {
+		direnajDriver = new DirenajDriverVersion2();
+		direnajMongoDriver = DirenajMongoDriver.getInstance();
+		this.requestId = requestId;
+		this.disableGraphAnalysis = disableGraphAnalysis;
+		tracedSingleHashtag = tracedHashtag;
+	}
 
 	public OrganizationDetector(String campaignId, int topHashtagCount, String requestDefinition, String tracedHashtag,
 			OrganizedBehaviourDetectionRequestType detectionRequestType, boolean disableGraphAnalysis) {
@@ -197,7 +207,6 @@ public class OrganizationDetector implements Runnable {
 			direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
 			collectTweetsOfAllUsers(requestId);
 			saveData4UserAnalysis();
-
 		}
 		calculateTweetSimilarities();
 		changeRequestStatusInMongo(true);
@@ -439,14 +448,14 @@ public class OrganizationDetector implements Runnable {
 
 	}
 
-	private User analyzePreProcessUser(DBObject preProcessUser) throws Exception {
+	public User analyzePreProcessUser(DBObject preProcessUser) throws Exception {
 		// get collection
 		DBCollection tweetsCollection = direnajMongoDriver.getOrgBehaviourUserTweets();
 		// parse user
 		User domainUser = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
 		// get tweets of users in an interval of two weeks
 		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId())).append(
-				"tweet.created_at",
+				"createdAt",
 				new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(), 2))
 						.append("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(), 2)));
 
@@ -454,32 +463,23 @@ public class OrganizationDetector implements Runnable {
 		try {
 			while (tweetsOfUser.hasNext()) {
 				UserTweets userTweet = new UserTweets();
-				JSONObject tweetData = new JSONObject(tweetsOfUser.next().toString());
-				JSONObject tweet = DirenajDriverUtils.getTweet(tweetData);
-				String tweetId = DirenajDriverUtils.getTweetId(tweet);
-				JSONObject entities = DirenajDriverUtils.getEntities(tweet);
-				String tweetPostSource = DirenajDriverUtils.getSource(tweet);
-				String tweetText = DirenajDriverUtils.getSingleTweetText(tweetData);
-				int usedHashtagCount = DirenajDriverUtils.getHashTags(entities).length();
-				List<String> urlStrings = DirenajDriverUtils.getUrlStrings(entities);
-				int mentionedUserCount = DirenajDriverUtils.getUserMentions(entities).length();
-				// get user
+				Gson gson = new Gson();
+//				Status twitter4jStatus = gson.fromJson(tweetsOfUser.next().toString(), StatusJSONImpl.class);
+				Status twitter4jStatus = DataObjectFactory.createStatus(tweetsOfUser.next().toString());
+				domainUser.addValue2CountOfUsedUrls((double) twitter4jStatus.getURLEntities().length);
+				domainUser.addValue2CountOfHashtags((double) twitter4jStatus.getHashtagEntities().length);
+				domainUser.addValue2CountOfMentionedUsers((double) twitter4jStatus.getUserMentionEntities().length);
+				domainUser.incrementPostDeviceCount(twitter4jStatus.getSource());
 				domainUser.incrementPostCount();
-				// spam link olayina girersek, url string'leri kullanacagiz
-				// domainUser.addUrlsToUser(urlStrings);
-				domainUser.addValue2CountOfUsedUrls(urlStrings.size());
-				domainUser.addValue2CountOfHashtags((double) usedHashtagCount);
-				domainUser.addValue2CountOfMentionedUsers((double) mentionedUserCount);
-				domainUser.incrementPostDeviceCount(tweetPostSource);
 				// get user tweet data
-				if (tweetText.contains(tracedSingleHashtag)) {
+				if (twitter4jStatus.getText().contains(tracedSingleHashtag)) {
 					userTweet.setHashtagTweet(true);
 				}
-				userTweet.setTweetText(tweetText);
-				userTweet.setTweetId(tweetId);
+				userTweet.setTweetText(twitter4jStatus.getText());
+				userTweet.setTweetId(String.valueOf(twitter4jStatus.getId()));
 				domainUser.getAllUserTweets().add(userTweet);
 			}
-		} catch (JSONException e) {
+		} catch (Exception e) {
 			Logger.getLogger(OrganizationDetector.class.getSimpleName()).error("analyzePreProcessUser method error", e);
 			tweetsOfUser.close();
 		}
@@ -623,9 +623,8 @@ public class OrganizationDetector implements Runnable {
 		return new Vector<User>();
 	}
 
-	private void saveData4UserAnalysis() throws Exception {
+	public void saveData4UserAnalysis() throws Exception {
 		List<User> domainUsers = new Vector<User>();
-		DBObject requestIdObj = new BasicDBObject("requestId", requestId);
 		// get total user count for detection
 		DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
 		Long preprocessUserCounts = direnajMongoDriver.executeCountQuery(orgBehaviorPreProcessUsers, requestIdObj);
