@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
@@ -22,6 +23,7 @@ import twitter4j.Paging;
 import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.TwitterException;
+import twitter4j.URLEntity;
 
 public class Twitter4jUtil {
 
@@ -109,20 +111,24 @@ public class Twitter4jUtil {
 				return src == null ? null : new JsonPrimitive(DateTimeUtils.getRataDieFormat4Date(src));
 			}
 		};
+		
 		// get json of object
 		Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, ser).create();
 		String json = gson.toJson(userTimeline);
-		// System.out.println(json+ "\n");
+		System.out.println(json + "\n");
 
+		
 		// save object to db
 		List<DBObject> mongoDbObject = (List<DBObject>) JSON.parse(json);
 		DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().insert(mongoDbObject);
 	}
 
-	public static void main(String[] args) throws Exception {
-		User user = new User("78555806", "Meddre5911");
-		user.setCampaignTweetPostDate(DateTimeUtils.getTwitterDate("Mon Jan 04 09:18:39 +0000 2016"));
-		user.setCampaignTweetId("683940594016718800");
-		Twitter4jUtil.saveTweetsOfUser(user);
-	}
+	// public static void main(String[] args) throws Exception {
+	// User user = new User("78555806", "Meddre5911");
+	// user.setCampaignTweetPostDate(DateTimeUtils.getTwitterDate("Mon Jan 04
+	// 09:18:39 +0000 2016"));
+	// user.setCampaignTweetId("683940594016718800");
+	// Twitter4jUtil.saveTweetsOfUser(user);
+	// }
+
 }

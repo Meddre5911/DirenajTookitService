@@ -36,6 +36,7 @@ import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.servlet.OrganizedBehaviourDetectionRequestType;
 import direnaj.twitter.UserAccountPropertyAnalyser;
 import direnaj.twitter.twitter4j.Twitter4jUtil;
+import direnaj.twitter.twitter4j.external.DrnjStatusJSONImpl;
 import direnaj.util.CollectionUtil;
 import direnaj.util.CosineSimilarityUtil;
 import direnaj.util.DateTimeUtils;
@@ -43,7 +44,7 @@ import direnaj.util.ListUtils;
 import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
 import twitter4j.Status;
-import twitter4j.json.DataObjectFactory;
+import twitter4j.StatusJSONImpl;
 
 public class OrganizationDetector implements Runnable {
 
@@ -59,7 +60,7 @@ public class OrganizationDetector implements Runnable {
 	private String tracedSingleHashtag;
 	private DBObject requestIdObj;
 
-	public OrganizationDetector(String requestId,boolean disableGraphAnalysis, String tracedHashtag) {
+	public OrganizationDetector(String requestId, boolean disableGraphAnalysis, String tracedHashtag) {
 		direnajDriver = new DirenajDriverVersion2();
 		direnajMongoDriver = DirenajMongoDriver.getInstance();
 		this.requestId = requestId;
@@ -454,18 +455,31 @@ public class OrganizationDetector implements Runnable {
 		// parse user
 		User domainUser = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
 		// get tweets of users in an interval of two weeks
-		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId())).append(
-				"createdAt",
-				new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(), 2))
-						.append("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(), 2)));
+		// BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id",
+		// Long.valueOf(domainUser.getUserId())).append(
+		// "createdAt",
+		// new
+		// BasicDBObject("$gt",DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(),
+		// 2))
+		// .append("$lt",
+		// DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(),
+		// 2)));
 
-		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery);
+		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("id", Long.valueOf(633531082739216384l));
+		BasicDBObject keys = new BasicDBObject("_id", false).append("createdAt", false).append("user.createdAt", false);
+
+		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery,keys);
 		try {
 			while (tweetsOfUser.hasNext()) {
 				UserTweets userTweet = new UserTweets();
+				String string = tweetsOfUser.next().toString();
+				System.out.println("Tweet is : " + string);
+				
+//				Status twitter4jStatus = (Status) TwitterObjectFactory.createObject(string);
+				
 				Gson gson = new Gson();
-//				Status twitter4jStatus = gson.fromJson(tweetsOfUser.next().toString(), StatusJSONImpl.class);
-				Status twitter4jStatus = DataObjectFactory.createStatus(tweetsOfUser.next().toString());
+				Status twitter4jStatus = (Status) gson.fromJson(string, DrnjStatusJSONImpl.class);
+				
 				domainUser.addValue2CountOfUsedUrls((double) twitter4jStatus.getURLEntities().length);
 				domainUser.addValue2CountOfHashtags((double) twitter4jStatus.getHashtagEntities().length);
 				domainUser.addValue2CountOfMentionedUsers((double) twitter4jStatus.getUserMentionEntities().length);

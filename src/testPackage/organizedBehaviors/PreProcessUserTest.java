@@ -17,10 +17,12 @@ public class PreProcessUserTest {
 		User user = createTestUser();
 		// add it to preprocess db
 		BasicDBObject preprocessUser = insertPreProcessUser2Collection(requestId, user);
+		OrganizationDetector organizationDetector = new OrganizationDetector(requestId, true, "");
+
 		// create organization detector
-        OrganizationDetector organizationDetector = new OrganizationDetector(requestId,true,"");
-        organizationDetector.collectTweetsOfAllUsers(requestId);
-        organizationDetector.saveData4UserAnalysis();
+		// organizationDetector.collectTweetsOfAllUsers(requestId);
+		User domainUser = organizationDetector.analyzePreProcessUser(preprocessUser);
+		// organizationDetector.saveData4UserAnalysis();
 		// delete the obj
 		DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().remove(requestIdObj);
 	}
