@@ -455,31 +455,28 @@ public class OrganizationDetector implements Runnable {
 		// parse user
 		User domainUser = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
 		// get tweets of users in an interval of two weeks
-		// BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id",
-		// Long.valueOf(domainUser.getUserId())).append(
-		// "createdAt",
-		// new
-		// BasicDBObject("$gt",DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(),
-		// 2))
-		// .append("$lt",
-		// DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(),
-		// 2)));
+		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId())).append(
+				"createdAt",
+				new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(), 2))
+						.append("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(), 2)));
 
-		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("id", Long.valueOf(633531082739216384l));
+		// BasicDBObject tweetsRetrievalQuery = new BasicDBObject("id",
+		// Long.valueOf(633531082739216384l));
 		BasicDBObject keys = new BasicDBObject("_id", false).append("createdAt", false).append("user.createdAt", false);
 
-		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery,keys);
+		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery, keys);
 		try {
 			while (tweetsOfUser.hasNext()) {
 				UserTweets userTweet = new UserTweets();
 				String string = tweetsOfUser.next().toString();
 				System.out.println("Tweet is : " + string);
-				
-//				Status twitter4jStatus = (Status) TwitterObjectFactory.createObject(string);
-				
+
+				// Status twitter4jStatus = (Status)
+				// TwitterObjectFactory.createObject(string);
+
 				Gson gson = new Gson();
 				Status twitter4jStatus = (Status) gson.fromJson(string, DrnjStatusJSONImpl.class);
-				
+
 				domainUser.addValue2CountOfUsedUrls((double) twitter4jStatus.getURLEntities().length);
 				domainUser.addValue2CountOfHashtags((double) twitter4jStatus.getHashtagEntities().length);
 				domainUser.addValue2CountOfMentionedUsers((double) twitter4jStatus.getUserMentionEntities().length);

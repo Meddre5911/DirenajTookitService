@@ -6,12 +6,16 @@ import direnaj.domain.User;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.functionalities.OrganizationDetector;
-import direnaj.twitter.UserAccountPropertyAnalyser;
 import direnaj.util.DateTimeUtils;
 
 public class PreProcessUserTest {
 
 	public static void main(String[] args) throws Exception {
+		// delete object
+		DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().remove(new BasicDBObject());
+		DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().remove(new BasicDBObject());
+		DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().remove(new BasicDBObject());
+		// create test entity
 		String requestId = "20160211";
 		BasicDBObject requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
 		User user = createTestUser();
@@ -20,11 +24,8 @@ public class PreProcessUserTest {
 		OrganizationDetector organizationDetector = new OrganizationDetector(requestId, true, "");
 
 		// create organization detector
-		// organizationDetector.collectTweetsOfAllUsers(requestId);
-		User domainUser = organizationDetector.analyzePreProcessUser(preprocessUser);
-		// organizationDetector.saveData4UserAnalysis();
-		// delete the obj
-		DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().remove(requestIdObj);
+		organizationDetector.collectTweetsOfAllUsers(requestId);
+		organizationDetector.saveData4UserAnalysis();
 	}
 
 	private static BasicDBObject insertPreProcessUser2Collection(String requestId, User user) {

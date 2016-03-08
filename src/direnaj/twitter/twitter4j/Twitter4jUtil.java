@@ -115,7 +115,7 @@ public class Twitter4jUtil {
 		// get json of object
 		Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, ser).create();
 		String json = gson.toJson(userTimeline);
-		System.out.println(json + "\n");
+//		System.out.println(json + "\n");
 
 		
 		// save object to db
