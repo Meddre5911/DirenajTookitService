@@ -1,5 +1,7 @@
 package direnaj.functionalities;
 
+import java.lang.reflect.Type;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -18,6 +20,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BulkWriteOperation;
 import com.mongodb.DBCollection;
@@ -43,8 +51,10 @@ import direnaj.util.DateTimeUtils;
 import direnaj.util.ListUtils;
 import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
+import twitter4j.MediaEntity;
+import twitter4j.MediaEntity.Size;
+import twitter4j.MediaEntityJSONImpl;
 import twitter4j.Status;
-import twitter4j.StatusJSONImpl;
 
 public class OrganizationDetector implements Runnable {
 
@@ -457,7 +467,7 @@ public class OrganizationDetector implements Runnable {
 		// get tweets of users in an interval of two weeks
 		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId())).append(
 				"createdAt",
-				new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(), 2))
+				new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(), 100))
 						.append("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(), 2)));
 
 		// BasicDBObject tweetsRetrievalQuery = new BasicDBObject("id",
@@ -471,10 +481,50 @@ public class OrganizationDetector implements Runnable {
 				String string = tweetsOfUser.next().toString();
 				System.out.println("Tweet is : " + string);
 
-				// Status twitter4jStatus = (Status)
-				// TwitterObjectFactory.createObject(string);
+				JsonDeserializer<Date> dateJsonDeserializer = new JsonDeserializer<Date>() {
+					@Override
+					public Date deserialize(JsonElement json, Type arg1,
+							com.google.gson.JsonDeserializationContext arg2) throws JsonParseException {
+						SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy");
+						Date date = null;
+						String dateStr = json.getAsJsonPrimitive().getAsString();
+						try {
+							date = sdf.parse(dateStr);
+						} catch (ParseException e) {
+							try {
+								date = DateTimeUtils.getTwitterDateFromRataDieFormat(dateStr);
+							} catch (Exception e1) {
+								Logger.getLogger(OrganizationDetector.class.getSimpleName())
+										.error("Date Format Exception.", e);
+							}
+						}
+						return date;
+					}
+				};
 
-				Gson gson = new Gson();
+				JsonDeserializer<MediaEntity.Size> mediaEntitysizeDeserializer = new JsonDeserializer<MediaEntity.Size>() {
+					@Override
+					public Size deserialize(JsonElement arg0, Type arg1, JsonDeserializationContext arg2)
+							throws JsonParseException {
+						try {
+//							twitter4j.MediaEntityJSONImpl.Size size = new MediaEntityJSONImpl.Size();
+//							JsonObject asJsonObject = arg0.getAsJsonObject();
+//							size.setHeight(asJsonObject.get("height").getAsInt());
+//							size.setWidth(asJsonObject.get("width").getAsInt());
+//							size.setResize(asJsonObject.get("resize").getAsInt());
+//							return size;
+						} catch (Exception e) {
+							Logger.getLogger(OrganizationDetector.class.getSimpleName())
+									.error("MediaEntity.Size Deserialize Exception.", e);
+						}
+						return null;
+					}
+				};
+
+				
+				// get json of object
+				Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, dateJsonDeserializer)
+						.registerTypeAdapter(MediaEntity.Size.class, mediaEntitysizeDeserializer).create();
 				Status twitter4jStatus = (Status) gson.fromJson(string, DrnjStatusJSONImpl.class);
 
 				domainUser.addValue2CountOfUsedUrls((double) twitter4jStatus.getURLEntities().length);

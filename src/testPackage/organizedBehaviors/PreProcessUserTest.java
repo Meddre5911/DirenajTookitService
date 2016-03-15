@@ -15,6 +15,7 @@ public class PreProcessUserTest {
 		DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().remove(new BasicDBObject());
 		DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().remove(new BasicDBObject());
 		DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().remove(new BasicDBObject());
+		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().remove(new BasicDBObject());
 		// create test entity
 		String requestId = "20160211";
 		BasicDBObject requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);

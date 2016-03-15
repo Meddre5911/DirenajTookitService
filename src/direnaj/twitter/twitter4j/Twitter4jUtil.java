@@ -44,13 +44,13 @@ public class Twitter4jUtil {
 	}
 
 	private static void getEarliestTweets(User user) throws TwitterException {
-		Date lowestDate = DateTimeUtils.subtractWeeksFromDateInDateFormat(user.getCampaignTweetPostDate(), 2);
+		Date lowestDate = DateTimeUtils.subtractWeeksFromDateInDateFormat(user.getCampaignTweetPostDate(), 200);
 		// first collect earlier tweets
 		int pageNumber = 1;
-		Paging paging = new Paging();
-		paging.setCount(200);
+		Paging paging = new Paging(1,200);
+//		paging.setCount(200);
 		paging.setMaxId(Long.valueOf(user.getCampaignTweetId()));
-		paging.setPage(pageNumber);
+//		paging.setPage(pageNumber);
 		for (int i = 0; i < 20; i++) {
 			boolean isEarlierTweetsRemaining = false;
 			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
@@ -59,8 +59,8 @@ public class Twitter4jUtil {
 			saveTweets(userTimeline);
 			// Status To JSON String
 			int arraySize = userTimeline.size();
-			if (arraySize >= 199) {
-				Date tweetCreationDate = userTimeline.get(198).getCreatedAt();
+			if (arraySize >= 179) {
+				Date tweetCreationDate = userTimeline.get(178).getCreatedAt();
 				if (tweetCreationDate.after(lowestDate)) {
 					paging.setPage(++pageNumber);
 					isEarlierTweetsRemaining = true;
@@ -75,7 +75,7 @@ public class Twitter4jUtil {
 
 	private static void getRecentTweets(User user) throws TwitterException {
 		// get lowest & highest dates
-		Date highestDate = DateTimeUtils.addWeeksToDateInDateFormat(user.getCampaignTweetPostDate(), 2);
+		Date highestDate = DateTimeUtils.addWeeksToDateInDateFormat(user.getCampaignTweetPostDate(), 200);
 		// first collect earlier tweets
 		int pageNumber = 1;
 		Paging paging = new Paging();
