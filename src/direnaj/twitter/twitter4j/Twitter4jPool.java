@@ -33,6 +33,7 @@ public class Twitter4jPool {
 		    build.setOAuthAccessTokenSecret(accessTokenSecret);
 		    build.setOAuthConsumerKey(consumerKey);
 		    build.setOAuthConsumerSecret(consumerSecret);
+		    build.setIncludeMyRetweetEnabled(true);
 		    OAuthAuthorization auth = new OAuthAuthorization(build.build());
 		    Twitter twitter = new TwitterFactory().getInstance(auth);
 			twitter4jObjects.add(twitter);

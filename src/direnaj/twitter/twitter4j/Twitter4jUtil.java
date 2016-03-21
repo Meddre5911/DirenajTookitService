@@ -9,7 +9,6 @@ import org.apache.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
@@ -23,7 +22,6 @@ import twitter4j.Paging;
 import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.TwitterException;
-import twitter4j.URLEntity;
 
 public class Twitter4jUtil {
 
@@ -44,13 +42,11 @@ public class Twitter4jUtil {
 	}
 
 	private static void getEarliestTweets(User user) throws TwitterException {
-		Date lowestDate = DateTimeUtils.subtractWeeksFromDateInDateFormat(user.getCampaignTweetPostDate(), 200);
+		Date lowestDate = DateTimeUtils.subtractWeeksFromDateInDateFormat(user.getCampaignTweetPostDate(), 2);
 		// first collect earlier tweets
 		int pageNumber = 1;
-		Paging paging = new Paging(1,200);
-//		paging.setCount(200);
+		Paging paging = new Paging(1, 200);
 		paging.setMaxId(Long.valueOf(user.getCampaignTweetId()));
-//		paging.setPage(pageNumber);
 		for (int i = 0; i < 20; i++) {
 			boolean isEarlierTweetsRemaining = false;
 			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
@@ -59,12 +55,11 @@ public class Twitter4jUtil {
 			saveTweets(userTimeline);
 			// Status To JSON String
 			int arraySize = userTimeline.size();
-			if (arraySize >= 179) {
-				Date tweetCreationDate = userTimeline.get(178).getCreatedAt();
+			if (arraySize >= 1) {
+				Date tweetCreationDate = userTimeline.get(arraySize - 1).getCreatedAt();
 				if (tweetCreationDate.after(lowestDate)) {
-					paging.setPage(++pageNumber);
 					isEarlierTweetsRemaining = true;
-					System.out.println("Increasing Page Number");
+					paging.setPage(++pageNumber);
 				}
 			}
 			if (!isEarlierTweetsRemaining) {
@@ -75,13 +70,11 @@ public class Twitter4jUtil {
 
 	private static void getRecentTweets(User user) throws TwitterException {
 		// get lowest & highest dates
-		Date highestDate = DateTimeUtils.addWeeksToDateInDateFormat(user.getCampaignTweetPostDate(), 200);
+		Date highestDate = DateTimeUtils.addWeeksToDateInDateFormat(user.getCampaignTweetPostDate(), 2);
 		// first collect earlier tweets
 		int pageNumber = 1;
-		Paging paging = new Paging();
-		paging.setCount(200);
+		Paging paging = new Paging(1, 200);
 		paging.setSinceId(Long.valueOf(user.getCampaignTweetId()));
-		paging.setPage(pageNumber);
 		for (int i = 0; i < 20; i++) {
 			boolean isRecentTweetsRemaining = false;
 			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
@@ -90,8 +83,8 @@ public class Twitter4jUtil {
 			saveTweets(userTimeline);
 			// Status To JSON String
 			int arraySize = userTimeline.size();
-			if (arraySize >= 199) {
-				Date tweetCreationDate = userTimeline.get(198).getCreatedAt();
+			if (arraySize >= 1) {
+				Date tweetCreationDate = userTimeline.get(arraySize - 1).getCreatedAt();
 				if (tweetCreationDate.before(highestDate)) {
 					paging.setPage(++pageNumber);
 					isRecentTweetsRemaining = true;
@@ -104,23 +97,26 @@ public class Twitter4jUtil {
 	}
 
 	private static void saveTweets(ResponseList<Status> userTimeline) {
-		// serialize Date in object in RataDie Format
-		JsonSerializer<Date> ser = new JsonSerializer<Date>() {
-			@Override
-			public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
-				return src == null ? null : new JsonPrimitive(DateTimeUtils.getRataDieFormat4Date(src));
-			}
-		};
-		
-		// get json of object
-		Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, ser).create();
-		String json = gson.toJson(userTimeline);
-//		System.out.println(json + "\n");
+		if (userTimeline != null && userTimeline.size() > 0) {
 
-		
-		// save object to db
-		List<DBObject> mongoDbObject = (List<DBObject>) JSON.parse(json);
-		DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().insert(mongoDbObject);
+			// serialize Date in object in RataDie Format
+			JsonSerializer<Date> ser = new JsonSerializer<Date>() {
+				@Override
+				public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
+					return src == null ? null : new JsonPrimitive(DateTimeUtils.getRataDieFormat4Date(src));
+				}
+			};
+
+			// get json of object
+			Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, ser).create();
+			String json = gson.toJson(userTimeline);
+			// System.out.println(json + "\n");
+
+			// save object to db
+			@SuppressWarnings("unchecked")
+			List<DBObject> mongoDbObject = (List<DBObject>) JSON.parse(json);
+			DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().insert(mongoDbObject);
+		}
 	}
 
 	// public static void main(String[] args) throws Exception {

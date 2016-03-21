@@ -479,7 +479,7 @@ public class OrganizationDetector implements Runnable {
 			while (tweetsOfUser.hasNext()) {
 				UserTweets userTweet = new UserTweets();
 				String string = tweetsOfUser.next().toString();
-				System.out.println("Tweet is : " + string);
+//				System.out.println("Tweet is : " + string);
 
 				JsonDeserializer<Date> dateJsonDeserializer = new JsonDeserializer<Date>() {
 					@Override
@@ -711,7 +711,7 @@ public class OrganizationDetector implements Runnable {
 		}
 		if (!disableGraphAnalysis) {
 			calculateClosenessCentrality(userIds);
-		}
+		}	
 	}
 
 	/**

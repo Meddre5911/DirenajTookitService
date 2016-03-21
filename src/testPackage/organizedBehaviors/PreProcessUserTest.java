@@ -55,8 +55,8 @@ public class PreProcessUserTest {
 		user.setProtected(true);
 		user.setVerified(false);
 		user.setCreationDate(DateTimeUtils.getTwitterDateFromRataDieFormat("734046.381400463"));
-		user.setCampaignTweetPostDate(DateTimeUtils.getTwitterDateFromRataDieFormat("735721.8438773149"));
-		user.setCampaignTweetId("462324442736394240");
+		user.setCampaignTweetPostDate(DateTimeUtils.getTwitterDate("Sun Jan 24 15:30:25 +0000 2016"));
+		user.setCampaignTweetId("691281908727156736");
 		return user;
 	}
 
