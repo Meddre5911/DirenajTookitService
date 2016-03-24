@@ -29,6 +29,7 @@ public class PropertiesUtil {
             Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("mongo.server.port"));
             Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("mongo.bulk.insert.size"));
             Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("mongo.usedDB"));
+            Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("tweet.checkInterval.inWeeks"));
         } catch (IOException ex) {
             ex.printStackTrace();
         } finally {

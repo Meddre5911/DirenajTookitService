@@ -34,4 +34,16 @@ public class DirenajMongoDriverUtil {
 		return dbObjects;
 	}
 
+	public static String getSuitableColumnName(String str) {
+		// mongo collection column can not have '.' in it
+		if (str.contains(".")) {
+			str = str.replace('.', '_');
+		}
+		// mongo collection column can start with '$'
+		if (str.startsWith("$")) {
+			str = str.substring(1);
+		}
+		return str;
+	}
+
 }

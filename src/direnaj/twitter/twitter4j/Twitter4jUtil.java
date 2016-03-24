@@ -18,6 +18,7 @@ import com.mongodb.util.JSON;
 import direnaj.domain.User;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.util.DateTimeUtils;
+import direnaj.util.PropertiesUtil;
 import twitter4j.Paging;
 import twitter4j.ResponseList;
 import twitter4j.Status;
@@ -42,7 +43,9 @@ public class Twitter4jUtil {
 	}
 
 	private static void getEarliestTweets(User user) throws TwitterException {
-		Date lowestDate = DateTimeUtils.subtractWeeksFromDateInDateFormat(user.getCampaignTweetPostDate(), 2);
+		Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inWeeks", 2);
+		Date lowestDate = DateTimeUtils.subtractWeeksFromDateInDateFormat(user.getCampaignTweetPostDate(),
+				tweetDuration);
 		// first collect earlier tweets
 		int pageNumber = 1;
 		Paging paging = new Paging(1, 200);
@@ -70,7 +73,8 @@ public class Twitter4jUtil {
 
 	private static void getRecentTweets(User user) throws TwitterException {
 		// get lowest & highest dates
-		Date highestDate = DateTimeUtils.addWeeksToDateInDateFormat(user.getCampaignTweetPostDate(), 2);
+		Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inWeeks", 2);
+		Date highestDate = DateTimeUtils.addWeeksToDateInDateFormat(user.getCampaignTweetPostDate(), tweetDuration);
 		// first collect earlier tweets
 		int pageNumber = 1;
 		Paging paging = new Paging(1, 200);

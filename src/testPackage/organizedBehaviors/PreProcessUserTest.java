@@ -1,6 +1,7 @@
 package testPackage.organizedBehaviors;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 
 import direnaj.domain.User;
 import direnaj.driver.DirenajMongoDriver;
@@ -16,6 +17,16 @@ public class PreProcessUserTest {
 		DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().remove(new BasicDBObject());
 		DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().remove(new BasicDBObject());
 		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().remove(new BasicDBObject());
+		DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityIDF().remove(new BasicDBObject());
+		
+		
+		DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().remove(new BasicDBObject());
+		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo().remove(new BasicDBObject());
+		DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityTF_IDF().remove(new BasicDBObject());
+		DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity().remove(new BasicDBObject());
+		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().remove(new BasicDBObject());
+		
+		
 		// create test entity
 		String requestId = "20160211";
 		BasicDBObject requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
@@ -27,6 +38,7 @@ public class PreProcessUserTest {
 		// create organization detector
 		organizationDetector.collectTweetsOfAllUsers(requestId);
 		organizationDetector.saveData4UserAnalysis();
+		organizationDetector.calculateTweetSimilarities();
 	}
 
 	private static BasicDBObject insertPreProcessUser2Collection(String requestId, User user) {

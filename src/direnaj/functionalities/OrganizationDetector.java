@@ -1,7 +1,6 @@
 package direnaj.functionalities;
 
 import java.lang.reflect.Type;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -24,7 +23,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BulkWriteOperation;
@@ -53,7 +51,6 @@ import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
 import twitter4j.MediaEntity;
 import twitter4j.MediaEntity.Size;
-import twitter4j.MediaEntityJSONImpl;
 import twitter4j.Status;
 
 public class OrganizationDetector implements Runnable {
@@ -246,7 +243,7 @@ public class OrganizationDetector implements Runnable {
 		}
 	}
 
-	private void calculateTweetSimilarities() {
+	public void calculateTweetSimilarities() {
 		// FIXME 20151224 Mongo icin gerekecek index'leri sonradan tanımlamayi
 		// unutma
 		// FIXME 20160204 Yeni tweet yapısını kurduktan sonra buralarda düzeltme
@@ -281,6 +278,8 @@ public class OrganizationDetector implements Runnable {
 			Map<String, Double> similarityOfTweetWithOtherTweets = CosineSimilarityUtil
 					.getEmptyMap4SimilarityDecisionTree();
 			for (String tweetId : allTweetIdsClone) {
+				Logger.getLogger(OrganizationDetector.class)
+						.debug("Comparing TweetId : " + queryTweetId + " to TweetId : " + tweetId);
 				BasicDBObject comparedTweetTFIdfValueObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 						requestId).append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
 				BasicDBObject queryTfIdfValues = (BasicDBObject) DirenajMongoDriver.getInstance()
@@ -288,7 +287,7 @@ public class OrganizationDetector implements Runnable {
 				List<BasicDBObject> comparedTfIdfList = (List<BasicDBObject>) queryTfIdfValues
 						.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_LIST);
 
-				Map<String, Double> comparedTweetWordTfIdfMap = (Map<String, Double>) comparedTweetTFIdfValueObj
+				Map<String, Double> comparedTweetWordTfIdfMap = (Map<String, Double>) queryTfIdfValues
 						.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_HASHMAP);
 
 				double comparedTweetVectorLength = CosineSimilarityUtil
@@ -384,7 +383,7 @@ public class OrganizationDetector implements Runnable {
 					DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityIDF(), wordIdfValues, false);
 		}
 		DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
-				DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityIDF(), wordIdfValues, false);
+				DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityIDF(), wordIdfValues, true);
 
 	}
 
@@ -409,12 +408,14 @@ public class OrganizationDetector implements Runnable {
 				double tweetWordCount = (double) tweetWords.length;
 				// count tweet words
 				for (String word : tweetWords) {
-					word = word.toLowerCase(Locale.US);
-					double wordCount = 0d;
-					if (wordCounts.containsKey(word)) {
-						wordCount = wordCounts.get(word);
+					if (!TextUtils.isEmpty(word)) {
+						word = DirenajMongoDriverUtil.getSuitableColumnName(word.toLowerCase(Locale.US));
+						double wordCount = 0d;
+						if (wordCounts.containsKey(word)) {
+							wordCount = wordCounts.get(word);
+						}
+						wordCounts.put(word, ++wordCount);
 					}
-					wordCounts.put(word, ++wordCount);
 				}
 				// normalize tweet word counts
 				for (Entry<String, Double> wordCount : wordCounts.entrySet()) {
@@ -465,10 +466,15 @@ public class OrganizationDetector implements Runnable {
 		// parse user
 		User domainUser = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
 		// get tweets of users in an interval of two weeks
-		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId())).append(
-				"createdAt",
-				new BasicDBObject("$gt", DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(), 100))
-						.append("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(), 2)));
+
+		Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inWeeks", 2);
+		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId()))
+				.append("createdAt",
+						new BasicDBObject("$gt",
+								DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(),
+										tweetDuration)).append("$lt",
+												DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(),
+														tweetDuration)));
 
 		// BasicDBObject tweetsRetrievalQuery = new BasicDBObject("id",
 		// Long.valueOf(633531082739216384l));
@@ -479,20 +485,20 @@ public class OrganizationDetector implements Runnable {
 			while (tweetsOfUser.hasNext()) {
 				UserTweets userTweet = new UserTweets();
 				String string = tweetsOfUser.next().toString();
-//				System.out.println("Tweet is : " + string);
+				System.out.println(string + ",");
 
 				JsonDeserializer<Date> dateJsonDeserializer = new JsonDeserializer<Date>() {
 					@Override
 					public Date deserialize(JsonElement json, Type arg1,
 							com.google.gson.JsonDeserializationContext arg2) throws JsonParseException {
-						SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy");
 						Date date = null;
+						SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy");
 						String dateStr = json.getAsJsonPrimitive().getAsString();
 						try {
-							date = sdf.parse(dateStr);
-						} catch (ParseException e) {
+							date = DateTimeUtils.getTwitterDateFromRataDieFormat(dateStr);
+						} catch (Exception e) {
 							try {
-								date = DateTimeUtils.getTwitterDateFromRataDieFormat(dateStr);
+								date = sdf.parse(dateStr);
 							} catch (Exception e1) {
 								Logger.getLogger(OrganizationDetector.class.getSimpleName())
 										.error("Date Format Exception.", e);
@@ -502,17 +508,19 @@ public class OrganizationDetector implements Runnable {
 					}
 				};
 
+				// FIXME ileride burayı düzeltmemiz gerekebilir
 				JsonDeserializer<MediaEntity.Size> mediaEntitysizeDeserializer = new JsonDeserializer<MediaEntity.Size>() {
 					@Override
 					public Size deserialize(JsonElement arg0, Type arg1, JsonDeserializationContext arg2)
 							throws JsonParseException {
 						try {
-//							twitter4j.MediaEntityJSONImpl.Size size = new MediaEntityJSONImpl.Size();
-//							JsonObject asJsonObject = arg0.getAsJsonObject();
-//							size.setHeight(asJsonObject.get("height").getAsInt());
-//							size.setWidth(asJsonObject.get("width").getAsInt());
-//							size.setResize(asJsonObject.get("resize").getAsInt());
-//							return size;
+							// twitter4j.MediaEntityJSONImpl.Size size = new
+							// MediaEntityJSONImpl.Size();
+							// JsonObject asJsonObject = arg0.getAsJsonObject();
+							// size.setHeight(asJsonObject.get("height").getAsInt());
+							// size.setWidth(asJsonObject.get("width").getAsInt());
+							// size.setResize(asJsonObject.get("resize").getAsInt());
+							// return size;
 						} catch (Exception e) {
 							Logger.getLogger(OrganizationDetector.class.getSimpleName())
 									.error("MediaEntity.Size Deserialize Exception.", e);
@@ -521,7 +529,6 @@ public class OrganizationDetector implements Runnable {
 					}
 				};
 
-				
 				// get json of object
 				Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, dateJsonDeserializer)
 						.registerTypeAdapter(MediaEntity.Size.class, mediaEntitysizeDeserializer).create();
@@ -711,7 +718,7 @@ public class OrganizationDetector implements Runnable {
 		}
 		if (!disableGraphAnalysis) {
 			calculateClosenessCentrality(userIds);
-		}	
+		}
 	}
 
 	/**

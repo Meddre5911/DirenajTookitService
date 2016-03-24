@@ -21,6 +21,8 @@ public class TweetPostSourceAnalyser {
     private TweetPostSourceAnalyser() {
         // init twitter regex
         twitterRegexList.add("Twitter for");
+        twitterRegexList.add("Twitter Web Client");
+        twitterRegexList.add("mobile.twitter");
         // init mobile regex
         mobileRegexList.add("Echofon");
         mobileRegexList.add("Gravity");

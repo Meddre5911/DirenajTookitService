@@ -5,9 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import com.mongodb.BasicDBObject;
 
 import direnaj.driver.MongoCollectionFieldNames;
+import direnaj.functionalities.OrganizationDetector;
 
 public class CosineSimilarityUtil {
 
@@ -70,25 +73,34 @@ public class CosineSimilarityUtil {
 	public static void findTweetSimilarityRange(Map<String, Double> similarityOfTweetWithOtherTweets, double dotProduct,
 			double tweetVectorLength, double comparedTweetVectorLength) {
 		String similarityKey = "";
-		double cosSimilarity = dotProduct / (tweetVectorLength * comparedTweetVectorLength);
-
-		if (cosSimilarity < -1d / 2d) {
-			similarityKey = MongoCollectionFieldNames.NON_SIMILAR;
-		} else if (cosSimilarity < 0d) {
-			similarityKey = MongoCollectionFieldNames.NOTR;
-		} else if (cosSimilarity < 1d / 2d) {
-			similarityKey = MongoCollectionFieldNames.SLIGHTLY_SIMILAR;
-		} else if (cosSimilarity < Math.sqrt(2d) / 2d) {
-			similarityKey = MongoCollectionFieldNames.SIMILAR;
-		} else if (cosSimilarity < Math.sqrt(3d) / 2d) {
-			similarityKey = MongoCollectionFieldNames.VERY_SIMILAR;
-		} else if (cosSimilarity <= 1d) {
-			similarityKey = MongoCollectionFieldNames.MOST_SIMILAR;
-		} else {
-			// FIXME throw exception
+		double cosSimilarity = 0d;
+		try {
+			if (tweetVectorLength == 0d || comparedTweetVectorLength == 0d) {
+				similarityKey = MongoCollectionFieldNames.NON_SIMILAR;
+			} else {
+				cosSimilarity = dotProduct / (tweetVectorLength * comparedTweetVectorLength);
+				if (cosSimilarity < -1d / 2d) {
+					similarityKey = MongoCollectionFieldNames.NON_SIMILAR;
+				} else if (cosSimilarity < 0d) {
+					similarityKey = MongoCollectionFieldNames.NOTR;
+				} else if (cosSimilarity < 1d / 2d) {
+					similarityKey = MongoCollectionFieldNames.SLIGHTLY_SIMILAR;
+				} else if (cosSimilarity < Math.sqrt(2d) / 2d) {
+					similarityKey = MongoCollectionFieldNames.SIMILAR;
+				} else if (cosSimilarity < Math.sqrt(3d) / 2d) {
+					similarityKey = MongoCollectionFieldNames.VERY_SIMILAR;
+				} else if (cosSimilarity <= 1d) {
+					similarityKey = MongoCollectionFieldNames.MOST_SIMILAR;
+				}
+			}
+			Double similarTweetCount = similarityOfTweetWithOtherTweets.get(similarityKey);
+			similarityOfTweetWithOtherTweets.put(similarityKey, ++similarTweetCount);
+		} catch (NullPointerException e) {
+			Logger.getLogger(CosineSimilarityUtil.class)
+					.error("Error in findTweetSimilarityRange. Dot Product : " + dotProduct + " - TweetVectorLength : "
+							+ tweetVectorLength + " - ComparedTweetVectorLength : " + comparedTweetVectorLength
+							+ " - CosSimilarity : " + cosSimilarity, e);
 		}
-		Double similarTweetCount = similarityOfTweetWithOtherTweets.get(similarityKey);
-		similarityOfTweetWithOtherTweets.put(similarityKey, ++similarTweetCount);
 	}
 
 }
