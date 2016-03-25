@@ -485,7 +485,8 @@ public class OrganizationDetector implements Runnable {
 			while (tweetsOfUser.hasNext()) {
 				UserTweets userTweet = new UserTweets();
 				String string = tweetsOfUser.next().toString();
-				System.out.println(string + ",");
+				// FIXME tweet'leri system.out'a yazmak istediğinde aç
+				// System.out.println(string + ",");
 
 				JsonDeserializer<Date> dateJsonDeserializer = new JsonDeserializer<Date>() {
 					@Override
