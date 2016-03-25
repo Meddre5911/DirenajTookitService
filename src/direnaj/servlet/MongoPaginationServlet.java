@@ -90,6 +90,32 @@ public class MongoPaginationServlet extends HttpServlet {
                     Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
                 }
 
+            }else if("requestTweetSimilaritiesInRequest".equals(pageType)){
+            	
+            	 String requestId = request.getParameter("retrievedRequestId");
+                 DBCollection tweetSimilarityCollection = DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity();
+                 BasicDBObject query = new BasicDBObject("requestId", requestId);
+
+                 if (session.getAttribute("similarTweetsDataCount") == null) {
+                     recordCounts = (int) tweetSimilarityCollection.count(query);
+                     session.setAttribute("similarTweetsDataCount", recordCounts);
+                 } else {
+                     recordCounts = Integer.valueOf(session.getAttribute("similarTweetsDataCount").toString());
+                 }
+                 // get cursor
+                 DBCursor paginatedResult = tweetSimilarityCollection.find(query).skip(pageNumber * pageDisplayLength)
+                         .limit(pageDisplayLength);
+                 // get objects from cursor
+                 try {
+                     while (paginatedResult.hasNext()) {
+                         jsonArray.put(new JSONObject(paginatedResult.next().toString()));
+                     }
+                 } catch (JSONException e) {
+                     Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
+                 }
+            	
+            	
+            	
             }
             responseJSonObject.put("iTotalRecords", recordCounts);
             responseJSonObject.put("iTotalDisplayRecords", recordCounts);

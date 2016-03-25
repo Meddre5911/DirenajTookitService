@@ -37,6 +37,15 @@ $(document).ready(function() {
                		}
                }
             },
+            { "mData": "_id", 
+              "mRender": function ( data, type, row ) {
+               		if(row.processCompleted==false){
+               			return data;
+               		}else {
+	            	  return '<a href=listTweetSimilaritiesInOrganizedBehaviourRequests.jsp?pageType=requestTweetSimilaritiesInRequest&requestId='+data+'>'+data+'</a>';
+               		}
+               }
+            },
             { "mData": "requestType" },
             { "mData": "requestDefinition" },
             { "mData": "campaignId" },
@@ -59,6 +68,7 @@ $(document).ready(function() {
         <thead>
             <tr>
                 <th>Request Id</th>
+                <th>Tweet Similarities</th>
                 <th>Request Type</th>
                 <th>Request Definition</th>
                 <th>Campaign Id</th>

@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 
 import direnaj.domain.User;
+import direnaj.util.TextUtils;
 
 public class DirenajMongoDriverUtil {
 
@@ -44,6 +46,12 @@ public class DirenajMongoDriverUtil {
 			str = str.substring(1);
 		}
 		return str;
+	}
+
+	public static String getTweetText4CosSimilarity(Long tweetId) {
+		BasicDBObject query = new BasicDBObject("id", tweetId);
+		DBObject findOne = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().findOne(query);
+		return TextUtils.getNotNullValue(findOne.get("text"));
 	}
 
 }

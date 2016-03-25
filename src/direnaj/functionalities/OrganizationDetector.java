@@ -244,10 +244,7 @@ public class OrganizationDetector implements Runnable {
 	}
 
 	public void calculateTweetSimilarities() {
-		// FIXME 20151224 Mongo icin gerekecek index'leri sonradan tanımlamayi
-		// unutma
-		// FIXME 20160204 Yeni tweet yapısını kurduktan sonra buralarda düzeltme
-		// yapmamız gerekebilir
+		// FIXME 20151224 Mongo icin gerekecek index'leri sonradan tanımla
 		calculateTFValues();
 		calculateIDFValues();
 		calculateTFIDFValues();
@@ -268,6 +265,12 @@ public class OrganizationDetector implements Runnable {
 					requestId).append(MongoCollectionFieldNames.MONGO_TWEET_ID, queryTweetId);
 			BasicDBObject tweetTfIdfValueObject = (BasicDBObject) DirenajMongoDriver.getInstance()
 					.getOrgBehaviourProcessCosSimilarityTF_IDF().findOne(queryTweetTFIdfQueryObj);
+
+			if (Boolean.valueOf(
+					PropertiesUtil.getInstance().getProperty("tweet.calculateSimilarity.showTweetTexts", "false"))) {
+				String tweetText = DirenajMongoDriverUtil.getTweetText4CosSimilarity(Long.valueOf(queryTweetId));
+				queryTweetTFIdfQueryObj.put(MongoCollectionFieldNames.MONGO_TWEET_TEXT, tweetText);
+			}
 			ArrayList<String> queryTweetWords = (ArrayList<String>) tweetTfIdfValueObject
 					.get(MongoCollectionFieldNames.MONGO_TWEET_WORDS);
 			List<BasicDBObject> tfIdfList = (List<BasicDBObject>) tweetTfIdfValueObject
