@@ -349,9 +349,9 @@ public class OrganizationDetector implements Runnable {
 				domainUser.incrementPostDeviceCount(twitter4jStatus.getSource());
 				domainUser.incrementPostCount();
 				// get user tweet data
-				if (twitter4jStatus.getText().contains(tracedSingleHashtag)) {
-					userTweet.setHashtagTweet(true);
-				}
+//				if (twitter4jStatus.getText().contains(tracedSingleHashtag)) {
+//				}
+				userTweet.setHashtagTweet(true);
 				// check earliest tweet date
 				if (earliestTweetDate == null) {
 					earliestTweetDate = twitter4jStatus.getCreatedAt();

@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 
@@ -45,9 +46,7 @@ public class CosineSimilarity {
 		// calculate hashtag basis similarity
 		if (calculateHashTagSimilarity) {
 			CosineSimilarityRequestData requestData = new CosineSimilarityRequestData(
-					TextUtils.generateUniqueId4Request(), originalRequestId);
-			requestData.getQuery4OrgBehaviourTweetsOfRequestCollection()
-					.append(MongoCollectionFieldNames.MONGO_IS_HASHTAG_TWEET, true);
+					TextUtils.generateUniqueId4Request(), originalRequestId, true, null, null);
 			requestDataList.add(requestData);
 			if (calculateHourBasisSimilarity) {
 				prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval, true);
@@ -65,15 +64,8 @@ public class CosineSimilarity {
 				// calculate upper time
 				upperTime = DateTimeUtils.addHoursToDate(lowerTime, hourBasisInterval);
 				CosineSimilarityRequestData requestData4TimeInterval = new CosineSimilarityRequestData(
-						TextUtils.generateUniqueId4Request(), originalRequestId);
-				requestData4TimeInterval.getQuery4OrgBehaviourTweetsOfRequestCollection().append(
-						MongoCollectionFieldNames.MONGO_TWEET_CREATION_DATE,
-						new BasicDBObject("$gt", DateTimeUtils.getRataDieFormat4Date(lowerTime)).append("$lt",
-								DateTimeUtils.getRataDieFormat4Date(upperTime)));
-				if (isHashtagSpecificRequest) {
-					requestData4TimeInterval.getQuery4OrgBehaviourTweetsOfRequestCollection()
-							.append(MongoCollectionFieldNames.MONGO_IS_HASHTAG_TWEET, true);
-				}
+						TextUtils.generateUniqueId4Request(), originalRequestId, isHashtagSpecificRequest, lowerTime,
+						upperTime);
 				requestDataList.add(requestData4TimeInterval);
 				// assign new lower time
 				lowerTime = upperTime;
@@ -81,8 +73,23 @@ public class CosineSimilarity {
 		}
 	}
 
+	private void insertRequest2Mongo(CosineSimilarityRequestData requestData) {
+		DBCollection orgBehaviourRequestedSimilarityCalculations = DirenajMongoDriver.getInstance()
+				.getOrgBehaviourRequestedSimilarityCalculations();
+		BasicDBObject document = new BasicDBObject();
+		document.put("originalRequestId", originalRequestId);
+		document.put("requestId", requestData.getRequestId());
+		document.put("isHashtagRequest", requestData.isHashtagSpecificRequest());
+		document.put("lowerTimeInterval", requestData.getLowerTime());
+		document.put("upperTimeInterval", requestData.getUpperTime());
+		orgBehaviourRequestedSimilarityCalculations.insert(document);
+	}
+
 	public void calculateTweetSimilarities() {
 		for (CosineSimilarityRequestData requestData : requestDataList) {
+			// log request
+			insertRequest2Mongo(requestData);
+			// calculate similarity
 			calculateTFValues(requestData);
 			calculateIDFValues(requestData);
 			calculateTFIDFValues(requestData);

@@ -25,6 +25,7 @@ public class PreProcessUserTest {
 		DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityTF_IDF().remove(new BasicDBObject());
 		DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity().remove(new BasicDBObject());
 		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().remove(new BasicDBObject());
+		DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations().remove(new BasicDBObject());
 		
 		
 		// create test entity
