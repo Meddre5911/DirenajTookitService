@@ -5,6 +5,7 @@ public class UserTweets {
 	private String tweetId;
 	private String tweetText;
 	private boolean isHashtagTweet;
+	private double tweetCreationDate;
 
 	public boolean isHashtagTweet() {
 		return isHashtagTweet;
@@ -28,6 +29,14 @@ public class UserTweets {
 
 	public void setTweetId(String tweetId) {
 		this.tweetId = tweetId;
+	}
+
+	public double getTweetCreationDate() {
+		return tweetCreationDate;
+	}
+
+	public void setTweetCreationDate(double tweetCreationDate) {
+		this.tweetCreationDate = tweetCreationDate;
 	}
 
 }

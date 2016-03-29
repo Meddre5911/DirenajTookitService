@@ -6,7 +6,7 @@ import com.mongodb.DBCollection;
 import direnaj.domain.User;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.MongoCollectionFieldNames;
-import direnaj.functionalities.OrganizationDetector;
+import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
 import direnaj.util.DateTimeUtils;
 
 public class PreProcessUserTest {

@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
-import direnaj.functionalities.OrganizationDetector;
+import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
 import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
 

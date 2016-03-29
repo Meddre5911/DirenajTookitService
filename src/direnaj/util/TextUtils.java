@@ -1,5 +1,8 @@
 package direnaj.util;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class TextUtils {
 
 	public static boolean isEmpty(String str) {
@@ -41,5 +44,13 @@ public class TextUtils {
 		} catch (Exception e) {
 			return new Double(0);
 		}
+	}
+	
+	public static String generateUniqueId4Request() {
+		// get current time
+		SimpleDateFormat sdfDate = new SimpleDateFormat("yyyyMMddHHmmssSS");
+		Date now = DateTimeUtils.getLocalDate();
+		String strDate = sdfDate.format(now);
+		return strDate;
 	}
 }

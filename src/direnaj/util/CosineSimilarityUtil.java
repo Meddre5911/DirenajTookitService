@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
 import com.mongodb.BasicDBObject;
 
 import direnaj.driver.MongoCollectionFieldNames;
-import direnaj.functionalities.OrganizationDetector;
+import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
 
 public class CosineSimilarityUtil {
 

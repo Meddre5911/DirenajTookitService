@@ -8,6 +8,7 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_TWEET_ID = "tweetId";
 	public static final String MONGO_TWEET_TEXT = "tweetText";
 	public static final String MONGO_IS_HASHTAG_TWEET = "isHashtagTweet";
+	public static final String MONGO_TWEET_CREATION_DATE = "tweetCreationDate";
 
 	public static final String MONGO_WORD = "word";
 	public static final String MONGO_WORD_TF = "TF";
@@ -39,4 +40,9 @@ public interface MongoCollectionFieldNames {
 
 	// user variables
 	public static final String MONGO_USER_POST_TWEET_ID = "postTweetId";
+
+	public static final String MONGO_LATEST_TWEET_TIME = "latestTweetTimeInRequest";
+	public static final String MONGO_EARLIEST_TWEET_TIME = "earliestTweetTimeInRequest";
+	
+	
 }

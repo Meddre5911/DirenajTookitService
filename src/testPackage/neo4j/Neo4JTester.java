@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import direnaj.functionalities.OrganizationDetector;
+import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
 import direnaj.servlet.OrganizedBehaviourDetectionRequestType;
 import direnaj.util.ListUtils;
 
