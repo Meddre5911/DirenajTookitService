@@ -33,7 +33,7 @@ $(document).ready(function() {
                		if(row.processCompleted==false){
                			return data;
                		}else {
-	            	  return '<a href=listUsersInOrganizedBehaviourRequests.jsp?pageType=requestInputData&requestId='+data+'>'+data+'</a>';
+	            	  return '<a href=listUsersInOrganizedBehaviourRequests.jsp?pageType=requestInputData&requestId='+data+'>'+data+' - User Statistics</a>';
                		}
                }
             },
@@ -42,7 +42,7 @@ $(document).ready(function() {
                		if(row.processCompleted==false){
                			return data;
                		}else {
-	            	  return '<a href=listTweetSimilaritiesInOrganizedBehaviourRequests.jsp?pageType=requestTweetSimilaritiesInRequest&requestId='+data+'>'+data+'</a>';
+	            	  return '<a href=listTweetSimilarityCalculationsInRequests.jsp?pageType=requestTweetSimilarityCalculationsInRequest&requestId='+data+'>'+data+' - Calculation Requests</a>';
                		}
                }
             },
@@ -51,6 +51,8 @@ $(document).ready(function() {
             { "mData": "campaignId" },
             { "mData": "topHashtagCount" },
             { "mData": "tracedHashtag" },
+            { "mData": "earliestTweetTimeInRequest" },
+            { "mData": "latestTweetTimeInRequest" },
             { "mData": "processCompleted" },
         ]
     } );
@@ -68,12 +70,14 @@ $(document).ready(function() {
         <thead>
             <tr>
                 <th>Request Id</th>
-                <th>Tweet Similarities</th>
+                <th>Similarity Calculation Requests</th>
                 <th>Request Type</th>
                 <th>Request Definition</th>
                 <th>Campaign Id</th>
                 <th>Top Hashtag Count</th>
                 <th>Traced Hashtag</th>
+                <th>Earliest Tweet Time</th>
+                <th>Latest Tweet Time</th>
                 <th>Process Completed</th>
             </tr>
         </thead>       

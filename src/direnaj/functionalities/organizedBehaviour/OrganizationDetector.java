@@ -21,6 +21,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BulkWriteOperation;
@@ -48,6 +49,7 @@ import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
 import twitter4j.MediaEntity;
 import twitter4j.MediaEntity.Size;
+import twitter4j.MediaEntityJSONImpl;
 import twitter4j.Status;
 
 public class OrganizationDetector implements Runnable {
@@ -224,9 +226,15 @@ public class OrganizationDetector implements Runnable {
 	 * FIXME test amacli encapsule edildi
 	 */
 	public void calculateTweetSimilarities() {
+		Boolean calculateGeneralSimilarity = PropertiesUtil.getInstance()
+				.getBooleanProperty("cosSimilarity.calculateGeneralSimilarity", true);
+		Boolean calculateHashTagSimilarity = PropertiesUtil.getInstance()
+				.getBooleanProperty("cosSimilarity.calculateHashTagSimilarity", true);
+		Boolean calculateHourBasisSimilarity = PropertiesUtil.getInstance()
+				.getBooleanProperty("cosSimilarity.calculateHourBasisSimilarity", true);
 		// calculate similarity
-		new CosineSimilarity(requestId, true, true, true, earliestTweetDate, latestTweetDate)
-				.calculateTweetSimilarities();
+		new CosineSimilarity(requestId, calculateGeneralSimilarity, calculateHashTagSimilarity,
+				calculateHourBasisSimilarity, earliestTweetDate, latestTweetDate).calculateTweetSimilarities();
 	}
 
 	public void collectTweetsOfAllUsers(String requestId) {
@@ -286,7 +294,7 @@ public class OrganizationDetector implements Runnable {
 
 		// BasicDBObject tweetsRetrievalQuery = new BasicDBObject("id",
 		// Long.valueOf(633531082739216384l));
-		BasicDBObject keys = new BasicDBObject("_id", false).append("createdAt", false).append("user.createdAt", false);
+		BasicDBObject keys = new BasicDBObject("_id", false);
 
 		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery, keys);
 		try {
@@ -323,13 +331,12 @@ public class OrganizationDetector implements Runnable {
 					public Size deserialize(JsonElement arg0, Type arg1, JsonDeserializationContext arg2)
 							throws JsonParseException {
 						try {
-							// twitter4j.MediaEntityJSONImpl.Size size = new
-							// MediaEntityJSONImpl.Size();
-							// JsonObject asJsonObject = arg0.getAsJsonObject();
-							// size.setHeight(asJsonObject.get("height").getAsInt());
-							// size.setWidth(asJsonObject.get("width").getAsInt());
-							// size.setResize(asJsonObject.get("resize").getAsInt());
-							// return size;
+							twitter4j.MediaEntityJSONImpl.Size size = new MediaEntityJSONImpl.Size();
+							JsonObject asJsonObject = arg0.getAsJsonObject();
+							size.setHeight(asJsonObject.get("height").getAsInt());
+							size.setWidth(asJsonObject.get("width").getAsInt());
+							size.setResize(asJsonObject.get("resize").getAsInt());
+							return size;
 						} catch (Exception e) {
 							Logger.getLogger(OrganizationDetector.class.getSimpleName())
 									.error("MediaEntity.Size Deserialize Exception.", e);
@@ -349,9 +356,9 @@ public class OrganizationDetector implements Runnable {
 				domainUser.incrementPostDeviceCount(twitter4jStatus.getSource());
 				domainUser.incrementPostCount();
 				// get user tweet data
-//				if (twitter4jStatus.getText().contains(tracedSingleHashtag)) {
-//				}
-				userTweet.setHashtagTweet(true);
+				if (twitter4jStatus.getText().contains(tracedSingleHashtag)) {
+					userTweet.setHashtagTweet(true);
+				}
 				// check earliest tweet date
 				if (earliestTweetDate == null) {
 					earliestTweetDate = twitter4jStatus.getCreatedAt();
@@ -555,8 +562,9 @@ public class OrganizationDetector implements Runnable {
 		findQuery.put("_id", requestId);
 		BasicDBObject updateQuery = new BasicDBObject();
 		updateQuery.append("$set", new BasicDBObject().append("tracedHashtag", tracedHashtagList))
-				.append(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME, earliestTweetDate)
-				.append(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME, latestTweetDate);
+				.append(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME,
+						TextUtils.getNotNullValue(earliestTweetDate))
+				.append(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME, TextUtils.getNotNullValue(latestTweetDate));
 		organizedBehaviorCollection.update(findQuery, updateQuery);
 	}
 

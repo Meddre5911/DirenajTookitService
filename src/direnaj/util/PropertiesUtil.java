@@ -69,5 +69,13 @@ public class PropertiesUtil {
             return defaultValue;
         }
     }
+    
+    public Boolean getBooleanProperty(String property, Boolean defaultValue) {
+    	try {
+    		return Boolean.valueOf(prop.getProperty(property));
+    	} catch (Exception e) {
+    		return defaultValue;
+    	}
+    }
 
 }

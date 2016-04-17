@@ -10,7 +10,6 @@ import org.apache.log4j.Logger;
 import com.mongodb.BasicDBObject;
 
 import direnaj.driver.MongoCollectionFieldNames;
-import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
 
 public class CosineSimilarityUtil {
 
@@ -89,7 +88,7 @@ public class CosineSimilarityUtil {
 					similarityKey = MongoCollectionFieldNames.SIMILAR;
 				} else if (cosSimilarity < Math.sqrt(3d) / 2d) {
 					similarityKey = MongoCollectionFieldNames.VERY_SIMILAR;
-				} else if (cosSimilarity <= 1d) {
+				} else {
 					similarityKey = MongoCollectionFieldNames.MOST_SIMILAR;
 				}
 			}

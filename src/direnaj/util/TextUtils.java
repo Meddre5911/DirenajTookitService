@@ -2,6 +2,7 @@ package direnaj.util;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.UUID;
 
 public class TextUtils {
 
@@ -50,7 +51,12 @@ public class TextUtils {
 		// get current time
 		SimpleDateFormat sdfDate = new SimpleDateFormat("yyyyMMddHHmmssSS");
 		Date now = DateTimeUtils.getLocalDate();
-		String strDate = sdfDate.format(now);
+		String strDate = sdfDate.format(now) + UUID.randomUUID();
 		return strDate;
+	}
+	
+	public static void main(String[] args) {
+		for(int i = 0; i<10;i++)
+		System.out.println(TextUtils.generateUniqueId4Request());
 	}
 }

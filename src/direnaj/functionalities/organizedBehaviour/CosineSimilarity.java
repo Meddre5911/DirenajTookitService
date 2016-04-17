@@ -80,9 +80,19 @@ public class CosineSimilarity {
 		document.put("originalRequestId", originalRequestId);
 		document.put("requestId", requestData.getRequestId());
 		document.put("isHashtagRequest", requestData.isHashtagSpecificRequest());
-		document.put("lowerTimeInterval", requestData.getLowerTime());
-		document.put("upperTimeInterval", requestData.getUpperTime());
+		document.put("lowerTimeInterval", TextUtils.getNotNullValue(requestData.getLowerTime()));
+		document.put("upperTimeInterval", TextUtils.getNotNullValue(requestData.getUpperTime()));
 		orgBehaviourRequestedSimilarityCalculations.insert(document);
+	}
+
+	private void updateRequestInMongo(CosineSimilarityRequestData requestData, boolean tweetFound) {
+		DBCollection orgBehaviourRequestedSimilarityCalculations = DirenajMongoDriver.getInstance()
+				.getOrgBehaviourRequestedSimilarityCalculations();
+		BasicDBObject findQuery = new BasicDBObject();
+		findQuery.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestData.getRequestId());
+		BasicDBObject updateQuery = new BasicDBObject();
+		updateQuery.append("$set", new BasicDBObject().append(MongoCollectionFieldNames.MONGO_TWEET_FOUND, tweetFound));
+		orgBehaviourRequestedSimilarityCalculations.update(findQuery, updateQuery);
 	}
 
 	public void calculateTweetSimilarities() {
@@ -273,13 +283,16 @@ public class CosineSimilarity {
 					tweetWordTfValue.put(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
 					tweetWordTfValue.put(MongoCollectionFieldNames.MONGO_WORD, wordCount.getKey());
 					tweetWordTfValue.put(MongoCollectionFieldNames.MONGO_WORD_TF,
-							wordCount.getValue() / tweetWordCount);
+							(wordCount.getValue() / tweetWordCount));
 					tweetTfValues.add(tweetWordTfValue);
 				}
 				if (totalTweetCount % DirenajMongoDriver.getInstance().getBulkInsertSize() == 0) {
 					tweetTfValues = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
 							DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF(), tweetTfValues, false);
 				}
+			}
+			if (totalTweetCount > 0d) {
+				updateRequestInMongo(requestData, true);
 			}
 			DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
 					DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF(), tweetTfValues, true);

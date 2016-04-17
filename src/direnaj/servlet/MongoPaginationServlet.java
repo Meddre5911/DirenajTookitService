@@ -19,114 +19,138 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 
 import direnaj.driver.DirenajMongoDriver;
+import direnaj.driver.MongoCollectionFieldNames;
 
 public class MongoPaginationServlet extends HttpServlet {
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("application/json");
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		response.setContentType("application/json");
 
-        PrintWriter out = response.getWriter();
-        String pageType = request.getParameter("pageType");
-        JSONArray jsonArray = new JSONArray();
-        JSONObject responseJSonObject = new JSONObject();
+		PrintWriter out = response.getWriter();
+		String pageType = request.getParameter("pageType");
+		JSONArray jsonArray = new JSONArray();
+		JSONObject responseJSonObject = new JSONObject();
 
-        HttpSession session = request.getSession(true);
+		HttpSession session = request.getSession(true);
 
-        Integer pageDisplayLength = Integer.valueOf(request.getParameter("iDisplayLength"));
-        //Fetch the page number from client
-        Integer pageNumber = (Integer.valueOf(request.getParameter("iDisplayStart")) / pageDisplayLength);
-        String sEcho = request.getParameter("sEcho");
-        int recordCounts = 0;
+		Integer pageDisplayLength = Integer.valueOf(request.getParameter("iDisplayLength"));
+		// Fetch the page number from client
+		Integer pageNumber = (Integer.valueOf(request.getParameter("iDisplayStart")) / pageDisplayLength);
+		String sEcho = request.getParameter("sEcho");
+		int recordCounts = 0;
 
-        try {
-            if ("requestListPagination".equals(pageType)) {
-                // mongo call
-                DBCollection orgBehaviorRequestCollection = DirenajMongoDriver.getInstance()
-                        .getOrgBehaviorRequestCollection();
-                if (session.getAttribute("collectionRecordCount") == null) {
-                    recordCounts = (int) orgBehaviorRequestCollection.count();
-                    session.setAttribute("collectionRecordCount", recordCounts);
-                } else {
-                    recordCounts = Integer.valueOf(session.getAttribute("collectionRecordCount").toString());
-                }
-                // get cursor
-                DBCursor paginatedResult = orgBehaviorRequestCollection.find().sort(new BasicDBObject("_id", -1))
-                        .skip(pageNumber * pageDisplayLength).limit(pageDisplayLength);
-                // get objects from cursor
-                try {
-                    while (paginatedResult.hasNext()) {
-                        jsonArray.put(new JSONObject(paginatedResult.next().toString()));
-                    }
-                } catch (JSONException e) {
-                    Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
-                }
+		try {
+			if ("requestListPagination".equals(pageType)) {
+				// mongo call
+				DBCollection orgBehaviorRequestCollection = DirenajMongoDriver.getInstance()
+						.getOrgBehaviorRequestCollection();
+				if (session.getAttribute("collectionRecordCount") == null) {
+					recordCounts = (int) orgBehaviorRequestCollection.count();
+					session.setAttribute("collectionRecordCount", recordCounts);
+				} else {
+					recordCounts = Integer.valueOf(session.getAttribute("collectionRecordCount").toString());
+				}
+				// get cursor
+				DBCursor paginatedResult = orgBehaviorRequestCollection.find().sort(new BasicDBObject("_id", -1))
+						.skip(pageNumber * pageDisplayLength).limit(pageDisplayLength);
+				// get objects from cursor
+				try {
+					while (paginatedResult.hasNext()) {
+						jsonArray.put(new JSONObject(paginatedResult.next().toString()));
+					}
+				} catch (JSONException e) {
+					Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
+				}
 
-            } else if ("requestInputData".equals(pageType)) {
-                String requestId = request.getParameter("retrievedRequestId");
-                DBCollection inputDataCollection = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
-                BasicDBObject query = new BasicDBObject("requestId", requestId);
+			} else if ("requestInputData".equals(pageType)) {
+				String requestId = request.getParameter("retrievedRequestId");
+				DBCollection inputDataCollection = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
+				BasicDBObject query = new BasicDBObject("requestId", requestId);
 
-                if (session.getAttribute("userInputDataCount") == null) {
-                    recordCounts = (int) inputDataCollection.count(query);
-                    session.setAttribute("userInputDataCount", recordCounts);
-                } else {
-                    recordCounts = Integer.valueOf(session.getAttribute("userInputDataCount").toString());
-                }
-                // get cursor
-                DBCursor paginatedResult = inputDataCollection.find(query).skip(pageNumber * pageDisplayLength)
-                        .limit(pageDisplayLength);
-                // get objects from cursor
-                try {
-                    while (paginatedResult.hasNext()) {
-                        jsonArray.put(new JSONObject(paginatedResult.next().toString()));
-                    }
-                } catch (JSONException e) {
-                    Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
-                }
+				if (session.getAttribute("userInputDataCount") == null) {
+					recordCounts = (int) inputDataCollection.count(query);
+					session.setAttribute("userInputDataCount", recordCounts);
+				} else {
+					recordCounts = Integer.valueOf(session.getAttribute("userInputDataCount").toString());
+				}
+				// get cursor
+				DBCursor paginatedResult = inputDataCollection.find(query).skip(pageNumber * pageDisplayLength)
+						.limit(pageDisplayLength);
+				// get objects from cursor
+				try {
+					while (paginatedResult.hasNext()) {
+						jsonArray.put(new JSONObject(paginatedResult.next().toString()));
+					}
+				} catch (JSONException e) {
+					Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
+				}
 
-            }else if("requestTweetSimilaritiesInRequest".equals(pageType)){
-            	
-            	 String requestId = request.getParameter("retrievedRequestId");
-                 DBCollection tweetSimilarityCollection = DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity();
-                 BasicDBObject query = new BasicDBObject("requestId", requestId);
+			} else if ("requestTweetSimilaritiesInRequest".equals(pageType)) {
 
-                 if (session.getAttribute("similarTweetsDataCount") == null) {
-                     recordCounts = (int) tweetSimilarityCollection.count(query);
-                     session.setAttribute("similarTweetsDataCount", recordCounts);
-                 } else {
-                     recordCounts = Integer.valueOf(session.getAttribute("similarTweetsDataCount").toString());
-                 }
-                 // get cursor
-                 DBCursor paginatedResult = tweetSimilarityCollection.find(query).skip(pageNumber * pageDisplayLength)
-                         .limit(pageDisplayLength);
-                 // get objects from cursor
-                 try {
-                     while (paginatedResult.hasNext()) {
-                         jsonArray.put(new JSONObject(paginatedResult.next().toString()));
-                     }
-                 } catch (JSONException e) {
-                     Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
-                 }
-            	
-            	
-            	
-            }
-            responseJSonObject.put("iTotalRecords", recordCounts);
-            responseJSonObject.put("iTotalDisplayRecords", recordCounts);
-            responseJSonObject.put("sEcho", sEcho);
-            responseJSonObject.put("aaData", jsonArray);
-            out.print(responseJSonObject.toString());
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.setContentType("text/html");
-            response.getWriter().print(e.getMessage());
-        }
-    }
+				String requestId = request.getParameter("retrievedRequestId");
+				DBCollection tweetSimilarityCollection = DirenajMongoDriver.getInstance()
+						.getOrgBehaviourProcessTweetSimilarity();
+				BasicDBObject query = new BasicDBObject("requestId", requestId);
+
+				if (session.getAttribute("similarTweetsDataCount") == null) {
+					recordCounts = (int) tweetSimilarityCollection.count(query);
+					session.setAttribute("similarTweetsDataCount", recordCounts);
+				} else {
+					recordCounts = Integer.valueOf(session.getAttribute("similarTweetsDataCount").toString());
+				}
+				// get cursor
+				DBCursor paginatedResult = tweetSimilarityCollection.find(query).skip(pageNumber * pageDisplayLength)
+						.limit(pageDisplayLength);
+				// get objects from cursor
+				try {
+					while (paginatedResult.hasNext()) {
+						jsonArray.put(new JSONObject(paginatedResult.next().toString()));
+					}
+				} catch (JSONException e) {
+					Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
+				}
+			} else if ("requestTweetSimilarityCalculationsInRequest".equals(pageType)) {
+
+				String requestId = request.getParameter("retrievedRequestId");
+				DBCollection similarityCalculationRequestCollection = DirenajMongoDriver.getInstance()
+						.getOrgBehaviourRequestedSimilarityCalculations();
+				BasicDBObject query = new BasicDBObject("originalRequestId", requestId).append(MongoCollectionFieldNames.MONGO_TWEET_FOUND, true);
+
+				if (session.getAttribute("requestedSimilarityCalculations") == null) {
+					recordCounts = (int) similarityCalculationRequestCollection.count(query);
+					session.setAttribute("requestedSimilarityCalculations", recordCounts);
+				} else {
+					recordCounts = Integer.valueOf(session.getAttribute("requestedSimilarityCalculations").toString());
+				}
+				// get cursor
+				DBCursor paginatedResult = similarityCalculationRequestCollection.find(query)
+						.skip(pageNumber * pageDisplayLength).limit(pageDisplayLength);
+				// get objects from cursor
+				try {
+					while (paginatedResult.hasNext()) {
+						jsonArray.put(new JSONObject(paginatedResult.next().toString()));
+					}
+				} catch (JSONException e) {
+					Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
+				}
+			}
+			responseJSonObject.put("iTotalRecords", recordCounts);
+			responseJSonObject.put("iTotalDisplayRecords", recordCounts);
+			responseJSonObject.put("sEcho", sEcho);
+			responseJSonObject.put("aaData", jsonArray);
+			out.print(responseJSonObject.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setContentType("text/html");
+			response.getWriter().print(e.getMessage());
+		}
+	}
 
 }

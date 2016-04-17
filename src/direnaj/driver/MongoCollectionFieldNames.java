@@ -9,6 +9,8 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_TWEET_TEXT = "tweetText";
 	public static final String MONGO_IS_HASHTAG_TWEET = "isHashtagTweet";
 	public static final String MONGO_TWEET_CREATION_DATE = "tweetCreationDate";
+	
+	public static final String MONGO_TWEET_FOUND = "tweetFound";
 
 	public static final String MONGO_WORD = "word";
 	public static final String MONGO_WORD_TF = "TF";
