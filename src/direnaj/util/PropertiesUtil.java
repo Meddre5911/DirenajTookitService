@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -19,15 +20,14 @@ public class PropertiesUtil {
 			input = new FileInputStream("/home/direnaj/toolkit/toolkitConfig/toolkitConfig.properties");
 			// load a properties file
 			prop.load(input);
-			// get the property value and print it out
-			Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("direnajUserId"));
-			Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("direnajPassword"));
-			Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("neo4j.server.rootUri"));
-			Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("mongo.server.address"));
-			Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("mongo.server.port"));
-			Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("mongo.bulk.insert.size"));
-			Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("mongo.usedDB"));
-			Logger.getLogger(PropertiesUtil.class).debug(prop.getProperty("tweet.checkInterval.inWeeks"));
+			// write all properties
+			Logger.getLogger(PropertiesUtil.class).debug("All properties");
+			Set<Object> propertyKeySet = prop.keySet();
+			for (Object propertyKey : propertyKeySet) {
+				String keyStr = propertyKey.toString();
+				// get the property value and print it out
+				Logger.getLogger(PropertiesUtil.class).debug(keyStr + " - " + prop.getProperty(keyStr));
+			}
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		} finally {

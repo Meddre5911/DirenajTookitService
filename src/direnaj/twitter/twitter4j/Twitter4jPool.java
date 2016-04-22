@@ -53,6 +53,7 @@ public class Twitter4jPool {
 		String resource = "statuses";
 		Twitter availableObject = null;
 		while (true) {
+			availableObject = null;
 			Logger.getLogger(Twitter4jPool.class).trace("getAvailableTwitterObject for resource : " + resource
 					+ " & TwitterRestApiOperationType : " + statusUsertimeline.name());
 			for (Twitter twitter4jObject : twitter4jObjects) {
@@ -76,7 +77,13 @@ public class Twitter4jPool {
 					} catch (TwitterException e) {
 						Logger.getLogger(Twitter4jPool.class)
 								.error("TwitterException - Error Taken in getAvailableTwitterObject method.", e);
+						try {
+							threadSleepTime = e.getRateLimitStatus().getSecondsUntilReset() * 1000;
+						} catch (Exception exp) {
+							Logger.getLogger(Twitter4jPool.class).error("Exception getting getSecondsUntilReset.", e);
+						}
 					}
+					Logger.getLogger(Twitter4jPool.class).debug("Thread is sleeping. Sleep Time : " + threadSleepTime);
 					Thread.sleep(threadSleepTime);
 				} catch (InterruptedException e) {
 					Logger.getLogger(Twitter4jPool.class)
@@ -92,13 +99,16 @@ public class Twitter4jPool {
 			TwitterRestApiOperationTypes twitterRestApiOperationType) {
 		boolean isTwitterObjAvailable = false;
 		try {
+			Logger.getLogger(Twitter4jPool.class).trace("Checking Twitter Object " + twitter4jObject.getScreenName());
 			RateLimitStatus rateLimitStatus = getRateLimitStatusObject(twitter4jObject, resource,
 					twitterRestApiOperationType);
 			int remaining = rateLimitStatus.getRemaining();
 			if (remaining > 0) {
-				Logger.getLogger(Twitter4jPool.class).trace(
+				Logger.getLogger(Twitter4jPool.class).debug(
 						"Available Twitter Object : " + twitter4jObject.getScreenName() + " Remaining : " + remaining);
 				isTwitterObjAvailable = true;
+			} else {
+				Logger.getLogger(Twitter4jPool.class).debug("No limit - Remaining : " + remaining);
 			}
 		} catch (TwitterException e) {
 			Logger.getLogger(Twitter4jPool.class).error("Error Taken in isAvailable method.", e);
