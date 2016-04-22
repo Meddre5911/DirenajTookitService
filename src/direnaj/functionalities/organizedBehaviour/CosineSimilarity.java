@@ -82,6 +82,7 @@ public class CosineSimilarity {
 		document.put("isHashtagRequest", requestData.isHashtagSpecificRequest());
 		document.put("lowerTimeInterval", TextUtils.getNotNullValue(requestData.getLowerTime()));
 		document.put("upperTimeInterval", TextUtils.getNotNullValue(requestData.getUpperTime()));
+		document.put(MongoCollectionFieldNames.MONGO_TWEET_FOUND, false);
 		orgBehaviourRequestedSimilarityCalculations.insert(document);
 	}
 
@@ -92,7 +93,7 @@ public class CosineSimilarity {
 		findQuery.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestData.getRequestId());
 		BasicDBObject updateQuery = new BasicDBObject();
 		updateQuery.append("$set", new BasicDBObject().append(MongoCollectionFieldNames.MONGO_TWEET_FOUND, tweetFound));
-		orgBehaviourRequestedSimilarityCalculations.update(findQuery, updateQuery,true,false);
+		orgBehaviourRequestedSimilarityCalculations.update(findQuery, updateQuery, true, false);
 	}
 
 	public void calculateTweetSimilarities() {

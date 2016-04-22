@@ -195,10 +195,7 @@ public class OrganizationDetector implements Runnable {
 			Logger.getLogger(OrganizationDetector.class).debug("Top Hashtags Descending");
 			for (Entry<String, Double> hashtag : topHashtagCounts.entrySet()) {
 				Logger.getLogger(OrganizationDetector.class).debug(hashtag.getKey() + " - " + hashtag.getValue());
-			}
-			Set<String> topHashtags = topHashtagCounts.keySet();
-			for (String topHashTag : topHashtags) {
-				tracedHashtagList.add(topHashTag);
+				tracedHashtagList.add(hashtag.getKey());
 			}
 			// update found hashtags
 			updateRequestInMongo();
@@ -212,6 +209,8 @@ public class OrganizationDetector implements Runnable {
 	public void getMetricsOfUsersOfHashTag() throws DirenajInvalidJSONException, Exception {
 		// FIXME burayi tek bir hashtag icin olacak sekilde degistirecez
 		for (String tracedHashtag : tracedHashtagList) {
+			Logger.getLogger(OrganizationDetector.class.getSimpleName())
+					.debug("Analysis For Hashtag : " + tracedHashtag);
 			tracedSingleHashtag = tracedHashtag;
 			direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
 			collectTweetsOfAllUsers(requestId);
@@ -408,9 +407,14 @@ public class OrganizationDetector implements Runnable {
 		BasicDBObject findQuery = new BasicDBObject();
 		findQuery.put("_id", requestId);
 		BasicDBObject updateQuery = new BasicDBObject();
-		updateQuery.append("$set", new BasicDBObject().append("processCompleted", requestStatus)
-				.append("statusChangeTime", DateTimeUtils.getLocalDate()));
-		organizedBehaviorCollection.update(findQuery, updateQuery,true,false);
+		updateQuery.append("$set", new BasicDBObject().append("processCompleted", requestStatus))
+				.append("$set", new BasicDBObject().append("statusChangeTime", DateTimeUtils.getLocalDate()))
+				.append("$set",
+						new BasicDBObject().append(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME,
+								TextUtils.getNotNullValue(earliestTweetDate)))
+				.append("$set", new BasicDBObject().append(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME,
+						TextUtils.getNotNullValue(latestTweetDate)));
+		organizedBehaviorCollection.update(findQuery, updateQuery, true, false);
 	}
 
 	private void clearNeo4jSubGraph(String subgraphEdgeLabel) {
@@ -470,6 +474,8 @@ public class OrganizationDetector implements Runnable {
 		document.put("processCompleted", Boolean.FALSE);
 		document.put("similartyCalculationCompleted", Boolean.FALSE);
 		document.put("statusChangeTime", DateTimeUtils.getLocalDate());
+		document.put(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME, "");
+		document.put(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME, "");
 		organizedBehaviorCollection.insert(document);
 	}
 
@@ -557,14 +563,13 @@ public class OrganizationDetector implements Runnable {
 	}
 
 	private void updateRequestInMongo() {
+		Logger.getLogger(OrganizationDetector.class)
+				.debug("updateRequestInMongo - do Upsert for requestId : " + requestId);
 		DBCollection organizedBehaviorCollection = direnajMongoDriver.getOrgBehaviorRequestCollection();
 		BasicDBObject findQuery = new BasicDBObject();
 		findQuery.put("_id", requestId);
 		BasicDBObject updateQuery = new BasicDBObject();
-		updateQuery.append("$set", new BasicDBObject().append("tracedHashtag", tracedHashtagList))
-				.append(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME,
-						TextUtils.getNotNullValue(earliestTweetDate))
-				.append(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME, TextUtils.getNotNullValue(latestTweetDate));
+		updateQuery.append("$set", new BasicDBObject().append("tracedHashtag", tracedHashtagList));
 		organizedBehaviorCollection.update(findQuery, updateQuery, true, false);
 	}
 
