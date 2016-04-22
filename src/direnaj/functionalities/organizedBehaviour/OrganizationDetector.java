@@ -410,7 +410,7 @@ public class OrganizationDetector implements Runnable {
 		BasicDBObject updateQuery = new BasicDBObject();
 		updateQuery.append("$set", new BasicDBObject().append("processCompleted", requestStatus)
 				.append("statusChangeTime", DateTimeUtils.getLocalDate()));
-		organizedBehaviorCollection.update(findQuery, updateQuery);
+		organizedBehaviorCollection.update(findQuery, updateQuery,true,false);
 	}
 
 	private void clearNeo4jSubGraph(String subgraphEdgeLabel) {
@@ -565,7 +565,7 @@ public class OrganizationDetector implements Runnable {
 				.append(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME,
 						TextUtils.getNotNullValue(earliestTweetDate))
 				.append(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME, TextUtils.getNotNullValue(latestTweetDate));
-		organizedBehaviorCollection.update(findQuery, updateQuery);
+		organizedBehaviorCollection.update(findQuery, updateQuery, true, false);
 	}
 
 }

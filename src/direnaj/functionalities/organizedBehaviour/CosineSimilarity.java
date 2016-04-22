@@ -92,7 +92,7 @@ public class CosineSimilarity {
 		findQuery.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestData.getRequestId());
 		BasicDBObject updateQuery = new BasicDBObject();
 		updateQuery.append("$set", new BasicDBObject().append(MongoCollectionFieldNames.MONGO_TWEET_FOUND, tweetFound));
-		orgBehaviourRequestedSimilarityCalculations.update(findQuery, updateQuery);
+		orgBehaviourRequestedSimilarityCalculations.update(findQuery, updateQuery,true,false);
 	}
 
 	public void calculateTweetSimilarities() {
