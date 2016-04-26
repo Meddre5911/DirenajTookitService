@@ -37,6 +37,7 @@ public class Twitter4jPool {
 			build.setOAuthConsumerKey(consumerKey);
 			build.setOAuthConsumerSecret(consumerSecret);
 			build.setIncludeMyRetweetEnabled(true);
+			build.setDebugEnabled(PropertiesUtil.getInstance().getBooleanProperty("twitter4j.isDebugEnabled", true));
 			OAuthAuthorization auth = new OAuthAuthorization(build.build());
 			Twitter twitter = new TwitterFactory().getInstance(auth);
 			twitter4jObjects.add(twitter);
