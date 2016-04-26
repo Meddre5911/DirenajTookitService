@@ -78,7 +78,7 @@ public class Twitter4jPool {
 				}
 			}
 			// traverse from beginning
-			if (previousAvailableObjIndex > 0) {
+			if (availableObject == null && previousAvailableObjIndex > 0) {
 				ListIterator<Twitter> itFromBeginning = twitter4jObjects.subList(0, previousAvailableObjIndex)
 						.listIterator();
 				while (itFromBeginning.hasNext()) {
