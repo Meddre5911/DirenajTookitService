@@ -1,7 +1,7 @@
 package direnaj.twitter.twitter4j;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -17,11 +17,12 @@ import twitter4j.conf.ConfigurationBuilder;
 public class Twitter4jPool {
 
 	private static Twitter4jPool instance = null;
-	private List<Twitter> twitter4jObjects = null;
+	private LinkedList<Twitter> twitter4jObjects = null;
+	private Twitter availableObject = null;
 
 	private Twitter4jPool() {
 		Integer twitter4jUserCount = PropertiesUtil.getInstance().getIntProperty("twitter4j.user.count", 1);
-		twitter4jObjects = new ArrayList<>(twitter4jUserCount);
+		twitter4jObjects = new LinkedList<>();
 		for (int i = 1; i <= twitter4jUserCount; i++) {
 			String consumerKey = PropertiesUtil.getInstance().getProperty("twitter4j.user." + i + ".consumerKey", null);
 			String consumerSecret = PropertiesUtil.getInstance().getProperty("twitter4j.user." + i + ".consumerSecret",
@@ -51,15 +52,41 @@ public class Twitter4jPool {
 
 	public Twitter getAvailableTwitterObject(TwitterRestApiOperationTypes statusUsertimeline) {
 		String resource = "statuses";
-		Twitter availableObject = null;
+
 		while (true) {
-			availableObject = null;
+			if (availableObject != null && isAvailable(availableObject, resource, statusUsertimeline)) {
+				break;
+			}
+
+			// find the beginning index in the list
+			int previousAvailableObjIndex = -1;
+			if (availableObject != null && twitter4jObjects.contains(availableObject)) {
+				previousAvailableObjIndex = twitter4jObjects.indexOf(availableObject);
+				Logger.getLogger(Twitter4jPool.class).debug(
+						"Previos object is not available. previousAvailableObjIndex : " + previousAvailableObjIndex);
+			}
 			Logger.getLogger(Twitter4jPool.class).trace("getAvailableTwitterObject for resource : " + resource
 					+ " & TwitterRestApiOperationType : " + statusUsertimeline.name());
-			for (Twitter twitter4jObject : twitter4jObjects) {
+			availableObject = null;
+			// traverse to forward
+			ListIterator<Twitter> it2Forward = twitter4jObjects.listIterator(previousAvailableObjIndex + 1);
+			while (it2Forward.hasNext()) {
+				Twitter twitter4jObject = it2Forward.next();
 				if (isAvailable(twitter4jObject, resource, statusUsertimeline)) {
 					availableObject = twitter4jObject;
 					break;
+				}
+			}
+			// traverse from beginning
+			if (previousAvailableObjIndex > 0) {
+				ListIterator<Twitter> itFromBeginning = twitter4jObjects.subList(0, previousAvailableObjIndex)
+						.listIterator();
+				while (itFromBeginning.hasNext()) {
+					Twitter twitter4jObject = itFromBeginning.next();
+					if (isAvailable(twitter4jObject, resource, statusUsertimeline)) {
+						availableObject = twitter4jObject;
+						break;
+					}
 				}
 			}
 
@@ -67,6 +94,7 @@ public class Twitter4jPool {
 			if (availableObject != null) {
 				break;
 			} else {
+				Logger.getLogger(Twitter4jPool.class).trace("No available object is found.");
 				try {
 					int threadSleepTime = 60000;
 					try {
@@ -91,6 +119,8 @@ public class Twitter4jPool {
 				}
 			}
 		}
+		int availableObjIndex = twitter4jObjects.indexOf(availableObject);
+		Logger.getLogger(Twitter4jPool.class).trace("Available Object Index is : " + availableObjIndex);
 		return availableObject;
 
 	}
@@ -99,7 +129,7 @@ public class Twitter4jPool {
 			TwitterRestApiOperationTypes twitterRestApiOperationType) {
 		boolean isTwitterObjAvailable = false;
 		try {
-			Logger.getLogger(Twitter4jPool.class).trace("Checking Twitter Object " + twitter4jObject.getScreenName());
+			Logger.getLogger(Twitter4jPool.class).trace("Checking Twitter Object " + twitter4jObject.getId());
 			RateLimitStatus rateLimitStatus = getRateLimitStatusObject(twitter4jObject, resource,
 					twitterRestApiOperationType);
 			int remaining = rateLimitStatus.getRemaining();
@@ -124,7 +154,6 @@ public class Twitter4jPool {
 	}
 
 	// public static void main(String[] args) {
-	// Twitter twitter = Twitter4jPool.getInstance()
-	// .getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE);
+	// Twitter4jPool.getInstance();
 	// }
 }
