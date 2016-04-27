@@ -11,6 +11,7 @@ import twitter4j.HashtagEntityJSONImpl;
 import twitter4j.MediaEntity;
 import twitter4j.MediaEntityJSONImpl;
 import twitter4j.Place;
+import twitter4j.PlaceJSONImpl;
 import twitter4j.RateLimitStatus;
 import twitter4j.Scopes;
 import twitter4j.ScopesImpl;
@@ -43,7 +44,7 @@ public final class DrnjStatusJSONImpl implements Status, java.io.Serializable {
 	private int favoriteCount;
 	private String inReplyToScreenName;
 	private GeoLocation geoLocation = null;
-	private Place place = null;
+	private PlaceJSONImpl place = null;
 	// this field should be int in theory, but left as long for the serialized
 	// form compatibility - TFJ-790
 	private long retweetCount;
@@ -330,7 +331,7 @@ public final class DrnjStatusJSONImpl implements Status, java.io.Serializable {
 		this.geoLocation = geoLocation;
 	}
 
-	public void setPlace(Place place) {
+	public void setPlace(PlaceJSONImpl place) {
 		this.place = place;
 	}
 
