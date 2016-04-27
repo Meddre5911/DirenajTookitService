@@ -96,5 +96,10 @@ public class CosineSimilarityRequestData {
 	public void setUpperTime(Date upperTime) {
 		this.upperTime = upperTime;
 	}
+	
+	@Override
+	public String toString() {
+		return "RequestId : " + requestId + " - Original Request Id : " + 
+	}
 
 }
