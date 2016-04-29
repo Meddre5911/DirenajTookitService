@@ -34,12 +34,13 @@ public class PreProcessUserTest {
 		BasicDBObject preprocessUser = insertPreProcessUser2Collection(requestId, user);
 		OrganizationDetector organizationDetector = new OrganizationDetector(requestId, true, "");
 
-		// create organization detector
-		int i = 0;
-		while (i < 200) {
-			i++;
-			organizationDetector.collectTweetsOfAllUsers(requestId);
-		}
+//		// create organization detector
+//		int i = 0;
+//		while (i < 200) {
+//			i++;
+//			organizationDetector.collectTweetsOfAllUsers(requestId);
+//		}
+		organizationDetector.collectTweetsOfAllUsers(requestId);
 		organizationDetector.saveData4UserAnalysis();
 		organizationDetector.calculateTweetSimilarities();
 	}

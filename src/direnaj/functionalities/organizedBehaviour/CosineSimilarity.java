@@ -99,13 +99,24 @@ public class CosineSimilarity {
 	public void calculateTweetSimilarities() {
 		for (CosineSimilarityRequestData requestData : requestDataList) {
 			// log request
-			Logger.getLogger(CosineSimilarity.class).debug("calculateTFIDFValues. allTweetIds size : " + allTweetIds.size());
+			Logger.getLogger(CosineSimilarity.class)
+					.debug("Request Data is getting inserted. \n" + requestData.toString());
 			insertRequest2Mongo(requestData);
 			// calculate similarity
+			Logger.getLogger(CosineSimilarity.class)
+					.debug("TF Values are getting calculated for requestId : " + requestData.getRequestId());
 			calculateTFValues(requestData);
+			Logger.getLogger(CosineSimilarity.class)
+					.debug("IDF Values are getting calculated for requestId : " + requestData.getRequestId());
 			calculateIDFValues(requestData);
+			Logger.getLogger(CosineSimilarity.class)
+					.debug("TF_IDF Values are getting calculated for requestId : " + requestData.getRequestId());
 			calculateTFIDFValues(requestData);
+			Logger.getLogger(CosineSimilarity.class)
+					.debug("Similarity is getting calculated for requestId : " + requestData.getRequestId());
 			calculateSimilarities(requestData);
+			Logger.getLogger(CosineSimilarity.class)
+			.debug("Cosine Similarity Calculation is DONE for requestId : " + requestData.getRequestId());
 		}
 	}
 
@@ -139,7 +150,7 @@ public class CosineSimilarity {
 					.getEmptyMap4SimilarityDecisionTree();
 			for (String tweetId : allTweetIdsClone) {
 				Logger.getLogger(CosineSimilarity.class)
-						.debug("Comparing TweetId : " + queryTweetId + " to TweetId : " + tweetId);
+						.trace("Comparing TweetId : " + queryTweetId + " to TweetId : " + tweetId);
 				BasicDBObject comparedTweetTFIdfValueObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 						requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
 				BasicDBObject queryTfIdfValues = (BasicDBObject) DirenajMongoDriver.getInstance()
@@ -178,7 +189,8 @@ public class CosineSimilarity {
 		List<DBObject> allTweetTFIdfValues = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		List<String> allTweetIds = (List<String>) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
 				.findOne(requestData.getRequestIdObject()).get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
-		Logger.getLogger(CosineSimilarity.class).debug("calculateTFIDFValues. allTweetIds size : " + allTweetIds.size());
+		Logger.getLogger(CosineSimilarity.class)
+				.debug("calculateTFIDFValues. allTweetIds size : " + allTweetIds.size());
 		for (String tweetId : allTweetIds) {
 			List<String> tweetWords = new ArrayList<>(20);
 			BasicDBObject tweetTFIdfValues = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,

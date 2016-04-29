@@ -63,7 +63,7 @@ public class Twitter4jPool {
 			int previousAvailableObjIndex = -1;
 			if (availableObject != null && twitter4jObjects.contains(availableObject)) {
 				previousAvailableObjIndex = twitter4jObjects.indexOf(availableObject);
-				Logger.getLogger(Twitter4jPool.class).debug(
+				Logger.getLogger(Twitter4jPool.class).trace(
 						"Previos object is not available. previousAvailableObjIndex : " + previousAvailableObjIndex);
 			}
 			Logger.getLogger(Twitter4jPool.class).trace("getAvailableTwitterObject for resource : " + resource
@@ -95,7 +95,7 @@ public class Twitter4jPool {
 			if (availableObject != null) {
 				break;
 			} else {
-				Logger.getLogger(Twitter4jPool.class).trace("No available object is found.");
+				Logger.getLogger(Twitter4jPool.class).debug("No available object is found.");
 				try {
 					int threadSleepTime = 60000;
 					try {
