@@ -19,6 +19,7 @@ import com.mongodb.BulkWriteOperation;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+import com.mongodb.WriteResult;
 
 import direnaj.adapter.DirenajInvalidJSONException;
 import direnaj.domain.User;
@@ -208,6 +209,8 @@ public class OrganizationDetector implements Runnable {
 		calculateTweetSimilarities();
 		changeRequestStatusInMongo(true);
 		removePreProcessUsers();
+		Logger.getLogger(OrganizationDetector.class.getSimpleName())
+				.debug("Hashtag Analysis is Finished for requestId : " + requestId);
 	}
 
 	/**
@@ -279,6 +282,9 @@ public class OrganizationDetector implements Runnable {
 												DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(),
 														tweetDuration)));
 
+		Logger.getLogger(OrganizationDetector.class)
+				.debug("Tweets Retrieval Query : " + tweetsRetrievalQuery.toString());
+
 		// BasicDBObject tweetsRetrievalQuery = new BasicDBObject("id",
 		// Long.valueOf(633531082739216384l));
 		BasicDBObject keys = new BasicDBObject("_id", false);
@@ -346,19 +352,28 @@ public class OrganizationDetector implements Runnable {
 		// clearNeo4jSubGraph(subgraphEdgeLabel);
 	}
 
-	private void changeRequestStatusInMongo(boolean requestStatus) {
+	public void changeRequestStatusInMongo(boolean requestStatus) {
 		DBCollection organizedBehaviorCollection = direnajMongoDriver.getOrgBehaviorRequestCollection();
 		BasicDBObject findQuery = new BasicDBObject();
 		findQuery.put("_id", requestId);
+
 		BasicDBObject updateQuery = new BasicDBObject();
-		updateQuery.append("$set", new BasicDBObject().append("processCompleted", requestStatus))
-				.append("$set", new BasicDBObject().append("statusChangeTime", DateTimeUtils.getLocalDate()))
-				.append("$set",
-						new BasicDBObject().append(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME,
-								TextUtils.getNotNullValue(earliestTweetDate)))
-				.append("$set", new BasicDBObject().append(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME,
-						TextUtils.getNotNullValue(latestTweetDate)));
-		organizedBehaviorCollection.update(findQuery, updateQuery, true, false);
+		updateQuery.append("$set", new BasicDBObject().append("processCompleted", requestStatus));
+		organizedBehaviorCollection.update(findQuery, updateQuery);
+
+		updateQuery = new BasicDBObject();
+		updateQuery.append("$set", new BasicDBObject().append("statusChangeTime", DateTimeUtils.getLocalDate()));
+		organizedBehaviorCollection.update(findQuery, updateQuery);
+
+		updateQuery = new BasicDBObject();
+		updateQuery.append("$set", new BasicDBObject().append(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME,
+				TextUtils.getNotNullValue(earliestTweetDate)));
+		organizedBehaviorCollection.update(findQuery, updateQuery);
+
+		updateQuery = new BasicDBObject();
+		updateQuery.append("$set", new BasicDBObject().append(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME,
+				TextUtils.getNotNullValue(latestTweetDate)));
+		organizedBehaviorCollection.update(findQuery, updateQuery);
 	}
 
 	private void clearNeo4jSubGraph(String subgraphEdgeLabel) {
@@ -461,8 +476,12 @@ public class OrganizationDetector implements Runnable {
 				userTweetsData.add(userTweetData);
 			}
 		}
-		direnajMongoDriver.getOrgBehaviourProcessInputData().insert(allUserInputData);
-		direnajMongoDriver.getOrgBehaviourTweetsOfRequest().insert(userTweetsData);
+		if (allUserInputData != null && allUserInputData.size() > 0) {
+			direnajMongoDriver.getOrgBehaviourProcessInputData().insert(allUserInputData);
+		}
+		if (userTweetsData != null && userTweetsData.size() > 0) {
+			direnajMongoDriver.getOrgBehaviourTweetsOfRequest().insert(userTweetsData);
+		}
 		return new Vector<User>();
 	}
 
@@ -501,7 +520,7 @@ public class OrganizationDetector implements Runnable {
 	 * 
 	 * @param orgBehaviorPreProcessUsers
 	 */
-	private void removePreProcessUsers() {
+	public void removePreProcessUsers() {
 		DBObject requestIdObj = new BasicDBObject("requestId", requestId);
 		DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().remove(requestIdObj);
 	}

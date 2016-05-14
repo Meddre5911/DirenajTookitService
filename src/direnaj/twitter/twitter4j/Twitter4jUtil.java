@@ -69,8 +69,18 @@ public class Twitter4jUtil {
 			// Status To JSON String
 			int arraySize = userTimeline.size();
 			if (arraySize >= 1) {
-				Date tweetCreationDate = userTimeline.get(arraySize - 1).getCreatedAt();
-				if (tweetCreationDate.after(lowestDate)) {
+
+				Date tweetCreationDateOfFirstTweet = userTimeline.get(0).getCreatedAt();
+				Date tweetCreationDateOfLastTweet = userTimeline.get(arraySize - 1).getCreatedAt();
+
+				Logger.getLogger(Twitter4jUtil.class)
+						.debug("User Campaign Tweet Post Date :"
+								+ DateTimeUtils.getRataDieFormat4Date(user.getCampaignTweetPostDate())
+								+ " - EarliestTweets - Rata Die Interval of Retrieved Tweets : "
+								+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet) + " - "
+								+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet));
+
+				if (tweetCreationDateOfLastTweet.after(lowestDate)) {
 					isEarlierTweetsRemaining = true;
 					paging.setPage(++pageNumber);
 				}
@@ -98,11 +108,24 @@ public class Twitter4jUtil {
 			// Status To JSON String
 			int arraySize = userTimeline.size();
 			if (arraySize >= 1) {
-				Date tweetCreationDate = userTimeline.get(arraySize - 1).getCreatedAt();
-				if (tweetCreationDate.before(highestDate)) {
-					paging.setPage(++pageNumber);
-					isRecentTweetsRemaining = true;
-				}
+				paging.setPage(++pageNumber);
+				isRecentTweetsRemaining = true;
+				Date tweetCreationDateOfFirstTweet = userTimeline.get(0).getCreatedAt();
+				Date tweetCreationDateOfLastTweet = userTimeline.get(arraySize - 1).getCreatedAt();
+
+				Logger.getLogger(Twitter4jUtil.class)
+						.debug("User Campaign Tweet Post Date :"
+								+ DateTimeUtils.getRataDieFormat4Date(user.getCampaignTweetPostDate())
+								+ " - RecentTweets Rata Die Interval of Retrieved Tweets : "
+								+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet) + " - "
+								+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet));
+
+				// Date tweetCreationDate = userTimeline.get(arraySize -
+				// 1).getCreatedAt();
+				// if (highestDate.before(tweetCreationDate)) {
+				// paging.setPage(++pageNumber);
+				// isRecentTweetsRemaining = true;
+				// }
 			}
 			if (!isRecentTweetsRemaining) {
 				break;
@@ -124,7 +147,7 @@ public class Twitter4jUtil {
 			// get json of object
 			Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, ser).create();
 			String json = gson.toJson(userTimeline);
-//			 System.out.println(json + "\n");
+			// System.out.println(json + "\n");
 
 			// save object to db
 			@SuppressWarnings("unchecked")
@@ -132,8 +155,8 @@ public class Twitter4jUtil {
 			DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().insert(mongoDbObject);
 		}
 	}
-	
-	public static Status deserializeTwitter4jStatusFromGson(Gson gson,String statusInJson) {
+
+	public static Status deserializeTwitter4jStatusFromGson(Gson gson, String statusInJson) {
 		Status twitter4jStatus = (Status) gson.fromJson(statusInJson, DrnjStatusJSONImpl.class);
 		return twitter4jStatus;
 	}
@@ -141,8 +164,8 @@ public class Twitter4jUtil {
 	public static Gson getGsonObject4Deserialization() {
 		JsonDeserializer<Date> dateJsonDeserializer = new JsonDeserializer<Date>() {
 			@Override
-			public Date deserialize(JsonElement json, Type arg1,
-					com.google.gson.JsonDeserializationContext arg2) throws JsonParseException {
+			public Date deserialize(JsonElement json, Type arg1, com.google.gson.JsonDeserializationContext arg2)
+					throws JsonParseException {
 				Date date = null;
 				SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy");
 				String dateStr = json.getAsJsonPrimitive().getAsString();
@@ -152,8 +175,7 @@ public class Twitter4jUtil {
 					try {
 						date = sdf.parse(dateStr);
 					} catch (Exception e1) {
-						Logger.getLogger(OrganizationDetector.class.getSimpleName())
-								.error("Date Format Exception.", e);
+						Logger.getLogger(OrganizationDetector.class.getSimpleName()).error("Date Format Exception.", e);
 					}
 				}
 				return date;

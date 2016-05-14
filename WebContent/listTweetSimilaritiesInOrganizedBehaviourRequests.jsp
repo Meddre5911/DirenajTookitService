@@ -38,7 +38,6 @@ $(document).ready(function() {
             { "mData": "SIMILARITY_WITH_OTHER_TWEETS.VERY_SIMILAR" },
             { "mData": "SIMILARITY_WITH_OTHER_TWEETS.SIMILAR" },
             { "mData": "SIMILARITY_WITH_OTHER_TWEETS.SLIGHTLY_SIMILAR" },
-            { "mData": "SIMILARITY_WITH_OTHER_TWEETS.NOTR" },
             { "mData": "SIMILARITY_WITH_OTHER_TWEETS.NON_SIMILAR" }
         ]
     } );
@@ -61,9 +60,8 @@ $(document).ready(function() {
                 <th>MOST_SIMILAR (btw:0-30)</th>
                 <th>VERY_SIMILAR (btw:30-45)</th>
                 <th>SIMILAR      (btw:45-60) </th>
-                <th>SLIGHTLY_SIMILAR (btw:60-90)</th>
-                <th>NOTR (btw:90-120)</th>
-                <th>NON_SIMILAR (btw:120-180)</th>
+                <th>SLIGHTLY_SIMILAR (btw:60-89)</th>
+                <th>NON_SIMILAR (90 degree)</th>
             </tr>
         </thead>       
     </table>

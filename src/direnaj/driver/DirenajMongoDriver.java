@@ -23,6 +23,7 @@ public class DirenajMongoDriver {
 		String mongoServerAddress = PropertiesUtil.getInstance().getProperty("mongo.server.address", null);
 		String mongoServerPort = PropertiesUtil.getInstance().getProperty("mongo.server.port", null);
 		String mongoUsedDb = PropertiesUtil.getInstance().getProperty("mongo.usedDB", null);
+		
 
 		mongoClient = new MongoClient(new MongoClientURI("mongodb://" + mongoServerAddress + ":" + mongoServerPort));
 

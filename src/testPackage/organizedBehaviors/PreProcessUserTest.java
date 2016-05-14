@@ -2,12 +2,14 @@ package testPackage.organizedBehaviors;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
+import com.mongodb.WriteResult;
 
 import direnaj.domain.User;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
 import direnaj.util.DateTimeUtils;
+import direnaj.util.TextUtils;
 
 public class PreProcessUserTest {
 
@@ -25,24 +27,23 @@ public class PreProcessUserTest {
 		DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity().remove(new BasicDBObject());
 		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().remove(new BasicDBObject());
 		DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations().remove(new BasicDBObject());
-
-		// create test entity
-		String requestId = "20160211";
-		BasicDBObject requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
-		User user = createTestUser();
-		// add it to preprocess db
-		BasicDBObject preprocessUser = insertPreProcessUser2Collection(requestId, user);
-		OrganizationDetector organizationDetector = new OrganizationDetector(requestId, true, "");
-
-//		// create organization detector
-//		int i = 0;
-//		while (i < 200) {
-//			i++;
-//			organizationDetector.collectTweetsOfAllUsers(requestId);
-//		}
-		organizationDetector.collectTweetsOfAllUsers(requestId);
-		organizationDetector.saveData4UserAnalysis();
-		organizationDetector.calculateTweetSimilarities();
+		
+//
+//		// create test entity
+//		String requestId = "20160211";
+//		BasicDBObject requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
+//		User user = createTestUser();
+//		// add it to preprocess db
+//		BasicDBObject preprocessUser = insertPreProcessUser2Collection(requestId, user);
+//		OrganizationDetector organizationDetector = new OrganizationDetector(requestId, true, "");
+//
+//		
+//		organizationDetector.collectTweetsOfAllUsers(requestId);
+//		organizationDetector.saveData4UserAnalysis();
+//		organizationDetector.calculateTweetSimilarities();
+//		organizationDetector.changeRequestStatusInMongo(true);
+//		organizationDetector.removePreProcessUsers();
+		
 	}
 
 	private static BasicDBObject insertPreProcessUser2Collection(String requestId, User user) {
@@ -61,6 +62,24 @@ public class PreProcessUserTest {
 		DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().insert(preprocessUser);
 		return preprocessUser;
 	}
+//	
+//	public void changeRequestStatusInMongo(boolean requestStatus) {
+//		DBCollection organizedBehaviorCollection = direnajMongoDriver.getOrgBehaviorRequestCollection();
+//		BasicDBObject findQuery = new BasicDBObject();
+//		findQuery.put("_id", requestId);
+//		BasicDBObject setQuery = new BasicDBObject();
+//		BasicDBObject updateQuery = new BasicDBObject();
+//		updateQuery.append("processCompleted", requestStatus);
+//		updateQuery.append("statusChangeTime", DateTimeUtils.getLocalDate());
+//		updateQuery.append(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME,
+//				TextUtils.getNotNullValue(earliestTweetDate));
+//		updateQuery.append(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME,
+//				TextUtils.getNotNullValue(latestTweetDate));
+//		
+//		
+//		setQuery.append("$set", updateQuery);
+//		WriteResult update = organizedBehaviorCollection.update(findQuery, updateQuery,true,false);
+//	}
 
 	private static User createTestUser() throws Exception {
 		// define user test

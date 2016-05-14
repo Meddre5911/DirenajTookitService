@@ -32,12 +32,11 @@ public class Twitter4jPool {
 					.getProperty("twitter4j.user." + i + ".accessTokenSecret", null);
 
 			ConfigurationBuilder build = new ConfigurationBuilder();
-			build.setOAuthAccessToken(accessToken);
-			build.setOAuthAccessTokenSecret(accessTokenSecret);
-			build.setOAuthConsumerKey(consumerKey);
-			build.setOAuthConsumerSecret(consumerSecret);
-			build.setIncludeMyRetweetEnabled(true);
-			build.setDebugEnabled(PropertiesUtil.getInstance().getBooleanProperty("twitter4j.isDebugEnabled", true));
+			build.setOAuthAccessToken(accessToken).setOAuthAccessTokenSecret(accessTokenSecret)
+					.setOAuthConsumerKey(consumerKey).setOAuthConsumerSecret(consumerSecret)
+					.setIncludeMyRetweetEnabled(true)
+					.setDebugEnabled(PropertiesUtil.getInstance().getBooleanProperty("twitter4j.isDebugEnabled", true))
+					.setPrettyDebugEnabled(false);
 			OAuthAuthorization auth = new OAuthAuthorization(build.build());
 			Twitter twitter = new TwitterFactory().getInstance(auth);
 			twitter4jObjects.add(twitter);

@@ -116,7 +116,7 @@ public class CosineSimilarity {
 					.debug("Similarity is getting calculated for requestId : " + requestData.getRequestId());
 			calculateSimilarities(requestData);
 			Logger.getLogger(CosineSimilarity.class)
-			.debug("Cosine Similarity Calculation is DONE for requestId : " + requestData.getRequestId());
+					.debug("Cosine Similarity Calculation is DONE for requestId : " + requestData.getRequestId());
 		}
 	}
 
@@ -165,6 +165,8 @@ public class CosineSimilarity {
 						.calculateVectorLengthBasedOnComparedWordList(queryTweetWords, comparedTfIdfList);
 				double dotProduct = CosineSimilarityUtil.calculateDotProduct(queryTweetWords, tweetWordTfIdfMap,
 						comparedTweetWordTfIdfMap);
+				Logger.getLogger(CosineSimilarity.class).trace("Dot Product is : " + dotProduct
+						+ " - comparedTweetVectorLength : " + comparedTweetVectorLength);
 				CosineSimilarityUtil.findTweetSimilarityRange(similarityOfTweetWithOtherTweets, dotProduct,
 						tweetVectorLength, comparedTweetVectorLength);
 			}

@@ -61,7 +61,6 @@ public class CosineSimilarityUtil {
 	public static Map<String, Double> getEmptyMap4SimilarityDecisionTree() {
 		Map<String, Double> similarityDecisionTree = new HashMap<>();
 		similarityDecisionTree.put(MongoCollectionFieldNames.NON_SIMILAR, 0d);
-		similarityDecisionTree.put(MongoCollectionFieldNames.NOTR, 0d);
 		similarityDecisionTree.put(MongoCollectionFieldNames.SLIGHTLY_SIMILAR, 0d);
 		similarityDecisionTree.put(MongoCollectionFieldNames.SIMILAR, 0d);
 		similarityDecisionTree.put(MongoCollectionFieldNames.VERY_SIMILAR, 0d);
@@ -78,10 +77,8 @@ public class CosineSimilarityUtil {
 				similarityKey = MongoCollectionFieldNames.NON_SIMILAR;
 			} else {
 				cosSimilarity = dotProduct / (tweetVectorLength * comparedTweetVectorLength);
-				if (cosSimilarity < -1d / 2d) {
+				if (cosSimilarity == 0d) {
 					similarityKey = MongoCollectionFieldNames.NON_SIMILAR;
-				} else if (cosSimilarity < 0d) {
-					similarityKey = MongoCollectionFieldNames.NOTR;
 				} else if (cosSimilarity < 1d / 2d) {
 					similarityKey = MongoCollectionFieldNames.SLIGHTLY_SIMILAR;
 				} else if (cosSimilarity < Math.sqrt(2d) / 2d) {
