@@ -328,11 +328,13 @@ public final class DrnjStatusJSONImpl implements Status, java.io.Serializable {
 	}
 
 	public void setGeoLocation(GeoLocation geoLocation) {
-		this.geoLocation = geoLocation;
+		if (geoLocation != null)
+			this.geoLocation = geoLocation;
 	}
 
 	public void setPlace(PlaceJSONImpl place) {
-		this.place = place;
+		if (place != null)
+			this.place = place;
 	}
 
 	public void setRetweetCount(long retweetCount) {
@@ -348,35 +350,43 @@ public final class DrnjStatusJSONImpl implements Status, java.io.Serializable {
 	}
 
 	public void setContributorsIDs(long[] contributorsIDs) {
-		this.contributorsIDs = contributorsIDs;
+		if (contributorsIDs != null)
+			this.contributorsIDs = contributorsIDs;
 	}
 
 	public void setRetweetedStatus(DrnjStatusJSONImpl retweetedStatus) {
-		this.retweetedStatus = retweetedStatus;
+		if (retweetedStatus != null)
+			this.retweetedStatus = retweetedStatus;
 	}
 
 	public void setUserMentionEntities(UserMentionEntityJSONImpl[] userMentionEntities) {
-		this.userMentionEntities = userMentionEntities;
+		if (userMentionEntities != null)
+			this.userMentionEntities = userMentionEntities;
 	}
 
 	public void setUrlEntities(URLEntityJSONImpl[] urlEntities) {
-		this.urlEntities = urlEntities;
+		if (urlEntities != null)
+			this.urlEntities = urlEntities;
 	}
 
 	public void setHashtagEntities(HashtagEntityJSONImpl[] hashtagEntities) {
-		this.hashtagEntities = hashtagEntities;
+		if (hashtagEntities != null)
+			this.hashtagEntities = hashtagEntities;
 	}
 
 	public void setMediaEntities(MediaEntityJSONImpl[] mediaEntities) {
-		this.mediaEntities = mediaEntities;
+		if (mediaEntities != null)
+			this.mediaEntities = mediaEntities;
 	}
 
 	public void setExtendedMediaEntities(ExtendedMediaEntityJSONImpl[] extendedMediaEntities) {
-		this.extendedMediaEntities = extendedMediaEntities;
+		if (extendedMediaEntities != null)
+			this.extendedMediaEntities = extendedMediaEntities;
 	}
 
 	public void setSymbolEntities(HashtagEntityJSONImpl[] symbolEntities) {
-		this.symbolEntities = symbolEntities;
+		if (symbolEntities != null)
+			this.symbolEntities = symbolEntities;
 	}
 
 	public void setCurrentUserRetweetId(long currentUserRetweetId) {
@@ -384,19 +394,23 @@ public final class DrnjStatusJSONImpl implements Status, java.io.Serializable {
 	}
 
 	public void setScopes(ScopesImpl scopes) {
-		this.scopes = scopes;
+		if (scopes != null)
+			this.scopes = scopes;
 	}
 
 	public void setUser(UserJSONImpl user) {
-		this.user = user;
+		if (user != null)
+			this.user = user;
 	}
 
 	public void setWithheldInCountries(String[] withheldInCountries) {
-		this.withheldInCountries = withheldInCountries;
+		if (withheldInCountries != null)
+			this.withheldInCountries = withheldInCountries;
 	}
 
 	public void setQuotedStatus(DrnjStatusJSONImpl quotedStatus) {
-		this.quotedStatus = quotedStatus;
+		if (quotedStatus != null)
+			this.quotedStatus = quotedStatus;
 	}
 
 	public void setQuotedStatusId(long quotedStatusId) {

@@ -75,17 +75,9 @@ public class DateTimeUtils {
 	}
 
 	public static void main(String[] args) throws Exception {
-		BigDecimal date = new BigDecimal("735543.7574768518");
-		BigDecimal daysNumberUntilJan1970 = new BigDecimal("719529.0");
-		BigDecimal subtract = date.subtract(daysNumberUntilJan1970);
-		BigDecimal dateInMiliSeconds = subtract.multiply(new BigDecimal("86400000"));
-		System.out.println("Date In miliseconds : " + dateInMiliSeconds);
-		long longValue = dateInMiliSeconds.longValue();
-		System.out.println("Long Value : " + longValue);
-		Date julianDate = new Date(longValue);
-		System.out.println("Date : " + julianDate);
-		System.out.println("Twitter Date : " + DateTimeUtils.getTwitterDate("Tue Nov 05 20:10:45 EET 2013"));
+		Date twitterDate = DateTimeUtils.getTwitterDate("Thu May 19 07:30:04 +0000 2016");
+		
 
-		System.out.println("Rata Date Back : " + getRataDieFormat4Date(julianDate));
+		System.out.println("Rata Date Back : " + DateTimeUtils.getRataDieFormat4Date(twitterDate));
 	}
 }

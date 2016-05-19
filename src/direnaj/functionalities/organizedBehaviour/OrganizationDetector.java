@@ -19,7 +19,6 @@ import com.mongodb.BulkWriteOperation;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.WriteResult;
 
 import direnaj.adapter.DirenajInvalidJSONException;
 import direnaj.domain.User;
@@ -81,6 +80,7 @@ public class OrganizationDetector implements Runnable {
 		}
 		this.detectionRequestType = detectionRequestType;
 		this.disableGraphAnalysis = disableGraphAnalysis;
+		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 		insertRequest2Mongo();
 	}
 
@@ -292,7 +292,6 @@ public class OrganizationDetector implements Runnable {
 		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery, keys);
 		try {
 			while (tweetsOfUser.hasNext()) {
-				UserTweets userTweet = new UserTweets();
 				String string = tweetsOfUser.next().toString();
 				// FIXME tweet'leri system.out'a yazmak istediğinde aç
 				// System.out.println(string + ",");
@@ -305,6 +304,7 @@ public class OrganizationDetector implements Runnable {
 				domainUser.incrementPostDeviceCount(twitter4jStatus.getSource());
 				domainUser.incrementPostCount();
 				// get user tweet data
+				UserTweets userTweet = new UserTweets();
 				if (twitter4jStatus.getText().contains(tracedSingleHashtag)) {
 					userTweet.setHashtagTweet(true);
 				}

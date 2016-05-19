@@ -157,11 +157,17 @@ public class Twitter4jUtil {
 	}
 
 	public static Status deserializeTwitter4jStatusFromGson(Gson gson, String statusInJson) {
-		Status twitter4jStatus = (Status) gson.fromJson(statusInJson, DrnjStatusJSONImpl.class);
-		return twitter4jStatus;
+		try {
+			Status twitter4jStatus = (Status) gson.fromJson(statusInJson, DrnjStatusJSONImpl.class);
+			return twitter4jStatus;
+		} catch (Exception e) {
+			Logger.getLogger(Twitter4jUtil.class).error("Error during deserializing of tweet : \n" + statusInJson);
+			throw e;
+		}
 	}
 
 	public static Gson getGsonObject4Deserialization() {
+		
 		JsonDeserializer<Date> dateJsonDeserializer = new JsonDeserializer<Date>() {
 			@Override
 			public Date deserialize(JsonElement json, Type arg1, com.google.gson.JsonDeserializationContext arg2)

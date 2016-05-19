@@ -137,6 +137,10 @@ public class DirenajMongoDriver {
 		return mongoDB.getCollection("OrgBehaviourRequestedSimilarityCalculations");
 	}
 
+	public DBCollection getTestCollection() {
+		return mongoDB.getCollection("testCollection");
+	}
+	
 	public Long executeCountQuery(DBCollection collection, DBObject query) {
 		return collection.count(query);
 	}
