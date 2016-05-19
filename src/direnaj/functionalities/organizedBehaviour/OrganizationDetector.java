@@ -147,7 +147,7 @@ public class OrganizationDetector implements Runnable {
 		// (x)-[:FOLLOWS]->(y),(n:ClosenessCentralityCalculator{calculationEdge:
 		// '" + newRelationName + "' }) " //
 		// + "WHERE x in nodes and y in nodes " //
-		// + "CREATE (n)-[:CalculateCentrality]->(x)-[r1:" + newRelationName +
+		// + "CREATE (n)-[:CalculateCentrality]->(x)-[r1:" + newRelationName +Y
 		// "]->(y)<-[:CalculateCentrality]-(n)";
 
 		String cypherQuery = "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) "

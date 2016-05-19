@@ -9,11 +9,8 @@
 		if (document.getElementById('All').checked == true) {
 			document.getElementById('tracedHashtag').value = '';
 			document.getElementById('tracedHashtag').disabled = true;
-			document.getElementById('topHashtagCount').disabled = false;
 		} else if (document.getElementById('Single').checked == true) {
 			document.getElementById('tracedHashtag').disabled = false;
-			document.getElementById('topHashtagCount').value = '';
-			document.getElementById('topHashtagCount').disabled = true;
 		}
 	}
 </script>
@@ -38,15 +35,14 @@
 			<p />
 			
 			<br>
-			<input type="radio" name="operationType" value="CheckHashtagsInCampaign" id="All" onClick="disableField();" checked>Check Hashtags In Campaign<br>
-			<input type="radio" name="operationType" value="CheckSingleHashtagInCampaign" onClick="disableField();" id="Single">Check Single Hashtags In Campaign<br>
+			<input type="radio" name="operationType" value="CheckHashtagsInCampaign" id="All" onClick="disableField();" checked>Check Top Hashtag In Campaign<br>
+			<input type="radio" name="operationType" value="CheckSingleHashtagInCampaign" onClick="disableField();" id="Single">Check Given Hashtag In Campaign<br>
 			<br>
 			<input type="checkbox" name="disableGraphDb" value="disable" checked>Disable Graph DB
 			<br>
 			<br>
 			Campaign Id :<br> <input type="text" name="campaignId" value="" size="20"><br>
-			Top Hashtag Count :<br> <input type="text" name="topHashtagCount" id="topHashtagCount" value="" size="20"><br>
-			Definition :<br> <input type="text" name="organizedHashtagDefinition" value="" size="20"><br>
+			Request Definition :<br> <input type="text" name="organizedHashtagDefinition" value="" size="20"><br>
 			Hashtag : <br><input type="text" name="tracedHashtag" id="tracedHashtag" value="" size="20" disabled><br>
 
 			<p />			

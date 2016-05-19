@@ -134,7 +134,6 @@ public class CosineSimilarity {
 			BasicDBObject tweetTfIdfValueObject = (BasicDBObject) DirenajMongoDriver.getInstance()
 					.getOrgBehaviourProcessCosSimilarityTF_IDF().findOne(queryTweetTFIdfQueryObj);
 
-//			queryTweetTFIdfQueryObj.put("_id", TextUtils.generateUniqueId4Request());
 			if (Boolean.valueOf(
 					PropertiesUtil.getInstance().getProperty("tweet.calculateSimilarity.showTweetTexts", "false"))) {
 				String tweetText = DirenajMongoDriverUtil.getTweetText4CosSimilarity(Long.valueOf(queryTweetId));
