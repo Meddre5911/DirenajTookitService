@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.Bytes;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -200,7 +201,8 @@ public class CosineSimilarity {
 			// get tf values for words in the tweet
 			DBObject tfQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
-			DBCursor wordTFValues = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().find(tfQueryObj);
+			DBCursor wordTFValues = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().find(tfQueryObj)
+					.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 			List<DBObject> wordTfIdfValuesList = new ArrayList<>(20);
 			HashMap<String, Double> wordTfIdfHashMap = new HashMap<>();
 			try {
@@ -267,7 +269,7 @@ public class CosineSimilarity {
 		List<String> allTweetIds = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		// get tweets first
 		DBCursor tweetsOfRequest = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest()
-				.find(requestData.getQuery4OrgBehaviourTweetsOfRequestCollection());
+				.find(requestData.getQuery4OrgBehaviourTweetsOfRequestCollection()).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 		try {
 			double totalTweetCount = 0;
 			while (tweetsOfRequest.hasNext()) {

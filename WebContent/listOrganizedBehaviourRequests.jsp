@@ -54,6 +54,18 @@ $(document).ready(function() {
             { "mData": "earliestTweetTimeInRequest" },
             { "mData": "latestTweetTimeInRequest" },
             { "mData": "processCompleted" },
+            { "mData": "tweetCollectionCompleted" },
+            { "mData": "_id", 
+              "mRender": function ( data, type, row ) {
+                		if(row.resumeProcess==false){
+                 			return "";
+                 		}else {
+  	          		  	  return '<a href=organizedBehaviourDetection?actionType=resume&requestId='+data+'>Resume</a>';
+                 		}
+                 }
+              },
+            	
+            	
         ]
     } );
 
@@ -79,6 +91,8 @@ $(document).ready(function() {
                 <th>Earliest Tweet Time</th>
                 <th>Latest Tweet Time</th>
                 <th>Process Completed</th>
+                <th>Tweet Collection Completed</th>
+                <th>Resume Request</th>
             </tr>
         </thead>       
     </table>

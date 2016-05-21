@@ -27,41 +27,53 @@ public class OrganizedBehaviours extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		OrganizationDetector organizationDetector = null;
 		response.setContentType("text/html; charset=UTF-8");
 		PrintWriter out = response.getWriter();
-
-		Map<String, String[]> params = request.getParameterMap();
-		String userId = params.get("userID")[0];
-		String password = params.get("pass")[0];
-		String operationType = params.get("operationType")[0];
-		String campaignId = request.getParameter("campaignId");
-		Logger.getLogger(OrganizedBehaviours.class).debug("Operation type : " + operationType);
-
-		// getting parameters from html form
-		String retHtmlStr = "<!DOCTYPE html>\n" + "<html>\n" + "<head><title>Direnaj Test Center</title></head>\n"
-				+ "<body bgcolor=\"#fdf5e6\">\n" + "<h1>DirenajDriver Test</h1>\n" + "<p>CampaignID : <b>" + campaignId
-				+ "</b> | Operation : <b>" + operationType + "</b> </p><hr>\n";
-
+		String retHtmlStr = "";
 		try {
-			String realUserId = PropertiesUtil.getInstance().getProperty("direnajUserId", null);
-			String realPassword = PropertiesUtil.getInstance().getProperty("direnajPassword", null);
-			if (!realUserId.equals(userId) || !realPassword.equals(password)) {
-				retHtmlStr += "Wrong UserName - Password <br>";
-			} else {
-				int topHashTagCount = 1;
-				String tracedHashtag = TextUtils.getNotNullValue(request.getParameter("tracedHashtag"));
-				String organizedHashtagDefinition = request.getParameter("organizedHashtagDefinition");
-				boolean disableGraphAnalysis = !TextUtils.isEmpty(request.getParameter("disableGraphDb"));
-
-				OrganizationDetector organizationDetector = new OrganizationDetector(campaignId, topHashTagCount,
-						organizedHashtagDefinition, tracedHashtag,
-						OrganizedBehaviourDetectionRequestType.valueOf(operationType), disableGraphAnalysis);
+			String actionType = TextUtils.getNotNullValue(request.getParameter("actionType"));
+			// actionType=resume&requestId='+data+'
+			if ("resume".equals(actionType)) {
+				String requestId = request.getParameter("requestId");
+				organizationDetector = new OrganizationDetector(requestId);
 				new Thread(organizationDetector).start();
 				forwardRequest(request, response, "/listOrganizedBehaviourRequests.jsp");
 				return;
+			} else {
+				Map<String, String[]> params = request.getParameterMap();
+				String userId = params.get("userID")[0];
+				String password = params.get("pass")[0];
+				String operationType = params.get("operationType")[0];
+				String campaignId = request.getParameter("campaignId");
+				Logger.getLogger(OrganizedBehaviours.class).debug("Operation type : " + operationType);
+
+				// getting parameters from html form
+				retHtmlStr = "<!DOCTYPE html>\n" + "<html>\n" + "<head><title>Direnaj Test Center</title></head>\n"
+						+ "<body bgcolor=\"#fdf5e6\">\n" + "<h1>DirenajDriver Test</h1>\n" + "<p>CampaignID : <b>"
+						+ campaignId + "</b> | Operation : <b>" + operationType + "</b> </p><hr>\n";
+
+				String realUserId = PropertiesUtil.getInstance().getProperty("direnajUserId", null);
+				String realPassword = PropertiesUtil.getInstance().getProperty("direnajPassword", null);
+				if (!realUserId.equals(userId) || !realPassword.equals(password)) {
+					retHtmlStr += "Wrong UserName - Password <br>";
+				} else {
+					int topHashTagCount = 1;
+					String tracedHashtag = TextUtils.getNotNullValue(request.getParameter("tracedHashtag"));
+					String organizedHashtagDefinition = request.getParameter("organizedHashtagDefinition");
+					boolean disableGraphAnalysis = !TextUtils.isEmpty(request.getParameter("disableGraphDb"));
+					organizationDetector = new OrganizationDetector(campaignId, topHashTagCount,
+							organizedHashtagDefinition, tracedHashtag,
+							OrganizedBehaviourDetectionRequestType.valueOf(operationType), disableGraphAnalysis);
+
+					new Thread(organizationDetector).start();
+					forwardRequest(request, response, "/listOrganizedBehaviourRequests.jsp");
+					return;
+				}
+				out.println(retHtmlStr + "</body></html>");
 			}
-			out.println(retHtmlStr + "</body></html>");
 		} catch (Exception e) {
+			e.printStackTrace();
 			out.println(retHtmlStr + "</body></html>");
 		} finally {
 			out.close();

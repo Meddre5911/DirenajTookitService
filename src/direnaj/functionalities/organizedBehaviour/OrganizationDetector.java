@@ -1,12 +1,12 @@
 package direnaj.functionalities.organizedBehaviour;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Vector;
 
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BulkWriteOperation;
+import com.mongodb.Bytes;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -55,6 +56,7 @@ public class OrganizationDetector implements Runnable {
 	private Date latestTweetDate;
 	private Date earliestTweetDate;
 	private Gson statusDeserializer;
+	private boolean isTweetCollectionCompleted;
 
 	public OrganizationDetector(String requestId, boolean disableGraphAnalysis, String tracedHashtag) {
 		direnajDriver = new DirenajDriverVersion2();
@@ -63,6 +65,7 @@ public class OrganizationDetector implements Runnable {
 		this.disableGraphAnalysis = disableGraphAnalysis;
 		tracedSingleHashtag = tracedHashtag;
 		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
+		isTweetCollectionCompleted = false;
 	}
 
 	public OrganizationDetector(String campaignId, int topHashtagCount, String requestDefinition, String tracedHashtag,
@@ -74,14 +77,37 @@ public class OrganizationDetector implements Runnable {
 		this.campaignId = campaignId;
 		this.topHashtagCount = topHashtagCount;
 		this.requestDefinition = requestDefinition;
-		this.tracedHashtagList = new Vector<>();
+		this.tracedHashtagList = new ArrayList<>();
 		if (!TextUtils.isEmpty(tracedHashtag)) {
 			this.tracedHashtagList.add(tracedHashtag);
 		}
 		this.detectionRequestType = detectionRequestType;
 		this.disableGraphAnalysis = disableGraphAnalysis;
 		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
+		isTweetCollectionCompleted = false;
 		insertRequest2Mongo();
+	}
+
+	public OrganizationDetector(String requestId) {
+		// init objects
+		direnajDriver = new DirenajDriverVersion2();
+		direnajMongoDriver = DirenajMongoDriver.getInstance();
+		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
+		this.requestId = requestId;
+		requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
+		// get request object from mongo
+		BasicDBObject findQuery = new BasicDBObject();
+		findQuery.put("_id", requestId);
+		DBObject requestObj = direnajMongoDriver.getOrgBehaviorRequestCollection().findOne(findQuery);
+		// retrive features of request object
+		this.campaignId = (String) requestObj.get("campaignId");
+		this.topHashtagCount = (int) Double.parseDouble(requestObj.get("topHashtagCount").toString());
+		this.requestDefinition = (String) requestObj.get("requestDefinition");
+		this.tracedHashtagList = (List<String>) requestObj.get("tracedHashtag");
+		this.detectionRequestType = OrganizedBehaviourDetectionRequestType
+				.valueOf((String) requestObj.get("requestType"));
+		this.isTweetCollectionCompleted = (boolean) requestObj.get("tweetCollectionCompleted");
+		this.disableGraphAnalysis = false;
 	}
 
 	public HashMap<String, Double> calculateInNeo4J(List<String> userIds, String subgraphEdgeLabel) {
@@ -178,22 +204,23 @@ public class OrganizationDetector implements Runnable {
 
 	public void detectOrganizedBehaviourInHashtags() {
 		try {
-			Map<String, Double> hashtagCounts = direnajDriver.getHashtagCounts(campaignId);
-			// get hashtag users
-			LinkedHashMap<String, Double> topHashtagCounts = CollectionUtil.discardOtherElementsOfMap(hashtagCounts,
-					topHashtagCount);
-			Logger.getLogger(OrganizationDetector.class).debug("Top Hashtags Descending");
-			for (Entry<String, Double> hashtag : topHashtagCounts.entrySet()) {
-				Logger.getLogger(OrganizationDetector.class).debug(hashtag.getKey() + " - " + hashtag.getValue());
-				tracedHashtagList.add(hashtag.getKey());
+			if (!isTweetCollectionCompleted) {
+				Map<String, Double> hashtagCounts = direnajDriver.getHashtagCounts(campaignId);
+				// get hashtag users
+				LinkedHashMap<String, Double> topHashtagCounts = CollectionUtil.discardOtherElementsOfMap(hashtagCounts,
+						topHashtagCount);
+				Logger.getLogger(OrganizationDetector.class).debug("Top Hashtags Descending");
+				for (Entry<String, Double> hashtag : topHashtagCounts.entrySet()) {
+					Logger.getLogger(OrganizationDetector.class).debug(hashtag.getKey() + " - " + hashtag.getValue());
+					tracedHashtagList.add(hashtag.getKey());
+				}
+				// update found hashtags
+				updateRequestInMongo();
 			}
-			// update found hashtags
-			updateRequestInMongo();
 			getMetricsOfUsersOfHashTag();
 		} catch (Exception e) {
 			Logger.getLogger(OrganizationDetector.class).error("Error in detectOrganizedBehaviourInHashtags", e);
 		}
-
 	}
 
 	public void getMetricsOfUsersOfHashTag() throws DirenajInvalidJSONException, Exception {
@@ -202,13 +229,15 @@ public class OrganizationDetector implements Runnable {
 			Logger.getLogger(OrganizationDetector.class.getSimpleName())
 					.debug("Analysis For Hashtag : " + tracedHashtag);
 			tracedSingleHashtag = tracedHashtag;
-			direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
-			collectTweetsOfAllUsers(requestId);
+			if (!isTweetCollectionCompleted) {
+				direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
+				collectTweetsOfAllUsers(requestId);
+			}
 			saveData4UserAnalysis();
 		}
 		calculateTweetSimilarities();
 		changeRequestStatusInMongo(true);
-		removePreProcessUsers();
+		// removePreProcessUsers();
 		Logger.getLogger(OrganizationDetector.class.getSimpleName())
 				.debug("Hashtag Analysis is Finished for requestId : " + requestId);
 	}
@@ -232,7 +261,7 @@ public class OrganizationDetector implements Runnable {
 		// get initial objects
 		DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
 		// get pre process users
-		DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj);
+		DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 		try {
 			while (preProcessUsers.hasNext()) {
 				DBObject preProcessUser = preProcessUsers.next();
@@ -247,6 +276,19 @@ public class OrganizationDetector implements Runnable {
 		} finally {
 			preProcessUsers.close();
 		}
+		updateTweetCollectionCompletedStatusInRequest(requestId);
+	}
+
+	private void updateTweetCollectionCompletedStatusInRequest(String requestId) {
+		// update request for tweetCollectionCompleted
+		Logger.getLogger(OrganizationDetector.class)
+				.debug(" update request for tweetCollectionCompleted - requestId : " + requestId);
+		DBCollection organizedBehaviorCollection = direnajMongoDriver.getOrgBehaviorRequestCollection();
+		BasicDBObject findQuery = new BasicDBObject();
+		findQuery.put("_id", requestId);
+		BasicDBObject updateQuery = new BasicDBObject();
+		updateQuery.append("$set", new BasicDBObject().append("tweetCollectionCompleted", Boolean.TRUE));
+		organizedBehaviorCollection.update(findQuery, updateQuery, true, false);
 	}
 
 	@Override
@@ -289,7 +331,10 @@ public class OrganizationDetector implements Runnable {
 		// Long.valueOf(633531082739216384l));
 		BasicDBObject keys = new BasicDBObject("_id", false);
 
-		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery, keys);
+		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery, keys)
+				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+
+		List<DBObject> allUserTweets = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		try {
 			while (tweetsOfUser.hasNext()) {
 				String string = tweetsOfUser.next().toString();
@@ -325,11 +370,28 @@ public class OrganizationDetector implements Runnable {
 				userTweet.setTweetText(twitter4jStatus.getText());
 				userTweet.setTweetId(String.valueOf(twitter4jStatus.getId()));
 				userTweet.setTweetCreationDate(DateTimeUtils.getRataDieFormat4Date(twitter4jStatus.getCreatedAt()));
-				domainUser.getAllUserTweets().add(userTweet);
+				// get user tweets
+				BasicDBObject userTweetData = new BasicDBObject();
+				userTweetData.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
+				userTweetData.put(MongoCollectionFieldNames.MONGO_USER_ID, domainUser.getUserId());
+				userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_ID, userTweet.getTweetId());
+				userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_TEXT, userTweet.getTweetText());
+				userTweetData.put(MongoCollectionFieldNames.MONGO_IS_HASHTAG_TWEET, userTweet.isHashtagTweet());
+				userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_CREATION_DATE,
+						userTweet.getTweetCreationDate());
+				allUserTweets.add(userTweetData);
+				// insert user tweets
+				allUserTweets = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+						DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest(), allUserTweets, false);
+
 			}
+			DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+					DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest(), allUserTweets, true);
 		} catch (Exception e) {
 			Logger.getLogger(OrganizationDetector.class.getSimpleName()).error("analyzePreProcessUser method error", e);
+		} finally {
 			tweetsOfUser.close();
+
 		}
 		return domainUser;
 	}
@@ -373,6 +435,10 @@ public class OrganizationDetector implements Runnable {
 		updateQuery = new BasicDBObject();
 		updateQuery.append("$set", new BasicDBObject().append(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME,
 				TextUtils.getNotNullValue(latestTweetDate)));
+		organizedBehaviorCollection.update(findQuery, updateQuery);
+
+		updateQuery = new BasicDBObject();
+		updateQuery.append("$set", new BasicDBObject().append("resumeProcess", Boolean.FALSE));
 		organizedBehaviorCollection.update(findQuery, updateQuery);
 	}
 
@@ -435,12 +501,13 @@ public class OrganizationDetector implements Runnable {
 		document.put("statusChangeTime", DateTimeUtils.getLocalDate());
 		document.put(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME, "");
 		document.put(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME, "");
+		document.put("resumeProcess", Boolean.FALSE);
+		document.put("tweetCollectionCompleted", Boolean.FALSE);
 		organizedBehaviorCollection.insert(document);
 	}
 
 	private List<User> saveOrganizedBehaviourInputData(List<User> domainUsers) {
-		List<DBObject> allUserInputData = new Vector<>();
-		List<DBObject> userTweetsData = new Vector<>();
+		List<DBObject> allUserInputData = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		for (User user : domainUsers) {
 			// first init user account properties
 			UserAccountProperties accountProperties = user.getAccountProperties();
@@ -462,36 +529,19 @@ public class OrganizationDetector implements Runnable {
 			userInputData.put("isVerified", user.isVerified());
 			userInputData.put("creationDate", user.getCreationDate().toString());
 			allUserInputData.add(userInputData);
-
-			for (UserTweets userTweet : user.getAllUserTweets()) {
-				// init tweet ids for user
-				BasicDBObject userTweetData = new BasicDBObject();
-				userTweetData.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
-				userTweetData.put(MongoCollectionFieldNames.MONGO_USER_ID, user.getUserId());
-				userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_ID, userTweet.getTweetId());
-				userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_TEXT, userTweet.getTweetText());
-				userTweetData.put(MongoCollectionFieldNames.MONGO_IS_HASHTAG_TWEET, userTweet.isHashtagTweet());
-				userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_CREATION_DATE,
-						userTweet.getTweetCreationDate());
-				userTweetsData.add(userTweetData);
-			}
 		}
 		if (allUserInputData != null && allUserInputData.size() > 0) {
 			direnajMongoDriver.getOrgBehaviourProcessInputData().insert(allUserInputData);
 		}
-		if (userTweetsData != null && userTweetsData.size() > 0) {
-			direnajMongoDriver.getOrgBehaviourTweetsOfRequest().insert(userTweetsData);
-		}
-		return new Vector<User>();
+		return new ArrayList<User>();
 	}
 
 	public void saveData4UserAnalysis() throws Exception {
-		List<User> domainUsers = new Vector<User>();
+		List<User> domainUsers = new ArrayList<User>();
 		// get total user count for detection
 		DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
 		Long preprocessUserCounts = direnajMongoDriver.executeCountQuery(orgBehaviorPreProcessUsers, requestIdObj);
-		List<String> userIds = new Vector<>();
-		DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj);
+		DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 		try {
 			int i = 0;
 			while (preProcessUsers.hasNext()) {
@@ -501,7 +551,6 @@ public class OrganizationDetector implements Runnable {
 				// do hashtag / mention / url & twitter device ratio
 				UserAccountPropertyAnalyser.getInstance().calculateUserAccountProperties(domainUser);
 				domainUsers.add(domainUser);
-				userIds.add(domainUser.getUserId());
 				if ((i == preprocessUserCounts)
 						|| domainUsers.size() > DirenajMongoDriver.getInstance().getBulkInsertSize()) {
 					domainUsers = saveOrganizedBehaviourInputData(domainUsers);
@@ -511,7 +560,9 @@ public class OrganizationDetector implements Runnable {
 			preProcessUsers.close();
 		}
 		if (!disableGraphAnalysis) {
-			calculateClosenessCentrality(userIds);
+			// FIXME closeness centrality ile yapılacak
+			// get all userIds
+			// calculateClosenessCentrality(userIds);
 		}
 	}
 

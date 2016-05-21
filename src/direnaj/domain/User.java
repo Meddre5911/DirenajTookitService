@@ -24,7 +24,6 @@ public class User implements Comparable<User> {
 	private UserAccountProperties accountProperties;
 	private List<String> posts;
 	private List<String> usedUrls;
-	private List<UserTweets> allUserTweets;
 	private double mobileDevicePostCount;
 	private double twitterDevicePostCount;
 	private double thirdPartyDevicePostCount;
@@ -48,7 +47,6 @@ public class User implements Comparable<User> {
 		countOfHashtags = 0L;
 		setUserId(userId);
 		setUserScreenName(screenName);
-		setAllUserTweets(new LinkedList<UserTweets>());
 	}
 
 	public String getUserId() {
@@ -311,14 +309,6 @@ public class User implements Comparable<User> {
 
 	public void setFavoriteCount(double favoriteCount) {
 		this.favoriteCount = favoriteCount;
-	}
-
-	public List<UserTweets> getAllUserTweets() {
-		return allUserTweets;
-	}
-
-	public void setAllUserTweets(List<UserTweets> allUserTweets) {
-		this.allUserTweets = allUserTweets;
 	}
 
 }
