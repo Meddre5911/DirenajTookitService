@@ -1,17 +1,25 @@
 package testPackage.generalTests;
 
-import java.util.LinkedList;
-import java.util.ListIterator;
+import direnaj.util.TextUtils;
 
 public class Deneme {
 
 	public static void main(String[] args) {
-		String str = "1.0";
-		
-		Integer i = (int) Double.parseDouble(str);
-		
-		
-		System.out.println(i);
+		String str = "kjdfhk";
+
+		str = Deneme.parseInvalidChars(str);
+		System.out.println(str);
+
+	}
+
+	public static String parseInvalidChars(String str) {
+		if (TextUtils.isEmpty(str) || !str.startsWith("$")) {
+			return str;
+		}
+		if (str.startsWith("$")) {
+			str = str.substring(1);
+		}
+		return parseInvalidChars(str);
 
 	}
 

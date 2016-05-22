@@ -41,11 +41,21 @@ public class DirenajMongoDriverUtil {
 		if (str.contains(".")) {
 			str = str.replace('.', '_');
 		}
-		// mongo collection column can start with '$'
+		if(str.equals("_id")){
+			str= "id";
+		}
+		// parse $ chars
+		return parseInvalidChars(str);
+	}
+	
+	public static String parseInvalidChars(String str) {
+		if (TextUtils.isEmpty(str) || !str.startsWith("$")) {
+			return str;
+		}
 		if (str.startsWith("$")) {
 			str = str.substring(1);
 		}
-		return str;
+		return parseInvalidChars(str);
 	}
 
 	public static String getTweetText4CosSimilarity(Long tweetId) {

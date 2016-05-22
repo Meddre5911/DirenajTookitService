@@ -190,11 +190,14 @@ public class CosineSimilarity {
 		// in tweetTfIdf Collect,on a record format is like
 		// "requestId, tweetId, [word, tf*Idf, (tf*Idf)^2] dizi halinde
 		List<DBObject> allTweetTFIdfValues = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
+		
+		// FIXME 20160522 Collection dan baska bir yontem bul
 		List<String> allTweetIds = (List<String>) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
 				.findOne(requestData.getRequestIdObject()).get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
 		Logger.getLogger(CosineSimilarity.class)
 				.debug("calculateTFIDFValues. allTweetIds size : " + allTweetIds.size());
 		for (String tweetId : allTweetIds) {
+			Logger.getLogger(DirenajMongoDriverUtil.class).debug("TF-IDF calculation for tweet : " + tweetId);
 			List<String> tweetWords = new ArrayList<>(20);
 			BasicDBObject tweetTFIdfValues = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
@@ -247,9 +250,11 @@ public class CosineSimilarity {
 		List<DBObject> wordIdfValues = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		double totalTweetCount = (double) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
 				.findOne(requestData.getRequestIdObject()).get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
+		// FIXME 20160522 Collection dan baska bir yontem bul
 		List<String> distinctWords = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF()
 				.distinct(MongoCollectionFieldNames.MONGO_WORD, requestData.getRequestIdObject());
 		for (String word : distinctWords) {
+			Logger.getLogger(DirenajMongoDriverUtil.class).debug("IDF calculation for word : " + word);
 			BasicDBObject wordCountQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_WORD, word);
 			long wordCount = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().count(wordCountQueryObj);
@@ -269,7 +274,8 @@ public class CosineSimilarity {
 		List<String> allTweetIds = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		// get tweets first
 		DBCursor tweetsOfRequest = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest()
-				.find(requestData.getQuery4OrgBehaviourTweetsOfRequestCollection()).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+				.find(requestData.getQuery4OrgBehaviourTweetsOfRequestCollection())
+				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 		try {
 			double totalTweetCount = 0;
 			while (tweetsOfRequest.hasNext()) {
