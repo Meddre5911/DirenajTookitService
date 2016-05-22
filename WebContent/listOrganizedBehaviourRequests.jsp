@@ -54,7 +54,7 @@ $(document).ready(function() {
             { "mData": "earliestTweetTimeInRequest" },
             { "mData": "latestTweetTimeInRequest" },
             { "mData": "processCompleted" },
-            { "mData": "tweetCollectionCompleted" },
+            { "mData": "resumeBreakPoint" },
             { "mData": "_id", 
               "mRender": function ( data, type, row ) {
                 		if(row.resumeProcess==false){
@@ -91,7 +91,7 @@ $(document).ready(function() {
                 <th>Earliest Tweet Time</th>
                 <th>Latest Tweet Time</th>
                 <th>Process Completed</th>
-                <th>Tweet Collection Completed</th>
+                <th>Request Status</th>
                 <th>Resume Request</th>
             </tr>
         </thead>       

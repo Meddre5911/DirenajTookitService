@@ -31,29 +31,65 @@ public class CosineSimilarity {
 
 	public CosineSimilarity(String requestId, boolean calculateGeneralSimilarity, boolean calculateHashTagSimilarity,
 			boolean calculateHourBasisSimilarity, Date earliestTweetDate, Date latestTweetDate) {
+		requestDataList = new ArrayList<>();
 		originalRequestId = requestId;
-		requestDataList = new ArrayList<>(4);
-		int hourBasisInterval = PropertiesUtil.getInstance()
-				.getIntProperty("tweet.calculateSimilarity.hourBasisInterval", 2);
-		// calculate general similarity
-		if (calculateGeneralSimilarity) {
-			CosineSimilarityRequestData requestData = new CosineSimilarityRequestData(
-					TextUtils.generateUniqueId4Request(), originalRequestId);
-			requestDataList.add(requestData);
-			if (calculateHourBasisSimilarity) {
-				prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval, false);
+		// first assume as resume process
+		check4ExistingCosSimilarityCalculationRequests();
+		// if this is not a resume process
+		if (requestDataList == null || requestDataList.size() <= 0) {
+			int hourBasisInterval = PropertiesUtil.getInstance()
+					.getIntProperty("tweet.calculateSimilarity.hourBasisInterval", 2);
+			// calculate general similarity
+			if (calculateGeneralSimilarity) {
+				CosineSimilarityRequestData requestData = new CosineSimilarityRequestData(
+						TextUtils.generateUniqueId4Request(), originalRequestId);
+				requestDataList.add(requestData);
+				if (calculateHourBasisSimilarity) {
+					prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval,
+							false);
+				}
 			}
-		}
-		// calculate hashtag basis similarity
-		if (calculateHashTagSimilarity) {
-			CosineSimilarityRequestData requestData = new CosineSimilarityRequestData(
-					TextUtils.generateUniqueId4Request(), originalRequestId, true, null, null);
-			requestDataList.add(requestData);
-			if (calculateHourBasisSimilarity) {
-				prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval, true);
+			// calculate hashtag basis similarity
+			if (calculateHashTagSimilarity) {
+				CosineSimilarityRequestData requestData = new CosineSimilarityRequestData(
+						TextUtils.generateUniqueId4Request(), originalRequestId, true, null, null);
+				requestDataList.add(requestData);
+				if (calculateHourBasisSimilarity) {
+					prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval,
+							true);
+				}
 			}
 		}
 
+	}
+
+	private void check4ExistingCosSimilarityCalculationRequests() {
+		DBCollection orgBehaviourRequestedSimilarityCalculations = DirenajMongoDriver.getInstance()
+				.getOrgBehaviourRequestedSimilarityCalculations();
+		BasicDBObject queryObj = new BasicDBObject();
+		queryObj.put("originalRequestId", originalRequestId);
+		DBCursor requestedSimilarityCalculations = orgBehaviourRequestedSimilarityCalculations.find(queryObj)
+				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+		while (requestedSimilarityCalculations.hasNext()) {
+			DBObject similarityCalculationRequest = requestedSimilarityCalculations.next();
+			CosineSimilarityRequestData cosineSimilarityRequestData = new CosineSimilarityRequestData(originalRequestId,
+					similarityCalculationRequest);
+			requestDataList.add(cosineSimilarityRequestData);
+		}
+	}
+
+	private void insertRequest2Mongo(CosineSimilarityRequestData requestData) {
+		DBCollection orgBehaviourRequestedSimilarityCalculations = DirenajMongoDriver.getInstance()
+				.getOrgBehaviourRequestedSimilarityCalculations();
+		BasicDBObject document = new BasicDBObject();
+		document.put("originalRequestId", originalRequestId);
+		document.put("requestId", requestData.getRequestId());
+		document.put("isHashtagRequest", requestData.isHashtagSpecificRequest());
+		document.put("lowerTimeInterval", TextUtils.getNotNullValue(requestData.getLowerTime()));
+		document.put("upperTimeInterval", TextUtils.getNotNullValue(requestData.getUpperTime()));
+		document.put(MongoCollectionFieldNames.MONGO_TWEET_FOUND, false);
+		document.put(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT, "");
+		orgBehaviourRequestedSimilarityCalculations.insert(document);
 	}
 
 	private void prepareRequestData4HourlyBasisCalculation(Date earliestTweetDate, Date latestTweetDate,
@@ -74,19 +110,6 @@ public class CosineSimilarity {
 		}
 	}
 
-	private void insertRequest2Mongo(CosineSimilarityRequestData requestData) {
-		DBCollection orgBehaviourRequestedSimilarityCalculations = DirenajMongoDriver.getInstance()
-				.getOrgBehaviourRequestedSimilarityCalculations();
-		BasicDBObject document = new BasicDBObject();
-		document.put("originalRequestId", originalRequestId);
-		document.put("requestId", requestData.getRequestId());
-		document.put("isHashtagRequest", requestData.isHashtagSpecificRequest());
-		document.put("lowerTimeInterval", TextUtils.getNotNullValue(requestData.getLowerTime()));
-		document.put("upperTimeInterval", TextUtils.getNotNullValue(requestData.getUpperTime()));
-		document.put(MongoCollectionFieldNames.MONGO_TWEET_FOUND, false);
-		orgBehaviourRequestedSimilarityCalculations.insert(document);
-	}
-
 	private void updateRequestInMongo(CosineSimilarityRequestData requestData, boolean tweetFound) {
 		DBCollection orgBehaviourRequestedSimilarityCalculations = DirenajMongoDriver.getInstance()
 				.getOrgBehaviourRequestedSimilarityCalculations();
@@ -97,25 +120,67 @@ public class CosineSimilarity {
 		orgBehaviourRequestedSimilarityCalculations.update(findQuery, updateQuery, true, false);
 	}
 
+	private void updateRequestInMongoByColumnName(CosineSimilarityRequestData requestData, String columnName,
+			Object updateValue) {
+		DBCollection orgBehaviourRequestedSimilarityCalculations = DirenajMongoDriver.getInstance()
+				.getOrgBehaviourRequestedSimilarityCalculations();
+		BasicDBObject findQuery = new BasicDBObject();
+		findQuery.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestData.getRequestId());
+		BasicDBObject updateQuery = new BasicDBObject();
+		updateQuery.append("$set", new BasicDBObject().append(columnName, updateValue));
+		orgBehaviourRequestedSimilarityCalculations.update(findQuery, updateQuery, true, false);
+	}
+
 	public void calculateTweetSimilarities() {
+		// first insert requests
 		for (CosineSimilarityRequestData requestData : requestDataList) {
-			// log request
-			Logger.getLogger(CosineSimilarity.class)
-					.debug("Request Data is getting inserted. \n" + requestData.toString());
-			insertRequest2Mongo(requestData);
+			if (requestData.getResumeBreakPoint() == null) {
+				// log request
+				Logger.getLogger(CosineSimilarity.class)
+						.debug("Request Data is getting inserted. \n" + requestData.toString());
+				insertRequest2Mongo(requestData);
+			}
+		}
+		// then start calculations
+		for (CosineSimilarityRequestData requestData : requestDataList) {
+			DirenajMongoDriverUtil.cleanData4ResumeProcess(requestData);
 			// calculate similarity
-			Logger.getLogger(CosineSimilarity.class)
-					.debug("TF Values are getting calculated for requestId : " + requestData.getRequestId());
-			calculateTFValues(requestData);
-			Logger.getLogger(CosineSimilarity.class)
-					.debug("IDF Values are getting calculated for requestId : " + requestData.getRequestId());
-			calculateIDFValues(requestData);
-			Logger.getLogger(CosineSimilarity.class)
-					.debug("TF_IDF Values are getting calculated for requestId : " + requestData.getRequestId());
-			calculateTFIDFValues(requestData);
-			Logger.getLogger(CosineSimilarity.class)
-					.debug("Similarity is getting calculated for requestId : " + requestData.getRequestId());
-			calculateSimilarities(requestData);
+			// calculate TF values
+			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.TF_CALCULATION_COMPLETED,
+					requestData.getResumeBreakPoint())) {
+				Logger.getLogger(CosineSimilarity.class)
+						.debug("TF Values are getting calculated for requestId : " + requestData.getRequestId());
+				calculateTFValues(requestData);
+				updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+						ResumeBreakPoint.TF_CALCULATION_COMPLETED.name());
+			}
+			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.IDF_CALCULATION_COMPLETED,
+					requestData.getResumeBreakPoint())) {
+				// calculate IDF values
+				Logger.getLogger(CosineSimilarity.class)
+						.debug("IDF Values are getting calculated for requestId : " + requestData.getRequestId());
+				calculateIDFValues(requestData);
+				updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+						ResumeBreakPoint.IDF_CALCULATION_COMPLETED.name());
+			}
+			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.TF_IDF_CALCULATION_COMPLETED,
+					requestData.getResumeBreakPoint())) {
+				// calculate TF IDF values
+				Logger.getLogger(CosineSimilarity.class)
+						.debug("TF_IDF Values are getting calculated for requestId : " + requestData.getRequestId());
+				calculateTFIDFValues(requestData);
+				updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+						ResumeBreakPoint.TF_IDF_CALCULATION_COMPLETED.name());
+			}
+			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.SIMILARTY_CALCULATED,
+					requestData.getResumeBreakPoint())) {
+				// calculate Similarities
+				Logger.getLogger(CosineSimilarity.class)
+						.debug("Similarity is getting calculated for requestId : " + requestData.getRequestId());
+				calculateSimilarities(requestData);
+				updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+						ResumeBreakPoint.SIMILARTY_CALCULATED.name());
+			}
 			Logger.getLogger(CosineSimilarity.class)
 					.debug("Cosine Similarity Calculation is DONE for requestId : " + requestData.getRequestId());
 		}
@@ -190,14 +255,13 @@ public class CosineSimilarity {
 		// in tweetTfIdf Collect,on a record format is like
 		// "requestId, tweetId, [word, tf*Idf, (tf*Idf)^2] dizi halinde
 		List<DBObject> allTweetTFIdfValues = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
-		
+
 		// FIXME 20160522 Collection dan baska bir yontem bul
 		List<String> allTweetIds = (List<String>) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
 				.findOne(requestData.getRequestIdObject()).get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
 		Logger.getLogger(CosineSimilarity.class)
 				.debug("calculateTFIDFValues. allTweetIds size : " + allTweetIds.size());
 		for (String tweetId : allTweetIds) {
-			Logger.getLogger(DirenajMongoDriverUtil.class).debug("TF-IDF calculation for tweet : " + tweetId);
 			List<String> tweetWords = new ArrayList<>(20);
 			BasicDBObject tweetTFIdfValues = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
@@ -254,7 +318,6 @@ public class CosineSimilarity {
 		List<String> distinctWords = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF()
 				.distinct(MongoCollectionFieldNames.MONGO_WORD, requestData.getRequestIdObject());
 		for (String word : distinctWords) {
-			Logger.getLogger(DirenajMongoDriverUtil.class).debug("IDF calculation for word : " + word);
 			BasicDBObject wordCountQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_WORD, word);
 			long wordCount = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().count(wordCountQueryObj);

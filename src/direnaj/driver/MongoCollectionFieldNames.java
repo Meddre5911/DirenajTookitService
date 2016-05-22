@@ -46,5 +46,11 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_LATEST_TWEET_TIME = "latestTweetTimeInRequest";
 	public static final String MONGO_EARLIEST_TWEET_TIME = "earliestTweetTimeInRequest";
 	
+	// Cosine Similarity Requests
+	public static final String MONGO_RESUME_PROCESS = "resumeProcess";
+	public static final String MONGO_RESUME_BREAKPOINT = "resumeBreakPoint";
+	
+	
+	
 	
 }

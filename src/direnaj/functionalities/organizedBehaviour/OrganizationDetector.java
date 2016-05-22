@@ -56,7 +56,8 @@ public class OrganizationDetector implements Runnable {
 	private Date latestTweetDate;
 	private Date earliestTweetDate;
 	private Gson statusDeserializer;
-	private boolean isTweetCollectionCompleted;
+	private ResumeBreakPoint resumeBreakPoint;
+	private boolean isCleaningDone4ResumeProcess;
 
 	public OrganizationDetector(String requestId, boolean disableGraphAnalysis, String tracedHashtag) {
 		direnajDriver = new DirenajDriverVersion2();
@@ -65,7 +66,7 @@ public class OrganizationDetector implements Runnable {
 		this.disableGraphAnalysis = disableGraphAnalysis;
 		tracedSingleHashtag = tracedHashtag;
 		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
-		isTweetCollectionCompleted = false;
+		isCleaningDone4ResumeProcess = false;
 	}
 
 	public OrganizationDetector(String campaignId, int topHashtagCount, String requestDefinition, String tracedHashtag,
@@ -84,7 +85,7 @@ public class OrganizationDetector implements Runnable {
 		this.detectionRequestType = detectionRequestType;
 		this.disableGraphAnalysis = disableGraphAnalysis;
 		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
-		isTweetCollectionCompleted = false;
+		isCleaningDone4ResumeProcess = false;
 		insertRequest2Mongo();
 	}
 
@@ -106,8 +107,13 @@ public class OrganizationDetector implements Runnable {
 		this.tracedHashtagList = (List<String>) requestObj.get("tracedHashtag");
 		this.detectionRequestType = OrganizedBehaviourDetectionRequestType
 				.valueOf((String) requestObj.get("requestType"));
-		this.isTweetCollectionCompleted = (boolean) requestObj.get("tweetCollectionCompleted");
+
+		Object retrievedResumeBreakPoint = requestObj.get(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT);
+		if (retrievedResumeBreakPoint != null) {
+			resumeBreakPoint = ResumeBreakPoint.valueOf(retrievedResumeBreakPoint.toString());
+		}
 		this.disableGraphAnalysis = false;
+		isCleaningDone4ResumeProcess = false;
 	}
 
 	public HashMap<String, Double> calculateInNeo4J(List<String> userIds, String subgraphEdgeLabel) {
@@ -204,7 +210,9 @@ public class OrganizationDetector implements Runnable {
 
 	public void detectOrganizedBehaviourInHashtags() {
 		try {
-			if (!isTweetCollectionCompleted) {
+			DirenajMongoDriverUtil.cleanData4ResumeProcess(requestIdObj, resumeBreakPoint);
+			isCleaningDone4ResumeProcess = true;
+			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.INIT, resumeBreakPoint)) {
 				Map<String, Double> hashtagCounts = direnajDriver.getHashtagCounts(campaignId);
 				// get hashtag users
 				LinkedHashMap<String, Double> topHashtagCounts = CollectionUtil.discardOtherElementsOfMap(hashtagCounts,
@@ -224,22 +232,34 @@ public class OrganizationDetector implements Runnable {
 	}
 
 	public void getMetricsOfUsersOfHashTag() throws DirenajInvalidJSONException, Exception {
-		// FIXME burayi tek bir hashtag icin olacak sekilde degistirecez
-		for (String tracedHashtag : tracedHashtagList) {
-			Logger.getLogger(OrganizationDetector.class.getSimpleName())
-					.debug("Analysis For Hashtag : " + tracedHashtag);
-			tracedSingleHashtag = tracedHashtag;
-			if (!isTweetCollectionCompleted) {
-				direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
-				collectTweetsOfAllUsers(requestId);
+		try {
+			if (!isCleaningDone4ResumeProcess) {
+				DirenajMongoDriverUtil.cleanData4ResumeProcess(requestIdObj, resumeBreakPoint);
 			}
-			saveData4UserAnalysis();
+			// FIXME burayi tek bir hashtag icin olacak sekilde degistirecez
+			for (String tracedHashtag : tracedHashtagList) {
+				Logger.getLogger(OrganizationDetector.class.getSimpleName())
+						.debug("Analysis For Hashtag : " + tracedHashtag);
+				tracedSingleHashtag = tracedHashtag;
+				if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.TWEET_COLLECTION_COMPLETED,
+						resumeBreakPoint)) {
+					direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
+					collectTweetsOfAllUsers(requestId);
+				}
+				if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.USER_ANALYZE_COMPLETED,
+						resumeBreakPoint)) {
+					saveData4UserAnalysis();
+				}
+			}
+			calculateTweetSimilarities();
+			changeRequestStatusInMongo(true);
+			// removePreProcessUsers();
+			Logger.getLogger(OrganizationDetector.class.getSimpleName())
+					.debug("Hashtag Analysis is Finished for requestId : " + requestId);
+		} catch (Exception e) {
+			updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, Boolean.TRUE);
+			throw e;
 		}
-		calculateTweetSimilarities();
-		changeRequestStatusInMongo(true);
-		// removePreProcessUsers();
-		Logger.getLogger(OrganizationDetector.class.getSimpleName())
-				.debug("Hashtag Analysis is Finished for requestId : " + requestId);
 	}
 
 	/**
@@ -276,19 +296,8 @@ public class OrganizationDetector implements Runnable {
 		} finally {
 			preProcessUsers.close();
 		}
-		updateTweetCollectionCompletedStatusInRequest(requestId);
-	}
-
-	private void updateTweetCollectionCompletedStatusInRequest(String requestId) {
-		// update request for tweetCollectionCompleted
-		Logger.getLogger(OrganizationDetector.class)
-				.debug(" update request for tweetCollectionCompleted - requestId : " + requestId);
-		DBCollection organizedBehaviorCollection = direnajMongoDriver.getOrgBehaviorRequestCollection();
-		BasicDBObject findQuery = new BasicDBObject();
-		findQuery.put("_id", requestId);
-		BasicDBObject updateQuery = new BasicDBObject();
-		updateQuery.append("$set", new BasicDBObject().append("tweetCollectionCompleted", Boolean.TRUE));
-		organizedBehaviorCollection.update(findQuery, updateQuery, true, false);
+		updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+				ResumeBreakPoint.TWEET_COLLECTION_COMPLETED.name());
 	}
 
 	@Override
@@ -438,7 +447,13 @@ public class OrganizationDetector implements Runnable {
 		organizedBehaviorCollection.update(findQuery, updateQuery);
 
 		updateQuery = new BasicDBObject();
-		updateQuery.append("$set", new BasicDBObject().append("resumeProcess", Boolean.FALSE));
+		updateQuery.append("$set",
+				new BasicDBObject().append(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, Boolean.FALSE));
+		organizedBehaviorCollection.update(findQuery, updateQuery);
+
+		updateQuery = new BasicDBObject();
+		updateQuery.append("$set", new BasicDBObject().append(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+				ResumeBreakPoint.FINISHED.name()));
 		organizedBehaviorCollection.update(findQuery, updateQuery);
 	}
 
@@ -501,8 +516,8 @@ public class OrganizationDetector implements Runnable {
 		document.put("statusChangeTime", DateTimeUtils.getLocalDate());
 		document.put(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME, "");
 		document.put(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME, "");
-		document.put("resumeProcess", Boolean.FALSE);
-		document.put("tweetCollectionCompleted", Boolean.FALSE);
+		document.put(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT, null);
+		document.put(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, false);
 		organizedBehaviorCollection.insert(document);
 	}
 
@@ -564,6 +579,8 @@ public class OrganizationDetector implements Runnable {
 			// get all userIds
 			// calculateClosenessCentrality(userIds);
 		}
+		updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+				ResumeBreakPoint.USER_ANALYZE_COMPLETED.name());
 	}
 
 	/**
@@ -584,6 +601,17 @@ public class OrganizationDetector implements Runnable {
 		findQuery.put("_id", requestId);
 		BasicDBObject updateQuery = new BasicDBObject();
 		updateQuery.append("$set", new BasicDBObject().append("tracedHashtag", tracedHashtagList));
+		organizedBehaviorCollection.update(findQuery, updateQuery, true, false);
+	}
+
+	private void updateRequestInMongoByColumnName(String columnName, Object updateValue) {
+		Logger.getLogger(OrganizationDetector.class)
+				.debug("updateRequestInMongo4ResumeProcess - do Upsert for requestId : " + requestId);
+		DBCollection organizedBehaviorCollection = direnajMongoDriver.getOrgBehaviorRequestCollection();
+		BasicDBObject findQuery = new BasicDBObject();
+		findQuery.put("_id", requestId);
+		BasicDBObject updateQuery = new BasicDBObject();
+		updateQuery.append("$set", new BasicDBObject().append(columnName, updateValue));
 		organizedBehaviorCollection.update(findQuery, updateQuery, true, false);
 	}
 

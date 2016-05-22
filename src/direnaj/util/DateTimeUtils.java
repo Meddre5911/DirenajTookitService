@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 
 public class DateTimeUtils {
@@ -37,6 +38,18 @@ public class DateTimeUtils {
 
 	public static Date getLocalDate() {
 		return new Date();
+	}
+
+	public static Date getDate(Object obj) {
+		try {
+			if (obj != null) {
+				return (Date) obj;
+			}
+			return null;
+		} catch (Exception e) {
+			Logger.getLogger(DateTimeUtils.class).error("Error During Conversion of Object to Date", e);
+			return null;
+		}
 	}
 
 	public static double subtractWeeksFromDate(Date date, int i) {
@@ -76,7 +89,6 @@ public class DateTimeUtils {
 
 	public static void main(String[] args) throws Exception {
 		Date twitterDate = DateTimeUtils.getTwitterDate("Thu May 19 07:30:04 +0000 2016");
-		
 
 		System.out.println("Rata Date Back : " + DateTimeUtils.getRataDieFormat4Date(twitterDate));
 	}
