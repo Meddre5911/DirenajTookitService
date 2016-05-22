@@ -114,6 +114,7 @@ public class OrganizationDetector implements Runnable {
 		}
 		this.disableGraphAnalysis = false;
 		isCleaningDone4ResumeProcess = false;
+		updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, false);
 	}
 
 	public HashMap<String, Double> calculateInNeo4J(List<String> userIds, String subgraphEdgeLabel) {
