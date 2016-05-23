@@ -1,6 +1,7 @@
 package direnaj.functionalities.organizedBehaviour;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -10,8 +11,10 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
+import com.mongodb.AggregationOptions;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Bytes;
+import com.mongodb.Cursor;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -314,10 +317,24 @@ public class CosineSimilarity {
 		List<DBObject> wordIdfValues = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		double totalTweetCount = (double) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
 				.findOne(requestData.getRequestIdObject()).get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
-		// FIXME 20160522 Collection dan baska bir yontem bul
-		List<String> distinctWords = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF()
-				.distinct(MongoCollectionFieldNames.MONGO_WORD, requestData.getRequestIdObject());
-		for (String word : distinctWords) {
+
+		AggregationOptions aggregationOptions = AggregationOptions.builder()
+				.batchSize(DirenajMongoDriver.getInstance().getBulkInsertSize())
+				.outputMode(AggregationOptions.OutputMode.CURSOR).build();
+		// [{$match: {requestId :
+		// "20160522230016135400bc398-24f1-41df-888f-cfa6ff13c8b8"}}, {$group:
+		// {_id : "$word"}}
+
+		Cursor distinctWords = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().aggregate(
+				Arrays.asList(
+						(DBObject) new BasicDBObject("$match",
+								new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
+										requestData.getRequestId())),
+						(DBObject) new BasicDBObject("$group",
+								new BasicDBObject("_id", "$" + MongoCollectionFieldNames.MONGO_WORD))),
+				aggregationOptions);
+		while (distinctWords.hasNext()) {
+			String word = (String) distinctWords.next().get("_id");
 			BasicDBObject wordCountQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_WORD, word);
 			long wordCount = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().count(wordCountQueryObj);
