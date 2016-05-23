@@ -191,13 +191,21 @@ public class CosineSimilarity {
 
 	@SuppressWarnings("unchecked")
 	private void calculateSimilarities(CosineSimilarityRequestData requestData) {
-		ArrayList<String> allTweetIds = (ArrayList<String>) DirenajMongoDriver.getInstance()
-				.getOrgBehaviourTweetsShortInfo().findOne(requestData.getRequestIdObject())
-				.get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
-		ArrayList<String> allTweetIdsClone = (ArrayList<String>) allTweetIds.clone();
+
+		AggregationOptions aggregationOptions = AggregationOptions.builder().batchSize(50)
+				.outputMode(AggregationOptions.OutputMode.CURSOR).build();
+		Cursor allTweetIds = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().aggregate(
+				Arrays.asList(
+						(DBObject) new BasicDBObject("$match",
+								requestData.getQuery4OrgBehaviourTweetsOfRequestCollection()),
+						(DBObject) new BasicDBObject("$group",
+								new BasicDBObject("_id", "$" + MongoCollectionFieldNames.MONGO_TWEET_ID))),
+				aggregationOptions);
+
 		List<DBObject> tweetSimilarityWithOtherTweets = new ArrayList<>(
 				DirenajMongoDriver.getInstance().getBulkInsertSize());
-		for (String queryTweetId : allTweetIds) {
+		while (allTweetIds.hasNext()) {
+			String queryTweetId = (String) allTweetIds.next().get("_id");
 			BasicDBObject queryTweetTFIdfQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, queryTweetId);
 			BasicDBObject tweetTfIdfValueObject = (BasicDBObject) DirenajMongoDriver.getInstance()
@@ -217,7 +225,19 @@ public class CosineSimilarity {
 			double tweetVectorLength = CosineSimilarityUtil.calculateVectorLength(tfIdfList);
 			Map<String, Double> similarityOfTweetWithOtherTweets = CosineSimilarityUtil
 					.getEmptyMap4SimilarityDecisionTree();
-			for (String tweetId : allTweetIdsClone) {
+			// get cursor for clone
+			AggregationOptions aggregationOptions4Clone = AggregationOptions.builder()
+					.batchSize(DirenajMongoDriver.getInstance().getBulkInsertSize())
+					.outputMode(AggregationOptions.OutputMode.CURSOR).build();
+			Cursor allTweetIdsClone = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().aggregate(
+					Arrays.asList(
+							(DBObject) new BasicDBObject("$match",
+									requestData.getQuery4OrgBehaviourTweetsOfRequestCollection()),
+							(DBObject) new BasicDBObject("$group",
+									new BasicDBObject("_id", "$" + MongoCollectionFieldNames.MONGO_TWEET_ID))),
+					aggregationOptions4Clone);
+			while (allTweetIdsClone.hasNext()) {
+				String tweetId = (String) allTweetIdsClone.next().get("_id");
 				Logger.getLogger(CosineSimilarity.class)
 						.trace("Comparing TweetId : " + queryTweetId + " to TweetId : " + tweetId);
 				BasicDBObject comparedTweetTFIdfValueObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
@@ -255,16 +275,30 @@ public class CosineSimilarity {
 
 	@SuppressWarnings("unchecked")
 	private void calculateTFIDFValues(CosineSimilarityRequestData requestData) {
+		double totalTweetCount = (double) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
+				.findOne(requestData.getRequestIdObject()).get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
+
 		// in tweetTfIdf Collect,on a record format is like
 		// "requestId, tweetId, [word, tf*Idf, (tf*Idf)^2] dizi halinde
 		List<DBObject> allTweetTFIdfValues = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
+		AggregationOptions aggregationOptions = AggregationOptions.builder()
+				.batchSize(DirenajMongoDriver.getInstance().getBulkInsertSize())
+				.outputMode(AggregationOptions.OutputMode.CURSOR).build();
+		// [{$match: {requestId :
+		// "20160522230016135400bc398-24f1-41df-888f-cfa6ff13c8b8"}}, {$group:
+		// {_id : "$word"}}
 
-		// FIXME 20160522 Collection dan baska bir yontem bul
-		List<String> allTweetIds = (List<String>) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
-				.findOne(requestData.getRequestIdObject()).get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
-		Logger.getLogger(CosineSimilarity.class)
-				.debug("calculateTFIDFValues. allTweetIds size : " + allTweetIds.size());
-		for (String tweetId : allTweetIds) {
+		Cursor allTweetIds = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().aggregate(
+				Arrays.asList(
+						(DBObject) new BasicDBObject("$match",
+								requestData.getQuery4OrgBehaviourTweetsOfRequestCollection()),
+						(DBObject) new BasicDBObject("$group",
+								new BasicDBObject("_id", "$" + MongoCollectionFieldNames.MONGO_TWEET_ID))),
+				aggregationOptions);
+
+		Logger.getLogger(CosineSimilarity.class).debug("calculateTFIDFValues. allTweetIds size : " + totalTweetCount);
+		while (allTweetIds.hasNext()) {
+			String tweetId = (String) allTweetIds.next().get("_id");
 			List<String> tweetWords = new ArrayList<>(20);
 			BasicDBObject tweetTFIdfValues = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
