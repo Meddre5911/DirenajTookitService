@@ -19,6 +19,18 @@ public class DateTimeUtils {
 		return sf.parse(date);
 	}
 
+	public static Date getDate(String dateFormatInStr, String dateInStr) throws Exception {
+		SimpleDateFormat formatter = new SimpleDateFormat(dateFormatInStr);
+		Date date = formatter.parse(dateInStr);
+		return date;
+	}
+
+	public static String getStringOfDate(String dateFormatInStr, Date date) throws Exception {
+		SimpleDateFormat formatter = new SimpleDateFormat(dateFormatInStr);
+		String reportDate = formatter.format(date);
+		return reportDate;
+	}
+
 	public static Date getTwitterDateFromRataDieFormat(String dateInRataDie) throws Exception {
 		BigDecimal date = new BigDecimal(dateInRataDie);
 		BigDecimal daysNumberUntilJan1970 = new BigDecimal("719529.0");
@@ -38,6 +50,10 @@ public class DateTimeUtils {
 
 	public static Date getLocalDate() {
 		return new Date();
+	}
+
+	public static double getLocalDateInRataDieFormat() {
+		return getRataDieFormat4Date(new Date());
 	}
 
 	public static Date getDate(Object obj) {
@@ -88,8 +104,11 @@ public class DateTimeUtils {
 	}
 
 	public static void main(String[] args) throws Exception {
-		Date twitterDate = DateTimeUtils.getTwitterDate("Thu May 19 07:30:04 +0000 2016");
+		Date localDate = DateTimeUtils.getLocalDate();
+		DateTimeUtils.getStringOfDate("yyyy-MM-dd", localDate);
+		
+		Date date = DateTimeUtils.getDate("yyyy-MM-dd",  "2016-06-15");
+		System.out.println(date);
 
-		System.out.println("Rata Date Back : " + DateTimeUtils.getRataDieFormat4Date(twitterDate));
 	}
 }

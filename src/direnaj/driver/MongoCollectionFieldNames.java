@@ -14,6 +14,7 @@ public interface MongoCollectionFieldNames {
 
 	public static final String MONGO_WORD = "word";
 	public static final String MONGO_WORD_TF = "TF";
+	public static final String MONGO_WORD_COUNT = "wordCount";
 	public static final String MONGO_WORD_IDF = "IDF";
 
 	public static final String MONGO_WORD_TF_IDF_LIST = "WORD_TF_IDF_LIST";
@@ -49,6 +50,21 @@ public interface MongoCollectionFieldNames {
 	// Cosine Similarity Requests
 	public static final String MONGO_RESUME_PROCESS = "resumeProcess";
 	public static final String MONGO_RESUME_BREAKPOINT = "resumeBreakPoint";
+	
+	// legacy direnaj
+	public static final String MONGO_CAMPAIGN_ID = "campaign_id";
+	
+	// campaign statistics
+	public static final String MONGO_CAMPAIGN_TOTAL_TWEET_COUNT = "totalTweetCount";
+	public static final String MONGO_CAMPAIGN_RETWEET_COUNT = "retweetedTweetCount";
+	public static final String MONGO_CAMPAIGN_REPLY_TWEET_COUNT = "replyTweetCount";
+	public static final String MONGO_CAMPAIGN_MENTION_TWEET_COUNT = "mentionTweetCount";
+	public static final String MONGO_CAMPAIGN_DISTINCT_USER_TWEET_COUNT = "distinctUserCount";
+	public static final String MONGO_CAMPAIGN_TOTAL_WORD_COUNT = "totalWordCount";
+	public static final String MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT = "totalDistinctWordCount";
+	public static final String MONGO_CAMPAIGN_WORD_FREQUENCIES = "wordFrequencies";
+	public static final String MONGO_CAMPAIGN_HASHTAG_COUNTS = "hashTagCounts";
+	
 	
 	
 	

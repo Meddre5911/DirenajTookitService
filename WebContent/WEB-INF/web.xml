@@ -36,13 +36,25 @@
 		<servlet-class>direnaj.servlet.OrganizedBehaviours</servlet-class>
 	</servlet>
 	<servlet>
+		<servlet-name>CampaignCreationServlet</servlet-name>
+		<servlet-class>direnaj.servlet.CampaignCreationServlet</servlet-class>
+	</servlet>
+	<servlet>
 		<servlet-name>ListOrganizedBehaviourRequest</servlet-name>
 		<jsp-file>/listOrganizedBehaviourRequests.jsp</jsp-file>
+	</servlet>
+	<servlet>
+		<servlet-name>ListToolkitCampaigns</servlet-name>
+		<jsp-file>/listToolkitCampaigns.jsp</jsp-file>
 	</servlet>
 	
 	<servlet-mapping>
 		<servlet-name>ListOrganizedBehaviourRequest</servlet-name>
 		<url-pattern>/listOrganizedBehaviourRequest</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>ListToolkitCampaigns</servlet-name>
+		<url-pattern>/listToolkitCampaigns</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>MongoPaginationServlet</servlet-name>
@@ -51,6 +63,10 @@
 	<servlet-mapping>
 		<servlet-name>OrganizedBehaviourDetection</servlet-name>
 		<url-pattern>/organizedBehaviourDetection</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>CampaignCreationServlet</servlet-name>
+		<url-pattern>/campaignCreation</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>DirenajService</servlet-name>

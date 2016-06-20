@@ -50,11 +50,10 @@ public class Twitter4jPool {
 		return instance;
 	}
 
-	public Twitter getAvailableTwitterObject(TwitterRestApiOperationTypes statusUsertimeline) {
-		String resource = "statuses";
+	public Twitter getAvailableTwitterObject(TwitterRestApiOperationTypes restApiOperationType) {
 
 		while (true) {
-			if (availableObject != null && isAvailable(availableObject, resource, statusUsertimeline)) {
+			if (availableObject != null && isAvailable(availableObject, restApiOperationType)) {
 				break;
 			}
 
@@ -65,14 +64,15 @@ public class Twitter4jPool {
 				Logger.getLogger(Twitter4jPool.class).trace(
 						"Previos object is not available. previousAvailableObjIndex : " + previousAvailableObjIndex);
 			}
-			Logger.getLogger(Twitter4jPool.class).trace("getAvailableTwitterObject for resource : " + resource
-					+ " & TwitterRestApiOperationType : " + statusUsertimeline.name());
+			Logger.getLogger(Twitter4jPool.class)
+					.trace("getAvailableTwitterObject for resource : " + restApiOperationType.getResource()
+							+ " & TwitterRestApiOperationType : " + restApiOperationType.name());
 			availableObject = null;
 			// traverse to forward
 			ListIterator<Twitter> it2Forward = twitter4jObjects.listIterator(previousAvailableObjIndex + 1);
 			while (it2Forward.hasNext()) {
 				Twitter twitter4jObject = it2Forward.next();
-				if (isAvailable(twitter4jObject, resource, statusUsertimeline)) {
+				if (isAvailable(twitter4jObject, restApiOperationType)) {
 					availableObject = twitter4jObject;
 					break;
 				}
@@ -83,7 +83,7 @@ public class Twitter4jPool {
 						.listIterator();
 				while (itFromBeginning.hasNext()) {
 					Twitter twitter4jObject = itFromBeginning.next();
-					if (isAvailable(twitter4jObject, resource, statusUsertimeline)) {
+					if (isAvailable(twitter4jObject, restApiOperationType)) {
 						availableObject = twitter4jObject;
 						break;
 					}
@@ -99,8 +99,7 @@ public class Twitter4jPool {
 					int threadSleepTime = 60000;
 					try {
 						Twitter twitter = twitter4jObjects.get(0);
-						RateLimitStatus rateLimitStatusObject = getRateLimitStatusObject(twitter, resource,
-								statusUsertimeline);
+						RateLimitStatus rateLimitStatusObject = getRateLimitStatusObject(twitter, restApiOperationType);
 						threadSleepTime = (rateLimitStatusObject.getSecondsUntilReset() + 1) * 1000;
 					} catch (TwitterException e) {
 						Logger.getLogger(Twitter4jPool.class)
@@ -125,13 +124,11 @@ public class Twitter4jPool {
 
 	}
 
-	private boolean isAvailable(Twitter twitter4jObject, String resource,
-			TwitterRestApiOperationTypes twitterRestApiOperationType) {
+	private boolean isAvailable(Twitter twitter4jObject, TwitterRestApiOperationTypes twitterRestApiOperationType) {
 		boolean isTwitterObjAvailable = false;
 		try {
 			Logger.getLogger(Twitter4jPool.class).trace("Checking Twitter Object " + twitter4jObject.getId());
-			RateLimitStatus rateLimitStatus = getRateLimitStatusObject(twitter4jObject, resource,
-					twitterRestApiOperationType);
+			RateLimitStatus rateLimitStatus = getRateLimitStatusObject(twitter4jObject, twitterRestApiOperationType);
 			int remaining = rateLimitStatus.getRemaining();
 			if (remaining > 0) {
 				Logger.getLogger(Twitter4jPool.class).debug(
@@ -146,14 +143,11 @@ public class Twitter4jPool {
 		return isTwitterObjAvailable;
 	}
 
-	private RateLimitStatus getRateLimitStatusObject(Twitter twitter4jObject, String resource,
+	private RateLimitStatus getRateLimitStatusObject(Twitter twitter4jObject,
 			TwitterRestApiOperationTypes twitterRestApiOperationType) throws TwitterException {
-		Map<String, RateLimitStatus> rateLimitStatusMap = twitter4jObject.getRateLimitStatus(resource);
+		Map<String, RateLimitStatus> rateLimitStatusMap = twitter4jObject
+				.getRateLimitStatus(twitterRestApiOperationType.getResource());
 		RateLimitStatus rateLimitStatus = rateLimitStatusMap.get(twitterRestApiOperationType.toString());
 		return rateLimitStatus;
 	}
-
-	// public static void main(String[] args) {
-	// Twitter4jPool.getInstance();
-	// }
 }

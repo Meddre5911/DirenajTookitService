@@ -1,7 +1,7 @@
 package direnaj.util;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 public class ListUtils {
     //
@@ -35,8 +35,16 @@ public class ListUtils {
     //	}
 
     public static List<String> getListOfStrings(String... values) {
-        List<String> list = new Vector<>();
+        List<String> list = new ArrayList<>();
         for (String value : values) {
+            list.add(value);
+        }
+        return list;
+    }
+    
+    public static <T> List<T> getListOfObjects(@SuppressWarnings("unchecked") T... values) {
+        List<T> list = new ArrayList<>();
+        for (T value : values) {
             list.add(value);
         }
         return list;

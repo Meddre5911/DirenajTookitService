@@ -23,7 +23,6 @@ public class DirenajMongoDriver {
 		String mongoServerAddress = PropertiesUtil.getInstance().getProperty("mongo.server.address", null);
 		String mongoServerPort = PropertiesUtil.getInstance().getProperty("mongo.server.port", null);
 		String mongoUsedDb = PropertiesUtil.getInstance().getProperty("mongo.usedDB", null);
-		
 
 		mongoClient = new MongoClient(new MongoClientURI("mongodb://" + mongoServerAddress + ":" + mongoServerPort));
 
@@ -74,7 +73,16 @@ public class DirenajMongoDriver {
 		}
 		if (!mongoDB.collectionExists("OrgBehaviourRequestedSimilarityCalculations")) {
 			mongoDB.createCollection("OrgBehaviourRequestedSimilarityCalculations", null);
-			Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourRequestedSimilarityCalculations is created");
+			Logger.getLogger(DirenajMongoDriver.class.getSimpleName())
+					.debug("OrgBehaviourRequestedSimilarityCalculations is created");
+		}
+		if (!mongoDB.collectionExists("CampaignWords")) {
+			mongoDB.createCollection("CampaignWords", null);
+			Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("CampaignWords is created");
+		}
+		if (!mongoDB.collectionExists("CampaignStatistics")) {
+			mongoDB.createCollection("CampaignStatistics", null);
+			Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("CampaignStatistics is created");
 		}
 	}
 
@@ -91,6 +99,18 @@ public class DirenajMongoDriver {
 
 	public DBCollection getTweetsCollection() {
 		return mongoDB.getCollection("tweets");
+	}
+
+	public DBCollection getCampaignsCollection() {
+		return mongoDB.getCollection("campaigns");
+	}
+
+	public DBCollection getCampaignWordCollection() {
+		return mongoDB.getCollection("CampaignWords");
+	}
+
+	public DBCollection getCampaignStatisticsCollection() {
+		return mongoDB.getCollection("CampaignStatistics");
 	}
 
 	public DBCollection getOrgBehaviorRequestCollection() {
@@ -140,7 +160,7 @@ public class DirenajMongoDriver {
 	public DBCollection getTestCollection() {
 		return mongoDB.getCollection("testCollection");
 	}
-	
+
 	public Long executeCountQuery(DBCollection collection, DBObject query) {
 		return collection.count(query);
 	}

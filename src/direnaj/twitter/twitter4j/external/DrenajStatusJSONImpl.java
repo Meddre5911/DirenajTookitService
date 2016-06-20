@@ -29,7 +29,7 @@ import twitter4j.UserMentionEntityJSONImpl;
  *
  * @author Yusuke Yamamoto - yusuke at mac.com
  */
-public final class DrnjStatusJSONImpl implements Status, java.io.Serializable {
+public final class DrenajStatusJSONImpl implements Status, java.io.Serializable {
 	private static final long serialVersionUID = -6461195536943679985L;
 
 	private Date createdAt;
@@ -53,7 +53,7 @@ public final class DrnjStatusJSONImpl implements Status, java.io.Serializable {
 
 	private long[] contributorsIDs;
 
-	private DrnjStatusJSONImpl retweetedStatus;
+	private DrenajStatusJSONImpl retweetedStatus;
 	private UserMentionEntityJSONImpl[] userMentionEntities;
 	private URLEntityJSONImpl[] urlEntities;
 	private HashtagEntityJSONImpl[] hashtagEntities;
@@ -64,7 +64,7 @@ public final class DrnjStatusJSONImpl implements Status, java.io.Serializable {
 	private ScopesImpl scopes;
 	private UserJSONImpl user = null;
 	private String[] withheldInCountries = null;
-	private DrnjStatusJSONImpl quotedStatus;
+	private DrenajStatusJSONImpl quotedStatus;
 	private long quotedStatusId = -1L;
 
 	@Override
@@ -354,7 +354,7 @@ public final class DrnjStatusJSONImpl implements Status, java.io.Serializable {
 			this.contributorsIDs = contributorsIDs;
 	}
 
-	public void setRetweetedStatus(DrnjStatusJSONImpl retweetedStatus) {
+	public void setRetweetedStatus(DrenajStatusJSONImpl retweetedStatus) {
 		if (retweetedStatus != null)
 			this.retweetedStatus = retweetedStatus;
 	}
@@ -408,7 +408,7 @@ public final class DrnjStatusJSONImpl implements Status, java.io.Serializable {
 			this.withheldInCountries = withheldInCountries;
 	}
 
-	public void setQuotedStatus(DrnjStatusJSONImpl quotedStatus) {
+	public void setQuotedStatus(DrenajStatusJSONImpl quotedStatus) {
 		if (quotedStatus != null)
 			this.quotedStatus = quotedStatus;
 	}

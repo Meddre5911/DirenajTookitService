@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Bytes;
 import com.mongodb.DBCollection;
@@ -20,7 +21,10 @@ import com.mongodb.DBObject;
 
 import direnaj.adapter.DirenajInvalidJSONException;
 import direnaj.domain.User;
+import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.util.CollectionUtil;
+import twitter4j.HashtagEntity;
+import twitter4j.Status;
 
 public class DirenajDriverVersion2 {
 
@@ -54,12 +58,14 @@ public class DirenajDriverVersion2 {
 		try {
 			while (tweetCursor.hasNext()) {
 				JSONObject tweet = new JSONObject(tweetCursor.next().toString());
+				Gson gsonObject4Deserialization = Twitter4jUtil.getGsonObject4Deserialization();
+				Status status = Twitter4jUtil.deserializeTwitter4jStatusFromGson(gsonObject4Deserialization,
+						DirenajDriverUtils.getTweet(tweet).toString());
 				// hashtags of a single result
-				JSONArray hashtags = DirenajDriverUtils
-						.getHashTags(DirenajDriverUtils.getEntities(DirenajDriverUtils.getTweet(tweet)));
+				HashtagEntity[] hashtagEntities = status.getHashtagEntities();
 				// populate the temporary list
-				for (int j = 0; j < hashtags.length(); j++) {
-					String tweetHashTag = hashtags.getJSONObject(j).get("text").toString().toLowerCase(Locale.US);
+				for (int j = 0; j < hashtagEntities.length; j++) {
+					String tweetHashTag = hashtagEntities[j].getText().toLowerCase(Locale.US);
 					CollectionUtil.incrementKeyValueInMap(hashtagCounts, tweetHashTag);
 				}
 			}
@@ -71,6 +77,15 @@ public class DirenajDriverVersion2 {
 		return CollectionUtil.sortByComparator(hashtagCounts);
 	}
 
+	/**
+	 * FIXME 20160609 Tweet - Retrieved By difference
+	 * 
+	 * @param campaignID
+	 * @param tracedHashtag
+	 * @param requestId
+	 * @throws Exception
+	 * @throws DirenajInvalidJSONException
+	 */
 	public void saveHashtagUsers2Mongo(String campaignID, String tracedHashtag, String requestId)
 			throws Exception, DirenajInvalidJSONException {
 		// list for user ids
