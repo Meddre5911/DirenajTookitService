@@ -165,7 +165,7 @@ public class MongoPaginationServlet extends HttpServlet {
 						StringBuilder sBuilder = new StringBuilder();
 						for(int i=0;i<hashtags.length;i++){
 							String hashtag = hashtags[i].substring(1);
-							sBuilder.append("<a href=\"https://twitter.com/hashtag/"+hashtag+"?src=hash\" target=\"_blank\">#"+hashtag+"</a></td>");
+							sBuilder.append("<a href=\"https://twitter.com/hashtag/"+hashtag+"?src=hash\" target=\"_blank\">#"+hashtag+"</a> ");
 						}
 						record.put("queryHashtags", sBuilder.toString());
 						jsonArray.put(new JSONObject(record.toString()));
