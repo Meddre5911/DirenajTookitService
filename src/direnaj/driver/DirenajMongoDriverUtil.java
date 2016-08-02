@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -13,7 +15,10 @@ import com.mongodb.DBObject;
 import direnaj.domain.User;
 import direnaj.functionalities.organizedBehaviour.CosineSimilarityRequestData;
 import direnaj.functionalities.organizedBehaviour.ResumeBreakPoint;
+import direnaj.twitter.twitter4j.Twitter4jUtil;
+import direnaj.twitter.twitter4j.external.DrenajCampaignRecord;
 import direnaj.util.TextUtils;
+import twitter4j.Status;
 
 public class DirenajMongoDriverUtil {
 
@@ -29,7 +34,17 @@ public class DirenajMongoDriverUtil {
 		user.setCampaignTweetId((String) preProcessUser.get(MongoCollectionFieldNames.MONGO_USER_POST_TWEET_ID));
 		return user;
 	}
+	
+	public static DrenajCampaignRecord getCampaign(String campaignId){
+		DBCollection campaignsCollection = DirenajMongoDriver.getInstance().getCampaignsCollection();
+		BasicDBObject findQuery = new BasicDBObject();
+		findQuery.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
+		DBObject campaignJson = campaignsCollection.findOne(findQuery);
+		Gson gsonObject4Deserialization = new GsonBuilder().create();
+		return gsonObject4Deserialization.fromJson(campaignJson.toString(), DrenajCampaignRecord.class);
+	}
 
+	
 	public static List<DBObject> insertBulkData2CollectionIfNeeded(DBCollection dbCollection, List<DBObject> dbObjects,
 			boolean saveAnyway) {
 		if (dbObjects.size() > 0

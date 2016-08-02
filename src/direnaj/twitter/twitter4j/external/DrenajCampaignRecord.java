@@ -1,5 +1,9 @@
 package direnaj.twitter.twitter4j.external;
 
+import java.util.Date;
+
+import direnaj.util.DateTimeUtils;
+
 public class DrenajCampaignRecord {
 
 	// > db.campaigns.findOne({"campaign_id":"Influencers_SM_Influencers"})
@@ -21,16 +25,19 @@ public class DrenajCampaignRecord {
 	private String campaign_id;
 	private String query_terms;
 	private boolean tweetCollectionEnded;
+	private Date minCampaignDate;
+	private Date maxCampaignDate;
 
-	
 	public DrenajCampaignRecord(String campaign_type, String description, double created_at, String campaign_id,
-			String query_terms) {
+			String query_terms, String minDateStr, String maxDateStr) throws Exception {
 		super();
 		this.campaign_type = campaign_type;
 		this.description = description;
 		this.created_at = created_at;
 		this.campaign_id = campaign_id;
 		this.query_terms = query_terms;
+		setMinCampaignDate(DateTimeUtils.getDate("yyyy-MM-dd HH:mm", minDateStr.trim() + " 00:00"));
+		setMaxCampaignDate(DateTimeUtils.getDate("yyyy-MM-dd HH:mm", maxDateStr.trim() + " 23:59"));
 		setTweetCollectionEnded(false);
 	}
 
@@ -80,6 +87,22 @@ public class DrenajCampaignRecord {
 
 	public void setTweetCollectionEnded(boolean tweetCollectionEnded) {
 		this.tweetCollectionEnded = tweetCollectionEnded;
+	}
+
+	public Date getMinCampaignDate() {
+		return minCampaignDate;
+	}
+
+	public void setMinCampaignDate(Date minCampaignDate) {
+		this.minCampaignDate = minCampaignDate;
+	}
+
+	public Date getMaxCampaignDate() {
+		return maxCampaignDate;
+	}
+
+	public void setMaxCampaignDate(Date maxCampaignDate) {
+		this.maxCampaignDate = maxCampaignDate;
 	}
 
 }

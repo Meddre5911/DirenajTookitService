@@ -33,6 +33,7 @@ import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.servlet.OrganizedBehaviourDetectionRequestType;
 import direnaj.twitter.UserAccountPropertyAnalyser;
 import direnaj.twitter.twitter4j.Twitter4jUtil;
+import direnaj.twitter.twitter4j.external.DrenajCampaignRecord;
 import direnaj.util.CollectionUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.ListUtils;
@@ -275,7 +276,7 @@ public class OrganizationDetector implements Runnable {
 				.getBooleanProperty("cosSimilarity.calculateHourBasisSimilarity", true);
 		// calculate similarity
 		new CosineSimilarity(requestId, calculateGeneralSimilarity, calculateHashTagSimilarity,
-				calculateHourBasisSimilarity, earliestTweetDate, latestTweetDate).calculateTweetSimilarities();
+				calculateHourBasisSimilarity, earliestTweetDate, latestTweetDate,campaignId).calculateTweetSimilarities();
 	}
 
 	public void collectTweetsOfAllUsers(String requestId) {
@@ -283,12 +284,14 @@ public class OrganizationDetector implements Runnable {
 		DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
 		// get pre process users
 		DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+		Boolean calculateOnlyTopTrendDate = PropertiesUtil.getInstance().getBooleanProperty("cosSimilarity.calculateOnlyTopTrendDate", true);
+		DrenajCampaignRecord drenajCampaignRecord = DirenajMongoDriverUtil.getCampaign(campaignId);
 		try {
 			while (preProcessUsers.hasNext()) {
 				DBObject preProcessUser = preProcessUsers.next();
 				try {
 					User user = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
-					Twitter4jUtil.saveTweetsOfUser(user);
+					Twitter4jUtil.saveTweetsOfUser(user,calculateOnlyTopTrendDate,drenajCampaignRecord.getMinCampaignDate(),drenajCampaignRecord.getMaxCampaignDate());
 				} catch (Exception e) {
 					Logger.getLogger(OrganizationDetector.class.getSimpleName())
 							.error("Twitter4jUtil-collectTweetsOfAllUsers", e);

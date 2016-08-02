@@ -19,6 +19,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 
+import cmu.arktweetnlp.Twokenize;
 import direnaj.driver.DirenajDriverVersion2;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.DirenajMongoDriverUtil;
@@ -40,8 +41,15 @@ public class CampaignCreator implements Runnable {
 	private Gson gsonDeserializer;
 
 	public CampaignCreator(String campaignId, String campaignDefinition, String requestedHashtags, String minDateStr,
-			String maxDateStr) {
+			String maxDateStr) throws Exception {
 		super();
+
+		if (TextUtils.isEmpty(campaignId) || TextUtils.isEmpty(requestedHashtags) || TextUtils.isEmpty(minDateStr)
+				|| TextUtils.isEmpty(maxDateStr)) {
+			Logger.getLogger(CampaignCreator.class)
+					.error("One of these are empty : Campaign Id, Hashtag, minDate, maxDate");
+			throw new Exception();
+		}
 		this.campaignId = campaignId;
 		this.campaignDefinition = campaignDefinition;
 		this.requestedHashtags = requestedHashtags;
@@ -50,7 +58,8 @@ public class CampaignCreator implements Runnable {
 		gsonDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 		// insert campaign record
 		Twitter4jUtil.insertCampaignRecord(campaignId,
-				campaignDefinition + " & Date Between : " + maxDateStr + " & " + minDateStr, requestedHashtags);
+				campaignDefinition + " & Date Between : " + maxDateStr + " & " + minDateStr, requestedHashtags,
+				minDateStr, maxDateStr);
 	}
 
 	public void createCampaign() {
@@ -138,7 +147,10 @@ public class CampaignCreator implements Runnable {
 						campaignTweets.next().get("tweet").toString());
 				// get tweet text
 				String tweetText = TextUtils.getNotNullValue(userTweetObj.getText());
-				String[] tweetWords = tweetText.split(" ");
+
+				// String[] tweetWords = tweetText.split(" ");
+				List<String> tweetWords = Twokenize.tokenize(tweetText);
+
 				HashMap<String, Double> wordCounts = new HashMap<>();
 				// count tweet words
 				for (String word : tweetWords) {

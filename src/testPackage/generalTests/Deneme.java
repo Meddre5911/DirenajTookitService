@@ -7,12 +7,11 @@ import direnaj.util.TextUtils;
 
 public class Deneme {
 
-	public static void main(String[] args) {
-		double d = 1.4423076923076923d;
-		
-		BigDecimal bd = new BigDecimal(d);
-	    bd = bd.setScale(3, RoundingMode.HALF_UP);
-		System.out.println(bd.doubleValue());
+	public static void main(String[] args) throws InterruptedException {
+		Deneme d = new Deneme();
+		synchronized (String.class) {
+			d.wait();
+		}
 
 	}
 

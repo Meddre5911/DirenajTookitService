@@ -94,20 +94,45 @@ public class DirenajDriverVersion2 {
 		try {
 			while (tweetCursor.hasNext()) {
 				JSONObject direnajTweetObject = new JSONObject(tweetCursor.next().toString());
-				JSONObject tweetData = DirenajDriverUtils.getTweet(direnajTweetObject);
-				JSONArray hashtags = DirenajDriverUtils.getHashTags(DirenajDriverUtils.getEntities(tweetData));
-				for (int j = 0; j < hashtags.length(); j++) {
-					try {
-						String tweetHashTag = hashtags.getJSONObject(j).get("text").toString().toLowerCase(Locale.US);
-						if (tracedHashtag.equals(tweetHashTag)) {
-							users.add(DirenajDriverUtils.parseUser(tweetData));
-							break;
+				// "retrieved_by" : "drenaj_toolkit",
+				if ("drenaj_toolkit".equals(direnajTweetObject.get("retrieved_by"))) {
+					Logger.getLogger(DirenajDriverVersion2.class).debug("Tweet is retrieved by : drenaj_toolkit");
+					Gson gsonObject4Deserialization = Twitter4jUtil.getGsonObject4Deserialization();
+					Status status = Twitter4jUtil.deserializeTwitter4jStatusFromGson(gsonObject4Deserialization,
+							DirenajDriverUtils.getTweet(direnajTweetObject).toString());
+					// hashtags of a single result
+					HashtagEntity[] hashtagEntities = status.getHashtagEntities();
+					for (HashtagEntity hashtagEntity : hashtagEntities) {
+						try {
+							String tweetHashTag = hashtagEntity.getText().toLowerCase(Locale.US);
+							if (tracedHashtag.equals(tweetHashTag)) {
+								users.add(DirenajDriverUtils.parseUser(status));
+								break;
+							}
+						} catch (Exception e) {
+							Logger.getLogger(DirenajDriverVersion2.class)
+									.error("Direnaj Driver Version 2 - saveHashtagUsers2Mongo", e);
 						}
-					} catch (Exception e) {
-						Logger.getLogger(DirenajDriverVersion2.class)
-								.error("Direnaj Driver Version 2 - saveHashtagUsers2Mongo", e);
+						users = savePreProcessUsersIfNeeded(users, requestId, false);
 					}
-					users = savePreProcessUsersIfNeeded(users, requestId, false);
+				} else {
+					Logger.getLogger(DirenajDriverVersion2.class).debug("Tweet is retrieved by : drenaj");
+					JSONObject tweetData = DirenajDriverUtils.getTweet(direnajTweetObject);
+					JSONArray hashtags = DirenajDriverUtils.getHashTags(DirenajDriverUtils.getEntities(tweetData));
+					for (int j = 0; j < hashtags.length(); j++) {
+						try {
+							String tweetHashTag = hashtags.getJSONObject(j).get("text").toString()
+									.toLowerCase(Locale.US);
+							if (tracedHashtag.equals(tweetHashTag)) {
+								users.add(DirenajDriverUtils.parseUser(tweetData));
+								break;
+							}
+						} catch (Exception e) {
+							Logger.getLogger(DirenajDriverVersion2.class)
+									.error("Direnaj Driver Version 2 - saveHashtagUsers2Mongo", e);
+						}
+						users = savePreProcessUsersIfNeeded(users, requestId, false);
+					}
 				}
 			}
 		} finally {

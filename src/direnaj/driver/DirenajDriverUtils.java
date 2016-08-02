@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import direnaj.adapter.DirenajInvalidJSONException;
 import direnaj.domain.User;
 import direnaj.util.DateTimeUtils;
+import twitter4j.Status;
 
 /**
  * @author Erdem
@@ -233,6 +234,22 @@ public class DirenajDriverUtils {
 		} catch (Exception e) {
 			throw new DirenajInvalidJSONException("parseUser : " + e.getMessage());
 		}
+	}
+
+	public static User parseUser(Status status) {
+		twitter4j.User twitterUser = status.getUser();
+		// get user domain
+		User user = new User(String.valueOf(twitterUser.getId()), twitterUser.getScreenName());
+		// set user info
+		user.setFollowersCount(twitterUser.getFollowersCount());
+		user.setFriendsCount(twitterUser.getFriendsCount());
+		user.setProtected(twitterUser.isProtected());
+		user.setVerified(twitterUser.isVerified());
+		user.setCreationDate(twitterUser.getCreatedAt());
+		user.setCampaignTweetPostDate(status.getCreatedAt());
+		user.setFavoriteCount(twitterUser.getFavouritesCount());
+		user.setCampaignTweetId(String.valueOf(status.getId()));
+		return user;
 	}
 
 	/**

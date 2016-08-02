@@ -8,7 +8,7 @@ import direnaj.functionalities.organizedBehaviour.CampaignCreator;
 public class CampaignCreationTest {
 
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		DirenajMongoDriver.getInstance().getCampaignWordCollection().remove(new BasicDBObject("campaign_id", "Deneme"));
 		DirenajMongoDriver.getInstance().getCampaignStatisticsCollection().remove(new BasicDBObject("campaign_id", "Deneme"));
 		

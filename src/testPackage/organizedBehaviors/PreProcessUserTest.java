@@ -15,23 +15,23 @@ public class PreProcessUserTest {
 
 	public static void main(String[] args) throws Exception {
 		// delete object
-		DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection().remove(new BasicDBObject());
-		DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations().remove(new BasicDBObject());
-		
-		
-		DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().remove(new BasicDBObject());
+//		DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection().remove(new BasicDBObject());
+//		DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations().remove(new BasicDBObject());
+//		
+//		
+//		DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().remove(new BasicDBObject());
 		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().remove(new BasicDBObject());
-
+//
 		DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().remove(new BasicDBObject());
-
-		DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().remove(new BasicDBObject());
-		DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityIDF().remove(new BasicDBObject());
-
-		DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().remove(new BasicDBObject());
-		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo().remove(new BasicDBObject());
-		DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityTF_IDF().remove(new BasicDBObject());
-		DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity().remove(new BasicDBObject());
-		DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations().remove(new BasicDBObject());
+//
+//		DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().remove(new BasicDBObject());
+//		DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityIDF().remove(new BasicDBObject());
+//
+//		DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().remove(new BasicDBObject());
+//		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo().remove(new BasicDBObject());
+//		DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityTF_IDF().remove(new BasicDBObject());
+//		DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity().remove(new BasicDBObject());
+//		DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations().remove(new BasicDBObject());
 
 		//
 		// // create test entity

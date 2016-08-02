@@ -22,6 +22,7 @@ import com.mongodb.DBObject;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.DirenajMongoDriverUtil;
 import direnaj.driver.MongoCollectionFieldNames;
+import direnaj.twitter.twitter4j.external.DrenajCampaignRecord;
 import direnaj.util.CosineSimilarityUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.PropertiesUtil;
@@ -33,37 +34,29 @@ public class CosineSimilarity {
 	private List<CosineSimilarityRequestData> requestDataList;
 
 	public CosineSimilarity(String requestId, boolean calculateGeneralSimilarity, boolean calculateHashTagSimilarity,
-			boolean calculateHourBasisSimilarity, Date earliestTweetDate, Date latestTweetDate) {
+			boolean calculateHourBasisSimilarity, Date earliestTweetDate, Date latestTweetDate, String campaignId) {
 		requestDataList = new ArrayList<>();
 		originalRequestId = requestId;
 		// first assume as resume process
 		check4ExistingCosSimilarityCalculationRequests();
+
+		Boolean calculateOnlyTopTrendDate = PropertiesUtil.getInstance().getBooleanProperty("cosSimilarity.calculateOnlyTopTrendDate", true);
+		if(calculateOnlyTopTrendDate){
+			DrenajCampaignRecord drenajCampaignRecord = DirenajMongoDriverUtil.getCampaign(campaignId);
+			earliestTweetDate = drenajCampaignRecord.getMinCampaignDate();
+			latestTweetDate = drenajCampaignRecord.getMaxCampaignDate();
+		}
 		// if this is not a resume process
 		if (requestDataList == null || requestDataList.size() <= 0) {
 			int hourBasisInterval = PropertiesUtil.getInstance()
 					.getIntProperty("tweet.calculateSimilarity.hourBasisInterval", 2);
-			// calculate general similarity
-			if (calculateGeneralSimilarity) {
-				CosineSimilarityRequestData requestData = new CosineSimilarityRequestData(
-						TextUtils.generateUniqueId4Request(), originalRequestId);
-				requestDataList.add(requestData);
-				if (calculateHourBasisSimilarity) {
-					prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval,
-							false);
-				}
-			}
-			// calculate hashtag basis similarity
+			// calculate general hour basis similarity
+			prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval, false);
+			// calculate hashtag hour basis similarity
 			if (calculateHashTagSimilarity) {
-				CosineSimilarityRequestData requestData = new CosineSimilarityRequestData(
-						TextUtils.generateUniqueId4Request(), originalRequestId, true, null, null);
-				requestDataList.add(requestData);
-				if (calculateHourBasisSimilarity) {
-					prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval,
-							true);
-				}
+				prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval, true);
 			}
 		}
-
 	}
 
 	private void check4ExistingCosSimilarityCalculationRequests() {

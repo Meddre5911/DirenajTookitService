@@ -42,13 +42,14 @@ import twitter4j.TwitterException;
 
 public class Twitter4jUtil {
 
-	public static void saveTweetsOfUser(User user) {
+	public static void saveTweetsOfUser(User user, Boolean calculateOnlyTopTrendDate, Date minCampaignDate,
+			Date maxCampaignDate) {
 		try {
-			getEarliestTweets(user);
+			getEarliestTweets(user, calculateOnlyTopTrendDate, minCampaignDate);
 			Logger.getLogger(Twitter4jUtil.class.getSimpleName())
 					.debug("Earliest Tweets has been collected for User Name :" + user.getUserScreenName()
 							+ ", User Id :" + user.getUserId());
-			getRecentTweets(user);
+			getRecentTweets(user, calculateOnlyTopTrendDate, maxCampaignDate);
 			Logger.getLogger(Twitter4jUtil.class.getSimpleName())
 					.debug("Recent Tweets has been collected for User Name :" + user.getUserScreenName() + ", User Id :"
 							+ user.getUserId());
@@ -58,10 +59,16 @@ public class Twitter4jUtil {
 		}
 	}
 
-	private static void getEarliestTweets(User user) throws TwitterException {
-		Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inWeeks", 2);
-		Date lowestDate = DateTimeUtils.subtractWeeksFromDateInDateFormat(user.getCampaignTweetPostDate(),
-				tweetDuration);
+	private static void getEarliestTweets(User user, Boolean calculateOnlyTopTrendDate, Date minCampaignDate)
+			throws TwitterException {
+		Date lowestDate;
+		if (calculateOnlyTopTrendDate) {
+			lowestDate = minCampaignDate;
+		} else {
+			Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inWeeks", 2);
+			lowestDate = DateTimeUtils.subtractWeeksFromDateInDateFormat(user.getCampaignTweetPostDate(),
+					tweetDuration);
+		}
 		// first collect earlier tweets
 		int pageNumber = 1;
 		Paging paging = new Paging(1, 200);
@@ -97,7 +104,8 @@ public class Twitter4jUtil {
 		}
 	}
 
-	private static void getRecentTweets(User user) throws TwitterException {
+	private static void getRecentTweets(User user, Boolean calculateOnlyTopTrendDate, Date maxCampaignDate)
+			throws TwitterException {
 		// first collect earlier tweets
 		int pageNumber = 1;
 		Paging paging = new Paging(1, 200);
@@ -182,7 +190,7 @@ public class Twitter4jUtil {
 				return date;
 			}
 		};
-		
+
 		// FIXME ileride burayı düzeltmemiz gerekebilir
 		JsonDeserializer<MediaEntity.Size> mediaEntitysizeDeserializer = new JsonDeserializer<MediaEntity.Size>() {
 			@Override
@@ -244,12 +252,13 @@ public class Twitter4jUtil {
 		}
 	}
 
-	public static void insertCampaignRecord(String campaignName, String campaignDefinition, String hashtagQuery) {
+	public static void insertCampaignRecord(String campaignName, String campaignDefinition, String hashtagQuery,
+			String minDateStr, String maxDateStr) throws Exception {
 		// insert record into campaign collection
 		DrenajCampaignRecord drenajCampaignRecord = new DrenajCampaignRecord("Search Api", campaignDefinition,
-				DateTimeUtils.getLocalDateInRataDieFormat(), campaignName, hashtagQuery);
+				DateTimeUtils.getLocalDateInRataDieFormat(), campaignName, hashtagQuery, minDateStr, maxDateStr);
 		// get json of object
-		Gson gson = getGsonObject4Serialization();
+		Gson gson = new GsonBuilder().create();
 		String json = gson.toJson(drenajCampaignRecord);
 		Logger.getLogger(Twitter4jUtil.class).debug("Campaign Record is inserted for campagin_id : " + campaignName);
 		Logger.getLogger(Twitter4jUtil.class).debug("Campaign Record is : " + json);
