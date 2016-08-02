@@ -272,11 +272,9 @@ public class OrganizationDetector implements Runnable {
 				.getBooleanProperty("cosSimilarity.calculateGeneralSimilarity", true);
 		Boolean calculateHashTagSimilarity = PropertiesUtil.getInstance()
 				.getBooleanProperty("cosSimilarity.calculateHashTagSimilarity", true);
-		Boolean calculateHourBasisSimilarity = PropertiesUtil.getInstance()
-				.getBooleanProperty("cosSimilarity.calculateHourBasisSimilarity", true);
 		// calculate similarity
-		new CosineSimilarity(requestId, calculateGeneralSimilarity, calculateHashTagSimilarity,
-				calculateHourBasisSimilarity, earliestTweetDate, latestTweetDate,campaignId).calculateTweetSimilarities();
+		new CosineSimilarity(requestId, calculateGeneralSimilarity, calculateHashTagSimilarity, earliestTweetDate,
+				latestTweetDate, campaignId).calculateTweetSimilarities();
 	}
 
 	public void collectTweetsOfAllUsers(String requestId) {
@@ -284,14 +282,16 @@ public class OrganizationDetector implements Runnable {
 		DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
 		// get pre process users
 		DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
-		Boolean calculateOnlyTopTrendDate = PropertiesUtil.getInstance().getBooleanProperty("cosSimilarity.calculateOnlyTopTrendDate", true);
+		Boolean calculateOnlyTopTrendDate = PropertiesUtil.getInstance()
+				.getBooleanProperty("cosSimilarity.calculateOnlyTopTrendDate", true);
 		DrenajCampaignRecord drenajCampaignRecord = DirenajMongoDriverUtil.getCampaign(campaignId);
 		try {
 			while (preProcessUsers.hasNext()) {
 				DBObject preProcessUser = preProcessUsers.next();
 				try {
 					User user = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
-					Twitter4jUtil.saveTweetsOfUser(user,calculateOnlyTopTrendDate,drenajCampaignRecord.getMinCampaignDate(),drenajCampaignRecord.getMaxCampaignDate());
+					Twitter4jUtil.saveTweetsOfUser(user, calculateOnlyTopTrendDate,
+							drenajCampaignRecord.getMinCampaignDate(), drenajCampaignRecord.getMaxCampaignDate());
 				} catch (Exception e) {
 					Logger.getLogger(OrganizationDetector.class.getSimpleName())
 							.error("Twitter4jUtil-collectTweetsOfAllUsers", e);

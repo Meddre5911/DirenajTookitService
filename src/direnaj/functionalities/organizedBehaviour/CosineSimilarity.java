@@ -34,14 +34,15 @@ public class CosineSimilarity {
 	private List<CosineSimilarityRequestData> requestDataList;
 
 	public CosineSimilarity(String requestId, boolean calculateGeneralSimilarity, boolean calculateHashTagSimilarity,
-			boolean calculateHourBasisSimilarity, Date earliestTweetDate, Date latestTweetDate, String campaignId) {
+			Date earliestTweetDate, Date latestTweetDate, String campaignId) {
 		requestDataList = new ArrayList<>();
 		originalRequestId = requestId;
 		// first assume as resume process
 		check4ExistingCosSimilarityCalculationRequests();
 
-		Boolean calculateOnlyTopTrendDate = PropertiesUtil.getInstance().getBooleanProperty("cosSimilarity.calculateOnlyTopTrendDate", true);
-		if(calculateOnlyTopTrendDate){
+		Boolean calculateOnlyTopTrendDate = PropertiesUtil.getInstance()
+				.getBooleanProperty("cosSimilarity.calculateOnlyTopTrendDate", true);
+		if (calculateOnlyTopTrendDate) {
 			DrenajCampaignRecord drenajCampaignRecord = DirenajMongoDriverUtil.getCampaign(campaignId);
 			earliestTweetDate = drenajCampaignRecord.getMinCampaignDate();
 			latestTweetDate = drenajCampaignRecord.getMaxCampaignDate();
@@ -51,7 +52,9 @@ public class CosineSimilarity {
 			int hourBasisInterval = PropertiesUtil.getInstance()
 					.getIntProperty("tweet.calculateSimilarity.hourBasisInterval", 2);
 			// calculate general hour basis similarity
-			prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval, false);
+			if (calculateGeneralSimilarity) {
+				prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval, false);
+			}
 			// calculate hashtag hour basis similarity
 			if (calculateHashTagSimilarity) {
 				prepareRequestData4HourlyBasisCalculation(earliestTweetDate, latestTweetDate, hourBasisInterval, true);
