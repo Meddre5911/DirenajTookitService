@@ -50,6 +50,8 @@ public interface MongoCollectionFieldNames {
 	// Cosine Similarity Requests
 	public static final String MONGO_RESUME_PROCESS = "resumeProcess";
 	public static final String MONGO_RESUME_BREAKPOINT = "resumeBreakPoint";
+	public static final String MONGO_GENARAL_SIMILARITY_CALCULATION = "calculateGeneralSimilarity";
+	public static final String MONGO_HASHTAG_SIMILARITY_CALCULATION = "calculateHashTagSimilarity";
 	
 	// legacy direnaj
 	public static final String MONGO_CAMPAIGN_ID = "campaign_id";

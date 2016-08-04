@@ -59,19 +59,12 @@ public class OrganizationDetector implements Runnable {
 	private Gson statusDeserializer;
 	private ResumeBreakPoint resumeBreakPoint;
 	private boolean isCleaningDone4ResumeProcess;
-
-	public OrganizationDetector(String requestId, boolean disableGraphAnalysis, String tracedHashtag) {
-		direnajDriver = new DirenajDriverVersion2();
-		direnajMongoDriver = DirenajMongoDriver.getInstance();
-		this.requestId = requestId;
-		this.disableGraphAnalysis = disableGraphAnalysis;
-		tracedSingleHashtag = tracedHashtag;
-		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
-		isCleaningDone4ResumeProcess = false;
-	}
+	private boolean calculateHashTagSimilarity;
+	private boolean calculateGeneralSimilarity;
 
 	public OrganizationDetector(String campaignId, int topHashtagCount, String requestDefinition, String tracedHashtag,
-			OrganizedBehaviourDetectionRequestType detectionRequestType, boolean disableGraphAnalysis) {
+			OrganizedBehaviourDetectionRequestType detectionRequestType, boolean disableGraphAnalysis,
+			boolean calculateHashTagSimilarity, boolean calculateGeneralSimilarity) {
 		direnajDriver = new DirenajDriverVersion2();
 		direnajMongoDriver = DirenajMongoDriver.getInstance();
 		requestId = TextUtils.generateUniqueId4Request();
@@ -85,6 +78,8 @@ public class OrganizationDetector implements Runnable {
 		}
 		this.detectionRequestType = detectionRequestType;
 		this.disableGraphAnalysis = disableGraphAnalysis;
+		this.calculateHashTagSimilarity = calculateHashTagSimilarity;
+		this.calculateGeneralSimilarity = calculateGeneralSimilarity;
 		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 		isCleaningDone4ResumeProcess = false;
 		insertRequest2Mongo();
@@ -108,6 +103,10 @@ public class OrganizationDetector implements Runnable {
 		this.tracedHashtagList = (List<String>) requestObj.get("tracedHashtag");
 		this.detectionRequestType = OrganizedBehaviourDetectionRequestType
 				.valueOf((String) requestObj.get("requestType"));
+		this.calculateGeneralSimilarity = (boolean) requestObj
+				.get(MongoCollectionFieldNames.MONGO_GENARAL_SIMILARITY_CALCULATION);
+		this.calculateHashTagSimilarity = (boolean) requestObj
+				.get(MongoCollectionFieldNames.MONGO_HASHTAG_SIMILARITY_CALCULATION);
 
 		Object retrievedResumeBreakPoint = requestObj.get(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT);
 		if (retrievedResumeBreakPoint != null) {
@@ -268,10 +267,8 @@ public class OrganizationDetector implements Runnable {
 	 * FIXME test amacli encapsule edildi
 	 */
 	public void calculateTweetSimilarities() {
-		Boolean calculateGeneralSimilarity = PropertiesUtil.getInstance()
-				.getBooleanProperty("cosSimilarity.calculateGeneralSimilarity", true);
-		Boolean calculateHashTagSimilarity = PropertiesUtil.getInstance()
-				.getBooleanProperty("cosSimilarity.calculateHashTagSimilarity", true);
+		Logger.getLogger(OrganizationDetector.class.getSimpleName()).debug("Calculate General Similarity : "
+				+ calculateGeneralSimilarity + " - Calculate Hashtag Similarity : " + calculateHashTagSimilarity);
 		// calculate similarity
 		new CosineSimilarity(requestId, calculateGeneralSimilarity, calculateHashTagSimilarity, earliestTweetDate,
 				latestTweetDate, campaignId).calculateTweetSimilarities();
@@ -522,6 +519,8 @@ public class OrganizationDetector implements Runnable {
 		document.put(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME, "");
 		document.put(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT, null);
 		document.put(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, false);
+		document.put(MongoCollectionFieldNames.MONGO_GENARAL_SIMILARITY_CALCULATION, calculateGeneralSimilarity);
+		document.put(MongoCollectionFieldNames.MONGO_HASHTAG_SIMILARITY_CALCULATION, calculateHashTagSimilarity);
 		organizedBehaviorCollection.insert(document);
 	}
 

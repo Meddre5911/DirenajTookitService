@@ -62,9 +62,14 @@ public class OrganizedBehaviours extends HttpServlet {
 					String tracedHashtag = TextUtils.getNotNullValue(request.getParameter("tracedHashtag"));
 					String organizedHashtagDefinition = request.getParameter("organizedHashtagDefinition");
 					boolean disableGraphAnalysis = !TextUtils.isEmpty(request.getParameter("disableGraphDb"));
+					boolean calculateHashTagSimilarity = !TextUtils
+							.isEmpty(request.getParameter("calculateHashTagSimilarity"));
+					boolean calculateGeneralSimilarity = !TextUtils
+							.isEmpty(request.getParameter("calculateGeneralSimilarity"));
 					organizationDetector = new OrganizationDetector(campaignId, topHashTagCount,
 							organizedHashtagDefinition, tracedHashtag,
-							OrganizedBehaviourDetectionRequestType.valueOf(operationType), disableGraphAnalysis);
+							OrganizedBehaviourDetectionRequestType.valueOf(operationType), disableGraphAnalysis,
+							calculateHashTagSimilarity, calculateGeneralSimilarity);
 
 					new Thread(organizationDetector).start();
 					forwardRequest(request, response, "/listOrganizedBehaviourRequests.jsp");
