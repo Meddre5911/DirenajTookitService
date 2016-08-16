@@ -17,6 +17,16 @@ body {
   shape-rendering: crispEdges;
 }
 
+.axis--x path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
 .dot {
   stroke: #000;
 }
@@ -58,20 +68,26 @@ body {
 	display: table-row-group;
 }
 </style>
+<head>
+</head>
 <body onload="prepareGraphs()">
 
 <input type="hidden" name="requestId" id="requestId"
 		value="<%=request.getParameter("requestId")%>">
 
-<script src="js/d3.v3.min.js"></script>
 <script src="js/d3Graph.js"></script>
 <script type="text/javascript" src="js/jquery-1.11.2.min.js"></script>
+<script type="text/javascript" src="js/d3.v3.min.js"></script>
 
 <script>
 
 function prepareGraphs(){ 
 	prepareUserCreationTimeGraph();
-	prepareUserRatiosGraph();
+	prepareMultiLineUserRatiosGraph('visualizeUserTweetEntityRatios','userRatiosGraph');
+	prepareMultiLineUserRatiosGraph('visualizeUserPostDeviceRatios','userPostDevicesRatiosGraph');
+	prepareUserRatiosGraph('visualizeUserFriendFollowerRatio','userFriendFollowerRatiosGraph');
+	prepareMultiLineUserRatiosGraph('visualizeUserRoughTweetCounts','userRoughTweetCountsGraph');
+	prepareUserRatiosGraph('visualizeUserRoughHashtagTweetCounts','userHashtagCountsGraph');
 }
 
 </script>
@@ -84,12 +100,12 @@ function prepareGraphs(){
 <div id="userRatiosGraph" class="divTableCell"></div>
 </div>
 <div class="divTableRow">
-<div class="divTableCell">&nbsp;</div>
-<div class="divTableCell">&nbsp;</div>
+<div id="userPostDevicesRatiosGraph" class="divTableCell"></div>
+<div id="userFriendFollowerRatiosGraph" class="divTableCell"></div>
 </div>
 <div class="divTableRow">
-<div class="divTableCell">&nbsp;</div>
-<div class="divTableCell">&nbsp;</div>
+<div id="userRoughTweetCountsGraph" class="divTableCell"></div>
+<div id="userHashtagCountsGraph" class="divTableCell">&nbsp;</div>
 </div>
 <div class="divTableRow">
 <div class="divTableCell">&nbsp;</div>

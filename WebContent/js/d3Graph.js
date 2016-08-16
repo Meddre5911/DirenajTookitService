@@ -1,7 +1,6 @@
 /**
  * 
  */
-
 function prepareUserCreationTimeGraph(){
 	/* 
 	 * value accessor - returns the value to encode for a given data object.
@@ -26,7 +25,7 @@ function prepareUserCreationTimeGraph(){
 	                               dateFinish.getTime())/(oneDay)));
 
 	    var margin = {top: 20, right: 20, bottom: 20, left: 50},
-	        height = 520,
+	        height = 700,
 	        width = numberDays * 0.2; 
 
 		// var margin = {top: 20, right: 20, bottom: 30, left: 40},
@@ -118,10 +117,180 @@ function prepareUserCreationTimeGraph(){
 	});
 }
 
-function prepareUserRatiosGraph(){
+function prepareMultiLineUserRatiosGraph(requestType,divId){
+
+	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
+		
+		
+		var margin = {
+			    top: 20,
+			    right: 80,
+			    bottom: 30,
+			    left: 50
+			},
+			width = 700 - margin.left - margin.right,
+			height = 700 - margin.top - margin.bottom;
+
+
+			var x = d3.scale.linear()
+			    .range([0, width]);
+
+			var y = d3.scale.linear()
+			    .range([height, 0]);
+
+			var color = d3.scale.category10();
+
+			var xAxis = d3.svg.axis()
+			    .scale(x)
+			    .orient("bottom");
+
+			var yAxis = d3.svg.axis()
+			    .scale(y)
+			    .orient("left");
+
+			var line = d3.svg.line()
+			    .interpolate("basis")
+			    .x(function (d) {
+			    return x(d.userSequenceNo);
+			})
+			    .y(function (d) {
+			    return y(d.ratioValue);
+			});
+
+			var svg = d3.select("#"+divId).append("svg")
+			    .attr("width", width + margin.left + margin.right)
+			    .attr("height", height + margin.top + margin.bottom)
+			    .append("g")
+			    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+			color.domain(data.map(function (d) { return d.ratioType; }));
+
+
+			var cities = data;
+
+			var minX = d3.min(data, function (kv) { return d3.min(kv.values, function (d) { return d.userSequenceNo; }) });
+			var maxX = d3.max(data, function (kv) { return d3.max(kv.values, function (d) { return d.userSequenceNo; }) });
+			var minY = d3.min(data, function (kv) { return d3.min(kv.values, function (d) { return d.ratioValue; }) });
+			var maxY = d3.max(data, function (kv) { return d3.max(kv.values, function (d) { return d.ratioValue; }) });
+
+			x.domain([minX, maxX]);
+			y.domain([minY, maxY]);
+
+			svg.append("g")
+			    .attr("class", "x axis")
+			    .attr("transform", "translate(0," + height + ")")
+			    .call(xAxis);
+
+			svg.append("g")
+			    .attr("class", "y axis")
+			    .call(yAxis)
+			    .append("text")
+			    .attr("transform", "rotate(-90)")
+			    .attr("y", 6)
+			    .attr("dy", ".71em")
+			    .style("text-anchor", "end")
+			    .text("Ratios");
+
+			var city = svg.selectAll(".city")
+			    .data(cities)
+			    .enter().append("g")
+			    .attr("class", "city");
+
+			city.append("path")
+			    .attr("class", "line")
+			    .attr("d", function (d) {
+			    return line(d.values);
+			})
+			    .style("stroke", function (d) {
+			    return color(d.ratioType);
+			});
+
+			city.append("text")
+			    .datum(function (d) {
+			    return {
+			    	ratioType: d.ratioType,
+			    	userSequenceNo: d.values[d.values.length - 1].userSequenceNo,
+			    	ratioValue: d.values[d.values.length - 1].ratioValue
+			    };
+			})
+			    .attr("transform", function (d) {
+			    return "translate(" + x(d.userSequenceNo) + "," + y(d.ratioValue) + ")";
+			})
+			    .attr("x", 3)
+			    .attr("dy", ".35em")
+			    .text(function (d) {
+			        return d.ratioType;
+			});
+		  
+		  
+		  
+		});
+}
+
+function prepareUserRatiosGraph(requestType,divId){
+
+	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
+		if (error) throw error;
+
+		var margin = {top: 20, right: 20, bottom: 30, left: 50},
+	    width = 960 - margin.left - margin.right,
+	    height = 500 - margin.top - margin.bottom;
 	
 	
+		var x = d3.scale.linear()
+		    .range([0, width]);
+	
+		var y = d3.scale.linear()
+		    .range([height, 0]);
+	
+		var xAxis = d3.svg.axis()
+		    .scale(x)
+		    .orient("bottom");
+	
+		var yAxis = d3.svg.axis()
+		    .scale(y)
+		    .orient("left");
+	
+		var line = d3.svg.line()
+		    .x(function(d) { return x(d.userSequenceNo); })
+		    .y(function(d) { return y(d.ratioValue); });
+	
+		var svg = d3.select("#"+divId).append("svg")
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom)
+		  .append("g")
+		    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	
+		  
+	
+		  x.domain([d3.min(data, function(d) { return d.userSequenceNo; }), d3.max(data, function(d) { return d.userSequenceNo; })]);
+		  y.domain([d3.min(data, function(d) { return d.ratioValue; }), d3.max(data, function(d) { return d.ratioValue; })]);
+		  
+	
+		  svg.append("g")
+		      .attr("class", "x axis")
+		      .attr("transform", "translate(0," + height + ")")
+		      .call(xAxis);
+	
+		  svg.append("g")
+		      .attr("class", "y axis")
+		      .call(yAxis)
+		    .append("text")
+		      .attr("transform", "rotate(-90)")
+		      .attr("y", 6)
+		      .attr("dy", ".71em")
+		      .style("text-anchor", "end")
+		      .text("Ratio");
+	
+		  svg.append("path")
+		      .datum(data)
+		      .attr("class", "line")
+		      .attr("d", line);
+		  
+	});
 	
 }
+
+
 
 

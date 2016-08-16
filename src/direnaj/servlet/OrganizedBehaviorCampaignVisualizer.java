@@ -63,26 +63,31 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				// get cursor
 				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
 						.find(query).sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_ID, 1));
+				JSONArray urlRatioJsonArray = new JSONArray();
+				JSONArray hashtagRatioJsonArray = new JSONArray();
+				JSONArray mentionRatioJsonArray = new JSONArray();
 				// get objects from cursor
 				int userNo = 0;
 				while (paginatedResult.hasNext()) {
 					DBObject next = paginatedResult.next();
 					userNo++;
-					// prepare json object
-					JSONObject userProcessInputData = new JSONObject();
-					userProcessInputData.put("userSequenceNo", userNo);
-					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_ID,
-							TextUtils.getLongValue((String) next.get(MongoCollectionFieldNames.MONGO_USER_ID)));
-					// get ratios
-					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_URL_RATIO,
-							(double) next.get(MongoCollectionFieldNames.MONGO_USER_URL_RATIO));
-					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO,
-							(double) next.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO));
-					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_MENTION_RATIO,
-							(double) next.get(MongoCollectionFieldNames.MONGO_USER_MENTION_RATIO));
-					// init to array
-					jsonArray.put(userProcessInputData);
+					urlRatioJsonArray.put(new JSONObject()
+							.put("ratioValue", (double) next.get(MongoCollectionFieldNames.MONGO_USER_URL_RATIO))
+							.put("userSequenceNo", userNo));
+					hashtagRatioJsonArray.put(new JSONObject()
+							.put("ratioValue", (double) next.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO))
+							.put("userSequenceNo", userNo));
+					mentionRatioJsonArray.put(new JSONObject()
+							.put("ratioValue", (double) next.get(MongoCollectionFieldNames.MONGO_USER_MENTION_RATIO))
+							.put("userSequenceNo", userNo));
 				}
+				// init to array
+				jsonArray.put(new JSONObject().put("ratioType", MongoCollectionFieldNames.MONGO_USER_URL_RATIO)
+						.put("values", urlRatioJsonArray));
+				jsonArray.put(new JSONObject().put("ratioType", MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO)
+						.put("values", hashtagRatioJsonArray));
+				jsonArray.put(new JSONObject().put("ratioType", MongoCollectionFieldNames.MONGO_USER_MENTION_RATIO)
+						.put("values", mentionRatioJsonArray));
 			} else if ("visualizeUserFriendFollowerRatio".equals(requestType)) {
 				// get cursor
 				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
@@ -98,12 +103,12 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_ID,
 							TextUtils.getLongValue((String) next.get(MongoCollectionFieldNames.MONGO_USER_ID)));
 					// get ratios
-					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO,
+					userProcessInputData.put("ratioValue",
 							(double) next.get(MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO));
 					// init to array
 					jsonArray.put(userProcessInputData);
 				}
-			} else if ("visualizeUserPostDeviceRatios".equals(requestType)) {
+			} else if ("visualizeUserRoughHashtagTweetCounts".equals(requestType)) {
 				// get cursor
 				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
 						.find(query).sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_ID, 1));
@@ -118,15 +123,79 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_ID,
 							TextUtils.getLongValue((String) next.get(MongoCollectionFieldNames.MONGO_USER_ID)));
 					// get ratios
-					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_POST_TWITTER_DEVICE_RATIO,
-							(double) next.get(MongoCollectionFieldNames.MONGO_USER_POST_TWITTER_DEVICE_RATIO));
-					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_POST_MOBILE_DEVICE_RATIO,
-							(double) next.get(MongoCollectionFieldNames.MONGO_USER_POST_MOBILE_DEVICE_RATIO));
-					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_THIRD_PARTY_DEVICE_RATIO,
-							(double) next.get(MongoCollectionFieldNames.MONGO_USER_THIRD_PARTY_DEVICE_RATIO));
+					userProcessInputData.put("ratioValue",
+							(double) next.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT));
 					// init to array
 					jsonArray.put(userProcessInputData);
 				}
+			} else if ("visualizeUserPostDeviceRatios".equals(requestType)) {
+				// get cursor
+				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
+						.find(query).sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_ID, 1));
+				JSONArray twitterPostDeviceRatioJsonArray = new JSONArray();
+				JSONArray mobilePostDeviceRatioJsonArray = new JSONArray();
+				JSONArray thirdPartyPostRatioJsonArray = new JSONArray();
+				// get objects from cursor
+				int userNo = 0;
+				while (paginatedResult.hasNext()) {
+					DBObject next = paginatedResult.next();
+					userNo++;
+					// prepare json object
+					twitterPostDeviceRatioJsonArray
+							.put(new JSONObject()
+									.put("ratioValue",
+											(double) next
+													.get(MongoCollectionFieldNames.MONGO_USER_POST_TWITTER_DEVICE_RATIO))
+									.put("userSequenceNo", userNo));
+					mobilePostDeviceRatioJsonArray
+							.put(new JSONObject()
+									.put("ratioValue",
+											(double) next
+													.get(MongoCollectionFieldNames.MONGO_USER_POST_MOBILE_DEVICE_RATIO))
+									.put("userSequenceNo", userNo));
+					thirdPartyPostRatioJsonArray
+							.put(new JSONObject()
+									.put("ratioValue",
+											(double) next
+													.get(MongoCollectionFieldNames.MONGO_USER_THIRD_PARTY_DEVICE_RATIO))
+									.put("userSequenceNo", userNo));
+
+				}
+				// init to array
+				jsonArray.put(new JSONObject()
+						.put("ratioType", MongoCollectionFieldNames.MONGO_USER_POST_TWITTER_DEVICE_RATIO)
+						.put("values", twitterPostDeviceRatioJsonArray));
+				jsonArray.put(
+						new JSONObject().put("ratioType", MongoCollectionFieldNames.MONGO_USER_POST_MOBILE_DEVICE_RATIO)
+								.put("values", mobilePostDeviceRatioJsonArray));
+				jsonArray.put(
+						new JSONObject().put("ratioType", MongoCollectionFieldNames.MONGO_USER_THIRD_PARTY_DEVICE_RATIO)
+								.put("values", thirdPartyPostRatioJsonArray));
+			} else if ("visualizeUserRoughTweetCounts".equals(requestType)) {
+				// get cursor
+				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
+						.find(query).sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_ID, 1));
+				JSONArray favoriteStatusCountsJsonArray = new JSONArray();
+				JSONArray wholeStatusCountsJsonArray = new JSONArray();
+				// get objects from cursor
+				int userNo = 0;
+				while (paginatedResult.hasNext()) {
+					DBObject next = paginatedResult.next();
+					userNo++;
+					// prepare json object
+					favoriteStatusCountsJsonArray.put(new JSONObject()
+							.put("ratioValue", (double) next.get(MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT))
+							.put("userSequenceNo", userNo));
+					wholeStatusCountsJsonArray.put(new JSONObject()
+							.put("ratioValue", (double) next.get(MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT))
+							.put("userSequenceNo", userNo));
+
+				}
+				// init to array
+				jsonArray.put(new JSONObject().put("ratioType", MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT)
+						.put("values", favoriteStatusCountsJsonArray));
+				jsonArray.put(new JSONObject().put("ratioType", MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT)
+						.put("values", wholeStatusCountsJsonArray));
 			}
 
 			// FIXME 20160813 Sil
