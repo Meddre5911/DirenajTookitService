@@ -12,11 +12,14 @@ import org.joda.time.DateTime;
 public class DateTimeUtils {
 
 	public static Date getTwitterDate(String date) throws Exception {
-		// Example : Thu Nov 03 11:37:45 +0000 2011
-		final String TWITTER = "EEE MMM dd HH:mm:ss ZZZZZ yyyy";
-		SimpleDateFormat sf = new SimpleDateFormat(TWITTER, Locale.ENGLISH);
-		sf.setLenient(false);
-		return sf.parse(date);
+		if (!TextUtils.isEmpty(date)) {
+			// Example : Thu Nov 03 11:37:45 +0000 2011
+			final String TWITTER = "EEE MMM dd HH:mm:ss ZZZZZ yyyy";
+			SimpleDateFormat sf = new SimpleDateFormat(TWITTER, Locale.ENGLISH);
+			sf.setLenient(false);
+			return sf.parse(date);
+		}
+		return null;
 	}
 
 	public static Date getDate(String dateFormatInStr, String dateInStr) throws Exception {
@@ -104,11 +107,11 @@ public class DateTimeUtils {
 	}
 
 	public static void main(String[] args) throws Exception {
-		Date localDate = DateTimeUtils.getLocalDate();
-		DateTimeUtils.getStringOfDate("yyyy-MM-dd", localDate);
 		
-		Date date = DateTimeUtils.getDate("yyyy-MM-dd",  "2016-06-15");
-		System.out.println(date);
+		Date date = DateTimeUtils.getTwitterDate("Wed May 12 12:22:10 EEST 2010");
+		String stringOfDate = DateTimeUtils.getStringOfDate("dd-MM-yyyy hh:mm:ss", date);
+		
+		System.out.println(stringOfDate);
 
 	}
 }

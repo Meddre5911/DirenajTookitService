@@ -1,3 +1,4 @@
+
 package direnaj.functionalities.organizedBehaviour;
 
 import java.util.ArrayList;
@@ -5,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -114,7 +116,7 @@ public class OrganizationDetector implements Runnable {
 		}
 		this.disableGraphAnalysis = false;
 		isCleaningDone4ResumeProcess = false;
-		updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, false);
+		updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, true);
 	}
 
 	public HashMap<String, Double> calculateInNeo4J(List<String> userIds, String subgraphEdgeLabel) {
@@ -265,8 +267,10 @@ public class OrganizationDetector implements Runnable {
 
 	/**
 	 * FIXME test amacli encapsule edildi
+	 * 
+	 * @throws Exception
 	 */
-	public void calculateTweetSimilarities() {
+	public void calculateTweetSimilarities() throws Exception {
 		Logger.getLogger(OrganizationDetector.class.getSimpleName()).debug("Calculate General Similarity : "
 				+ calculateGeneralSimilarity + " - Calculate Hashtag Similarity : " + calculateHashTagSimilarity);
 		// calculate similarity
@@ -325,7 +329,7 @@ public class OrganizationDetector implements Runnable {
 		User domainUser = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
 		// get tweets of users in an interval of two weeks
 
-		Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inWeeks", 2);
+		Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inWeeks", 1);
 		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId()))
 				.append("createdAt",
 						new BasicDBObject("$gt",
@@ -358,10 +362,13 @@ public class OrganizationDetector implements Runnable {
 				domainUser.addValue2CountOfMentionedUsers((double) twitter4jStatus.getUserMentionEntities().length);
 				domainUser.incrementPostDeviceCount(twitter4jStatus.getSource());
 				domainUser.incrementPostCount();
+				domainUser.setFavoriteCount(twitter4jStatus.getUser().getFavouritesCount());
+				domainUser.setWholeStatusesCount(twitter4jStatus.getUser().getStatusesCount());
 				// get user tweet data
 				UserTweets userTweet = new UserTweets();
-				if (twitter4jStatus.getText().contains(tracedSingleHashtag)) {
+				if (twitter4jStatus.getText().toLowerCase(Locale.US).contains(tracedSingleHashtag)) {
 					userTweet.setHashtagTweet(true);
+					domainUser.incrementHashtagPostCount();
 				}
 				// check earliest tweet date
 				if (earliestTweetDate == null) {
@@ -530,22 +537,30 @@ public class OrganizationDetector implements Runnable {
 			// first init user account properties
 			UserAccountProperties accountProperties = user.getAccountProperties();
 			BasicDBObject userInputData = new BasicDBObject();
-			userInputData.put("requestId", requestId);
-			userInputData.put("userId", user.getUserId());
-			userInputData.put("userScreenName", user.getUserScreenName());
-			userInputData.put("closenessCentrality", new Double(0));
+			userInputData.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_ID, user.getUserId());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_SCREEN_NAME, user.getUserScreenName());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_CLOSENESS_CENTRALITY, new Double(0));
 
-			userInputData.put("friendFollowerRatio", accountProperties.getFriendFollowerRatio());
-			userInputData.put("urlRatio", accountProperties.getUrlRatio());
-			userInputData.put("hashtagRatio", accountProperties.getHashtagRatio());
-			userInputData.put("mentionRatio", accountProperties.getMentionRatio());
-			userInputData.put("postTwitterDeviceRatio", accountProperties.getTwitterPostRatio());
-			userInputData.put("postMobileDeviceRatio", accountProperties.getMobilePostRatio());
-			userInputData.put("postThirdPartyDeviceRatio", accountProperties.getThirdPartyPostRatio());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT, user.getHashtagPostCount());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, user.getFavoriteCount());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, user.getWholeStatusesCount());
 
-			userInputData.put("isProtected", user.isProtected());
-			userInputData.put("isVerified", user.isVerified());
-			userInputData.put("creationDate", user.getCreationDate().toString());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO,
+					accountProperties.getFriendFollowerRatio());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_URL_RATIO, accountProperties.getUrlRatio());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO, accountProperties.getHashtagRatio());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_MENTION_RATIO, accountProperties.getMentionRatio());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_POST_TWITTER_DEVICE_RATIO,
+					accountProperties.getTwitterPostRatio());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_POST_MOBILE_DEVICE_RATIO,
+					accountProperties.getMobilePostRatio());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_THIRD_PARTY_DEVICE_RATIO,
+					accountProperties.getThirdPartyPostRatio());
+
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_PROTECTED, user.isProtected());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_VERIFIED, user.isVerified());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_CREATION_DATE, user.getCreationDate().toString());
 			allUserInputData.add(userInputData);
 		}
 		if (allUserInputData != null && allUserInputData.size() > 0) {

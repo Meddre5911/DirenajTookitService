@@ -40,12 +40,20 @@
 		<servlet-class>direnaj.servlet.CampaignCreationServlet</servlet-class>
 	</servlet>
 	<servlet>
+		<servlet-name>OrganizedBehaviorCampaignVisualizer</servlet-name>
+		<servlet-class>direnaj.servlet.OrganizedBehaviorCampaignVisualizer</servlet-class>
+	</servlet>
+	<servlet>
 		<servlet-name>ListOrganizedBehaviourRequest</servlet-name>
 		<jsp-file>/listOrganizedBehaviourRequests.jsp</jsp-file>
 	</servlet>
 	<servlet>
 		<servlet-name>ListToolkitCampaigns</servlet-name>
 		<jsp-file>/listToolkitCampaigns.jsp</jsp-file>
+	</servlet>
+	<servlet>
+		<servlet-name>CampaignVisualAnalysis</servlet-name>
+		<jsp-file>/campaignAnalysisUserCreationTimes.jsp</jsp-file>
 	</servlet>
 	
 	<servlet-mapping>
@@ -55,6 +63,10 @@
 	<servlet-mapping>
 		<servlet-name>ListToolkitCampaigns</servlet-name>
 		<url-pattern>/listToolkitCampaigns</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>CampaignVisualAnalysis</servlet-name>
+		<url-pattern>/campaignVisualAnalysis</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>MongoPaginationServlet</servlet-name>
@@ -91,5 +103,9 @@
 	<servlet-mapping>
 		<servlet-name>CommunitySentimentAnalysis</servlet-name>
 		<url-pattern>/communitySentimentAnalysis</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>OrganizedBehaviorCampaignVisualizer</servlet-name>
+		<url-pattern>/organizedBehaviorCampaignVisualizer</url-pattern>
 	</servlet-mapping>
 </web-app>

@@ -1,7 +1,6 @@
 package direnaj.functionalities.organizedBehaviour;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -11,10 +10,8 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import com.mongodb.AggregationOptions;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Bytes;
-import com.mongodb.Cursor;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -34,7 +31,7 @@ public class CosineSimilarity {
 	private List<CosineSimilarityRequestData> requestDataList;
 
 	public CosineSimilarity(String requestId, boolean calculateGeneralSimilarity, boolean calculateHashTagSimilarity,
-			Date earliestTweetDate, Date latestTweetDate, String campaignId) {
+			Date earliestTweetDate, Date latestTweetDate, String campaignId) throws Exception {
 		requestDataList = new ArrayList<>();
 		originalRequestId = requestId;
 		// first assume as resume process
@@ -62,7 +59,7 @@ public class CosineSimilarity {
 		}
 	}
 
-	private void check4ExistingCosSimilarityCalculationRequests() {
+	private void check4ExistingCosSimilarityCalculationRequests() throws Exception {
 		DBCollection orgBehaviourRequestedSimilarityCalculations = DirenajMongoDriver.getInstance()
 				.getOrgBehaviourRequestedSimilarityCalculations();
 		BasicDBObject queryObj = new BasicDBObject();
@@ -187,21 +184,33 @@ public class CosineSimilarity {
 
 	@SuppressWarnings("unchecked")
 	private void calculateSimilarities(CosineSimilarityRequestData requestData) {
+		// FIXME 20160804 - cursor memory leak fix is reverted
+		// AggregationOptions aggregationOptions =
+		// AggregationOptions.builder().batchSize(50)
+		// .outputMode(AggregationOptions.OutputMode.CURSOR).build();
+		// Cursor allTweetIds =
+		// DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().aggregate(
+		// Arrays.asList(
+		// (DBObject) new BasicDBObject("$match",
+		// requestData.getQuery4OrgBehaviourTweetsOfRequestCollection()),
+		// (DBObject) new BasicDBObject("$group",
+		// new BasicDBObject("_id", "$" +
+		// MongoCollectionFieldNames.MONGO_TWEET_ID))),
+		// aggregationOptions);
+		//
+		// List<DBObject> tweetSimilarityWithOtherTweets = new ArrayList<>(
+		// DirenajMongoDriver.getInstance().getBulkInsertSize());
+		// while (allTweetIds.hasNext()) {
+		// String queryTweetId = (String) allTweetIds.next().get("_id");
 
-		AggregationOptions aggregationOptions = AggregationOptions.builder().batchSize(50)
-				.outputMode(AggregationOptions.OutputMode.CURSOR).build();
-		Cursor allTweetIds = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().aggregate(
-				Arrays.asList(
-						(DBObject) new BasicDBObject("$match",
-								requestData.getQuery4OrgBehaviourTweetsOfRequestCollection()),
-						(DBObject) new BasicDBObject("$group",
-								new BasicDBObject("_id", "$" + MongoCollectionFieldNames.MONGO_TWEET_ID))),
-				aggregationOptions);
-
+		ArrayList<String> allTweetIds = (ArrayList<String>) DirenajMongoDriver.getInstance()
+				.getOrgBehaviourTweetsShortInfo().findOne(requestData.getRequestIdObject())
+				.get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
+		ArrayList<String> allTweetIdsClone = (ArrayList<String>) allTweetIds.clone();
 		List<DBObject> tweetSimilarityWithOtherTweets = new ArrayList<>(
 				DirenajMongoDriver.getInstance().getBulkInsertSize());
-		while (allTweetIds.hasNext()) {
-			String queryTweetId = (String) allTweetIds.next().get("_id");
+		for (String queryTweetId : allTweetIds) {
+
 			BasicDBObject queryTweetTFIdfQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, queryTweetId);
 			BasicDBObject tweetTfIdfValueObject = (BasicDBObject) DirenajMongoDriver.getInstance()
@@ -222,18 +231,7 @@ public class CosineSimilarity {
 			Map<String, Double> similarityOfTweetWithOtherTweets = CosineSimilarityUtil
 					.getEmptyMap4SimilarityDecisionTree();
 			// get cursor for clone
-			AggregationOptions aggregationOptions4Clone = AggregationOptions.builder()
-					.batchSize(DirenajMongoDriver.getInstance().getBulkInsertSize())
-					.outputMode(AggregationOptions.OutputMode.CURSOR).build();
-			Cursor allTweetIdsClone = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().aggregate(
-					Arrays.asList(
-							(DBObject) new BasicDBObject("$match",
-									requestData.getQuery4OrgBehaviourTweetsOfRequestCollection()),
-							(DBObject) new BasicDBObject("$group",
-									new BasicDBObject("_id", "$" + MongoCollectionFieldNames.MONGO_TWEET_ID))),
-					aggregationOptions4Clone);
-			while (allTweetIdsClone.hasNext()) {
-				String tweetId = (String) allTweetIdsClone.next().get("_id");
+			for (String tweetId : allTweetIdsClone) {
 				Logger.getLogger(CosineSimilarity.class)
 						.trace("Comparing TweetId : " + queryTweetId + " to TweetId : " + tweetId);
 				BasicDBObject comparedTweetTFIdfValueObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
@@ -277,24 +275,37 @@ public class CosineSimilarity {
 		// in tweetTfIdf Collect,on a record format is like
 		// "requestId, tweetId, [word, tf*Idf, (tf*Idf)^2] dizi halinde
 		List<DBObject> allTweetTFIdfValues = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
-		AggregationOptions aggregationOptions = AggregationOptions.builder()
-				.batchSize(DirenajMongoDriver.getInstance().getBulkInsertSize())
-				.outputMode(AggregationOptions.OutputMode.CURSOR).build();
-		// [{$match: {requestId :
-		// "20160522230016135400bc398-24f1-41df-888f-cfa6ff13c8b8"}}, {$group:
-		// {_id : "$word"}}
 
-		Cursor allTweetIds = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().aggregate(
-				Arrays.asList(
-						(DBObject) new BasicDBObject("$match",
-								requestData.getQuery4OrgBehaviourTweetsOfRequestCollection()),
-						(DBObject) new BasicDBObject("$group",
-								new BasicDBObject("_id", "$" + MongoCollectionFieldNames.MONGO_TWEET_ID))),
-				aggregationOptions);
+		// FIXME 20160804 - cursor memory leak fix is reverted
+		// AggregationOptions aggregationOptions = AggregationOptions.builder()
+		// .batchSize(DirenajMongoDriver.getInstance().getBulkInsertSize())
+		// .outputMode(AggregationOptions.OutputMode.CURSOR).build();
+		// // [{$match: {requestId :
+		// // "20160522230016135400bc398-24f1-41df-888f-cfa6ff13c8b8"}},
+		// {$group:
+		// // {_id : "$word"}}
+		//
+		// Cursor allTweetIds =
+		// DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().aggregate(
+		// Arrays.asList(
+		// (DBObject) new BasicDBObject("$match",
+		// requestData.getQuery4OrgBehaviourTweetsOfRequestCollection()),
+		// (DBObject) new BasicDBObject("$group",
+		// new BasicDBObject("_id", "$" +
+		// MongoCollectionFieldNames.MONGO_TWEET_ID))),
+		// aggregationOptions);
+		// while (allTweetIds.hasNext()) {
+		// String tweetId = (String) allTweetIds.next().get("_id");
 
 		Logger.getLogger(CosineSimilarity.class).debug("calculateTFIDFValues. allTweetIds size : " + totalTweetCount);
-		while (allTweetIds.hasNext()) {
-			String tweetId = (String) allTweetIds.next().get("_id");
+
+		// FIXME 20160522 Collection dan baska bir yontem bul
+		List<String> allTweetIds = (List<String>) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
+				.findOne(requestData.getRequestIdObject()).get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
+		Logger.getLogger(CosineSimilarity.class)
+				.debug("calculateTFIDFValues. allTweetIds size : " + allTweetIds.size());
+		for (String tweetId : allTweetIds) {
+
 			List<String> tweetWords = new ArrayList<>(20);
 			BasicDBObject tweetTFIdfValues = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
@@ -348,23 +359,31 @@ public class CosineSimilarity {
 		double totalTweetCount = (double) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
 				.findOne(requestData.getRequestIdObject()).get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
 
-		AggregationOptions aggregationOptions = AggregationOptions.builder()
-				.batchSize(DirenajMongoDriver.getInstance().getBulkInsertSize())
-				.outputMode(AggregationOptions.OutputMode.CURSOR).build();
+		// FIXME Possible Memory Leak Fix is reverted
+		// AggregationOptions aggregationOptions = AggregationOptions.builder()
+		// .batchSize(DirenajMongoDriver.getInstance().getBulkInsertSize())
+		// .outputMode(AggregationOptions.OutputMode.CURSOR).build();
 		// [{$match: {requestId :
 		// "20160522230016135400bc398-24f1-41df-888f-cfa6ff13c8b8"}}, {$group:
 		// {_id : "$word"}}
+		//
+		// Cursor distinctWords =
+		// DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().aggregate(
+		// Arrays.asList(
+		// (DBObject) new BasicDBObject("$match",
+		// new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
+		// requestData.getRequestId())),
+		// (DBObject) new BasicDBObject("$group",
+		// new BasicDBObject("_id", "$" +
+		// MongoCollectionFieldNames.MONGO_WORD))),
+		// aggregationOptions);
+		// while (distinctWords.hasNext()) {
+		// String word = (String) distinctWords.next().get("_id");
 
-		Cursor distinctWords = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().aggregate(
-				Arrays.asList(
-						(DBObject) new BasicDBObject("$match",
-								new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
-										requestData.getRequestId())),
-						(DBObject) new BasicDBObject("$group",
-								new BasicDBObject("_id", "$" + MongoCollectionFieldNames.MONGO_WORD))),
-				aggregationOptions);
-		while (distinctWords.hasNext()) {
-			String word = (String) distinctWords.next().get("_id");
+		List<String> distinctWords = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF()
+				.distinct(MongoCollectionFieldNames.MONGO_WORD, requestData.getRequestIdObject());
+		for (String word : distinctWords) {
+
 			BasicDBObject wordCountQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_WORD, word);
 			long wordCount = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().count(wordCountQueryObj);

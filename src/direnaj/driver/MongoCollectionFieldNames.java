@@ -67,6 +67,24 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_CAMPAIGN_WORD_FREQUENCIES = "wordFrequencies";
 	public static final String MONGO_CAMPAIGN_HASHTAG_COUNTS = "hashTagCounts";
 	
+	// preprocess input data
+	public static final String MONGO_USER_CREATION_DATE = "creationDate";
+	public static final String MONGO_USER_SCREEN_NAME = "userScreenName";
+	public static final String MONGO_USER_CLOSENESS_CENTRALITY = "closenessCentrality";
+	public static final String MONGO_USER_FRIEND_FOLLOWER_RATIO = "friendFollowerRatio";
+	public static final String MONGO_USER_URL_RATIO = "urlRatio";
+	public static final String MONGO_USER_HASHTAG_RATIO = "hashtagRatio";
+	public static final String MONGO_USER_MENTION_RATIO = "mentionRatio";
+	public static final String MONGO_USER_POST_TWITTER_DEVICE_RATIO = "postTwitterDeviceRatio";
+	public static final String MONGO_USER_POST_MOBILE_DEVICE_RATIO = "postMobileDeviceRatio";
+	public static final String MONGO_USER_THIRD_PARTY_DEVICE_RATIO = "postThirdPartyDeviceRatio";
+	public static final String MONGO_USER_PROTECTED = "isProtected";
+	public static final String MONGO_USER_VERIFIED = "isVerified";
+	
+	public static final String MONGO_USER_FAVORITE_COUNT = "favoriteCount";
+	public static final String MONGO_USER_STATUS_COUNT = "statusCount";
+	public static final String MONGO_USER_HASHTAG_POST_COUNT = "hashtagPostCount";
+	
 	
 	
 	

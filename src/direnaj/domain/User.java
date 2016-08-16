@@ -16,6 +16,8 @@ public class User implements Comparable<User> {
 	private double followersCount;
 	private double favoriteCount;
 	private double postCount;
+	private double hashtagPostCount;
+	private double wholeStatusesCount;
 	private boolean isProtected;
 	private boolean isVerified;
 	private Date creationDate;
@@ -45,6 +47,7 @@ public class User implements Comparable<User> {
 		followersCount = 0L;
 		countOfMentionedUsers = 0L;
 		countOfHashtags = 0L;
+		setHashtagPostCount(0d);
 		setUserId(userId);
 		setUserScreenName(screenName);
 	}
@@ -231,6 +234,10 @@ public class User implements Comparable<User> {
 	public void incrementPostCount() {
 		postCount++;
 	}
+	
+	public void incrementHashtagPostCount() {
+		setHashtagPostCount(getHashtagPostCount() + 1);
+	}
 
 	public double calculateFriendFollowerRatio() {
 		Double ratioValue = new Double(0);
@@ -309,6 +316,22 @@ public class User implements Comparable<User> {
 
 	public void setFavoriteCount(double favoriteCount) {
 		this.favoriteCount = favoriteCount;
+	}
+
+	public double getHashtagPostCount() {
+		return hashtagPostCount;
+	}
+
+	public void setHashtagPostCount(double hashtagPostCount) {
+		this.hashtagPostCount = hashtagPostCount;
+	}
+
+	public double getWholeStatusesCount() {
+		return wholeStatusesCount;
+	}
+
+	public void setWholeStatusesCount(double wholeStatusesCount) {
+		this.wholeStatusesCount = wholeStatusesCount;
 	}
 
 }

@@ -39,6 +39,9 @@ $(document).ready(function() {
                }
             },
             { "mData": "closenessCentrality" },
+            { "mData": "hashtagPostCount" },
+            { "mData": "favoriteCount" },
+            { "mData": "statusCount" },
             { "mData": "postThirdPartyDeviceRatio" },
             { "mData": "postMobileDeviceRatio" },
             { "mData": "postTwitterDeviceRatio" },
@@ -68,6 +71,9 @@ $(document).ready(function() {
                 <th>User Id</th>
                 <th>User Screen Name</th>
                 <th>Closeness Centrality</th>
+                <th>Hashtag Post Count</th>
+                <th>Favorite Count</th>
+                <th>Status Count</th>
                 <th>Third Party Device Ratio</th>
                 <th>Mobile Device Ratio</th>
                 <th>Twitter Device Ratio</th>

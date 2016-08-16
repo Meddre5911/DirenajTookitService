@@ -7,6 +7,7 @@ import com.mongodb.DBObject;
 
 import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.util.DateTimeUtils;
+import direnaj.util.TextUtils;
 
 public class CosineSimilarityRequestData {
 
@@ -50,13 +51,13 @@ public class CosineSimilarityRequestData {
 		}
 	}
 
-	public CosineSimilarityRequestData(String originalRequestId, DBObject dbObject) {
+	public CosineSimilarityRequestData(String originalRequestId, DBObject dbObject) throws Exception {
 		this.requestId = (String) dbObject.get("requestId");
 		this.hashtagSpecificRequest = (boolean) dbObject.get("isHashtagRequest");
-		this.lowerTime = DateTimeUtils.getDate(dbObject.get("lowerTimeInterval"));
-		this.upperTime = DateTimeUtils.getDate(dbObject.get("upperTimeInterval"));
+		this.lowerTime = DateTimeUtils.getTwitterDate(TextUtils.getNotNullValue(dbObject.get("lowerTimeInterval")));
+		this.upperTime = DateTimeUtils.getTwitterDate(TextUtils.getNotNullValue(dbObject.get("upperTimeInterval")));
 		Object retrievedResumeBreakPoint = dbObject.get(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT);
-		if (retrievedResumeBreakPoint != null) {
+		if (retrievedResumeBreakPoint != null && !TextUtils.isEmpty(retrievedResumeBreakPoint.toString())) {
 			this.setResumeBreakPoint(ResumeBreakPoint.valueOf(retrievedResumeBreakPoint.toString()));
 		}
 		// prepare queries

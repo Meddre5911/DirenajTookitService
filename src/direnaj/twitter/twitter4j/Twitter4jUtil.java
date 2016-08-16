@@ -62,7 +62,7 @@ public class Twitter4jUtil {
 	private static void getEarliestTweets(User user, Boolean calculateOnlyTopTrendDate, Date minCampaignDate)
 			throws TwitterException {
 		Date lowestDate;
-		if (calculateOnlyTopTrendDate) {
+		if (calculateOnlyTopTrendDate && minCampaignDate != null) {
 			lowestDate = minCampaignDate;
 		} else {
 			Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inWeeks", 2);
@@ -286,6 +286,9 @@ public class Twitter4jUtil {
 					query.setMaxId(maxId);
 				}
 				QueryResult queryResult = availableTwitterObject.search(query);
+				
+				// FIXME 20160805 next Query şeklinde kullanalım
+				queryResult.nextQuery();
 				List<Status> tweets = queryResult.getTweets();
 				if (tweets != null && tweets.size() > 0) {
 					Logger.getLogger(Twitter4jUtil.class)

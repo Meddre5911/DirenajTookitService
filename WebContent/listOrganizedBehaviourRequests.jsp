@@ -46,6 +46,15 @@ $(document).ready(function() {
                		}
                }
             },
+            { "mData": "_id", 
+              "mRender": function ( data, type, row ) {
+               		if(row.processCompleted==false){
+               			return "Visual Not Available";
+               		}else {
+	            	  return '<a href=campaignVisualAnalysis?requestType=visualizeUserCreationTimes&requestId='+data+'>Visual Analysis</a>';
+               		}
+               }
+            },
             { "mData": "requestType" },
             { "mData": "requestDefinition" },
             { "mData": "campaignId" },
@@ -83,6 +92,7 @@ $(document).ready(function() {
             <tr>
                 <th>Request Id</th>
                 <th>Similarity Calculation Requests</th>
+                <th>Visual Analysis</th>
                 <th>Request Type</th>
                 <th>Request Definition</th>
                 <th>Campaign Id</th>
