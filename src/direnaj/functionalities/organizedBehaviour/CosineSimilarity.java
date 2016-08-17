@@ -232,6 +232,8 @@ public class CosineSimilarity {
 					.getEmptyMap4SimilarityDecisionTree();
 			// get cursor for clone
 			for (String tweetId : allTweetIdsClone) {
+				// FIXME Burada 2 retweet tweet'i hiç karşılaştırmayacak şekilde bir logic koyalım
+				
 				Logger.getLogger(CosineSimilarity.class)
 						.trace("Comparing TweetId : " + queryTweetId + " to TweetId : " + tweetId);
 				BasicDBObject comparedTweetTFIdfValueObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
