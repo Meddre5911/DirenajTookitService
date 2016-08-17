@@ -3,10 +3,12 @@ package direnaj.functionalities.organizedBehaviour;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -203,12 +205,18 @@ public class CosineSimilarity {
 		// while (allTweetIds.hasNext()) {
 		// String queryTweetId = (String) allTweetIds.next().get("_id");
 
-		ArrayList<String> allTweetIds = (ArrayList<String>) DirenajMongoDriver.getInstance()
-				.getOrgBehaviourTweetsShortInfo().findOne(requestData.getRequestIdObject())
+		DBObject requestTweetsShortInfoObject = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
+				.findOne(requestData.getRequestIdObject());
+		double allTweetCount = (double) requestTweetsShortInfoObject
+				.get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
+		ArrayList<String> allTweetIds = (ArrayList<String>) requestTweetsShortInfoObject
 				.get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
 		ArrayList<String> allTweetIdsClone = (ArrayList<String>) allTweetIds.clone();
 		List<DBObject> tweetSimilarityWithOtherTweets = new ArrayList<>(
 				DirenajMongoDriver.getInstance().getBulkInsertSize());
+
+		Map<String, Double> similarityComparisonOfAllTweets = CosineSimilarityUtil.getEmptyMap4SimilarityDecisionTree();
+
 		for (String queryTweetId : allTweetIds) {
 
 			BasicDBObject queryTweetTFIdfQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
@@ -232,31 +240,36 @@ public class CosineSimilarity {
 					.getEmptyMap4SimilarityDecisionTree();
 			// get cursor for clone
 			for (String tweetId : allTweetIdsClone) {
-				// FIXME Burada 2 retweet tweet'i hiç karşılaştırmayacak şekilde bir logic koyalım
-				
-				Logger.getLogger(CosineSimilarity.class)
-						.trace("Comparing TweetId : " + queryTweetId + " to TweetId : " + tweetId);
-				BasicDBObject comparedTweetTFIdfValueObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
-						requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
-				BasicDBObject queryTfIdfValues = (BasicDBObject) DirenajMongoDriver.getInstance()
-						.getOrgBehaviourProcessCosSimilarityTF_IDF().findOne(comparedTweetTFIdfValueObj);
-				List<BasicDBObject> comparedTfIdfList = (List<BasicDBObject>) queryTfIdfValues
-						.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_LIST);
+				// FIXME Burada 2 retweet tweet'i hiç karşılaştırmayacak şekilde
+				// bir logic koyalım
+				if (!queryTweetId.equals(tweetId)) {
+					Logger.getLogger(CosineSimilarity.class)
+							.trace("Comparing TweetId : " + queryTweetId + " to TweetId : " + tweetId);
+					BasicDBObject comparedTweetTFIdfValueObj = new BasicDBObject(
+							MongoCollectionFieldNames.MONGO_REQUEST_ID, requestData.getRequestId())
+									.append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
+					BasicDBObject queryTfIdfValues = (BasicDBObject) DirenajMongoDriver.getInstance()
+							.getOrgBehaviourProcessCosSimilarityTF_IDF().findOne(comparedTweetTFIdfValueObj);
+					List<BasicDBObject> comparedTfIdfList = (List<BasicDBObject>) queryTfIdfValues
+							.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_LIST);
 
-				Map<String, Double> comparedTweetWordTfIdfMap = (Map<String, Double>) queryTfIdfValues
-						.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_HASHMAP);
+					Map<String, Double> comparedTweetWordTfIdfMap = (Map<String, Double>) queryTfIdfValues
+							.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_HASHMAP);
 
-				double comparedTweetVectorLength = CosineSimilarityUtil
-						.calculateVectorLengthBasedOnComparedWordList(queryTweetWords, comparedTfIdfList);
-				double dotProduct = CosineSimilarityUtil.calculateDotProduct(queryTweetWords, tweetWordTfIdfMap,
-						comparedTweetWordTfIdfMap);
-				Logger.getLogger(CosineSimilarity.class).trace("Dot Product is : " + dotProduct
-						+ " - comparedTweetVectorLength : " + comparedTweetVectorLength);
-				CosineSimilarityUtil.findTweetSimilarityRange(similarityOfTweetWithOtherTweets, dotProduct,
-						tweetVectorLength, comparedTweetVectorLength);
+					double comparedTweetVectorLength = CosineSimilarityUtil
+							.calculateVectorLengthBasedOnComparedWordList(queryTweetWords, comparedTfIdfList);
+					double dotProduct = CosineSimilarityUtil.calculateDotProduct(queryTweetWords, tweetWordTfIdfMap,
+							comparedTweetWordTfIdfMap);
+					Logger.getLogger(CosineSimilarity.class).trace("Dot Product is : " + dotProduct
+							+ " - comparedTweetVectorLength : " + comparedTweetVectorLength);
+					CosineSimilarityUtil.findTweetSimilarityRange(similarityOfTweetWithOtherTweets, dotProduct,
+							tweetVectorLength, comparedTweetVectorLength);
+				}
 			}
 			queryTweetTFIdfQueryObj.append(MongoCollectionFieldNames.MONGO_TWEET_SIMILARITY_WITH_OTHER_TWEETS,
 					similarityOfTweetWithOtherTweets);
+			CosineSimilarityUtil.addSimilarities2General(similarityComparisonOfAllTweets,
+					similarityOfTweetWithOtherTweets, allTweetCount);
 			tweetSimilarityWithOtherTweets.add(queryTweetTFIdfQueryObj);
 			tweetSimilarityWithOtherTweets = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
 					DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity(),
@@ -266,6 +279,19 @@ public class CosineSimilarity {
 		DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
 				DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity(),
 				tweetSimilarityWithOtherTweets, true);
+
+		CosineSimilarityUtil.calculateAvarage(similarityComparisonOfAllTweets, allTweetCount);
+
+		updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.NON_SIMILAR,
+				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.NON_SIMILAR));
+		updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.SLIGHTLY_SIMILAR,
+				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.SLIGHTLY_SIMILAR));
+		updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.SIMILAR,
+				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.SIMILAR));
+		updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.VERY_SIMILAR,
+				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.VERY_SIMILAR));
+		updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.MOST_SIMILAR,
+				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.MOST_SIMILAR));
 
 	}
 
@@ -403,6 +429,7 @@ public class CosineSimilarity {
 	private void calculateTFValues(CosineSimilarityRequestData requestData) {
 		List<DBObject> tweetTfValues = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		List<String> allTweetIds = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
+		Set<String> allUserIds = new HashSet<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 		// get tweets first
 		DBCursor tweetsOfRequest = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest()
 				.find(requestData.getQuery4OrgBehaviourTweetsOfRequestCollection())
@@ -414,7 +441,9 @@ public class CosineSimilarity {
 				DBObject userTweetObj = tweetsOfRequest.next();
 				// add tweet id to list
 				String tweetId = TextUtils.getNotNullValue(userTweetObj.get(MongoCollectionFieldNames.MONGO_TWEET_ID));
+				String userId = TextUtils.getNotNullValue(userTweetObj.get(MongoCollectionFieldNames.MONGO_USER_ID));
 				allTweetIds.add(tweetId);
+				allUserIds.add(userId);
 				// get tweet text
 				String tweetText = TextUtils
 						.getNotNullValue(userTweetObj.get(MongoCollectionFieldNames.MONGO_TWEET_TEXT));
@@ -452,10 +481,19 @@ public class CosineSimilarity {
 			}
 			DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
 					DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF(), tweetTfValues, true);
+			int distinctUserIdCount = allUserIds.size();
 			DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
 					.insert(new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestData.getRequestId())
 							.append(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT, totalTweetCount)
-							.append(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS, allTweetIds));
+							.append(MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT, distinctUserIdCount)
+							.append(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS, allTweetIds)
+							.append(MongoCollectionFieldNames.MONGO_ALL_USER_IDS, allUserIds));
+
+			// update request
+			updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT,
+					distinctUserIdCount);
+			updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT,
+					totalTweetCount);
 		} finally {
 			tweetsOfRequest.close();
 		}

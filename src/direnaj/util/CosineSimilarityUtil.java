@@ -68,6 +68,53 @@ public class CosineSimilarityUtil {
 		return similarityDecisionTree;
 	}
 
+	public static void addSimilarities2General(Map<String, Double> similarityComparisonOfAllTweets,
+			Map<String, Double> similarityOfTweetWithOtherTweets, double allTweetCount) {
+		if (allTweetCount > 1d) {
+			allTweetCount = allTweetCount - 1;
+		}
+
+		similarityComparisonOfAllTweets.put(MongoCollectionFieldNames.NON_SIMILAR, similarityComparisonOfAllTweets
+				.get(MongoCollectionFieldNames.NON_SIMILAR)
+				+ (similarityOfTweetWithOtherTweets.get(MongoCollectionFieldNames.NON_SIMILAR) / allTweetCount));
+
+		similarityComparisonOfAllTweets.put(MongoCollectionFieldNames.SLIGHTLY_SIMILAR, similarityComparisonOfAllTweets
+				.get(MongoCollectionFieldNames.SLIGHTLY_SIMILAR)
+				+ (similarityOfTweetWithOtherTweets.get(MongoCollectionFieldNames.SLIGHTLY_SIMILAR) / allTweetCount));
+
+		similarityComparisonOfAllTweets.put(MongoCollectionFieldNames.SIMILAR,
+				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.SIMILAR)
+						+ (similarityOfTweetWithOtherTweets.get(MongoCollectionFieldNames.SIMILAR) / allTweetCount));
+
+		similarityComparisonOfAllTweets.put(MongoCollectionFieldNames.VERY_SIMILAR, similarityComparisonOfAllTweets
+				.get(MongoCollectionFieldNames.VERY_SIMILAR)
+				+ (similarityOfTweetWithOtherTweets.get(MongoCollectionFieldNames.VERY_SIMILAR) / allTweetCount));
+
+		similarityComparisonOfAllTweets.put(MongoCollectionFieldNames.MOST_SIMILAR, similarityComparisonOfAllTweets
+				.get(MongoCollectionFieldNames.MOST_SIMILAR)
+				+ (similarityOfTweetWithOtherTweets.get(MongoCollectionFieldNames.MOST_SIMILAR) / allTweetCount));
+	}
+
+	public static void calculateAvarage(Map<String, Double> similarityComparisonOfAllTweets, double allTweetCount) {
+		if (allTweetCount > 1d) {
+			allTweetCount = allTweetCount - 1;
+		}
+		similarityComparisonOfAllTweets.put(MongoCollectionFieldNames.NON_SIMILAR,
+				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.NON_SIMILAR) / allTweetCount);
+
+		similarityComparisonOfAllTweets.put(MongoCollectionFieldNames.SLIGHTLY_SIMILAR,
+				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.SLIGHTLY_SIMILAR) / allTweetCount);
+
+		similarityComparisonOfAllTweets.put(MongoCollectionFieldNames.SIMILAR,
+				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.SIMILAR) / allTweetCount);
+
+		similarityComparisonOfAllTweets.put(MongoCollectionFieldNames.VERY_SIMILAR,
+				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.VERY_SIMILAR) / allTweetCount);
+
+		similarityComparisonOfAllTweets.put(MongoCollectionFieldNames.MOST_SIMILAR,
+				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.MOST_SIMILAR) / allTweetCount);
+	}
+
 	public static void findTweetSimilarityRange(Map<String, Double> similarityOfTweetWithOtherTweets, double dotProduct,
 			double tweetVectorLength, double comparedTweetVectorLength) {
 		String similarityKey = "";

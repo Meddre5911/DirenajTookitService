@@ -24,7 +24,9 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_TWEET_SIMILARITY_WITH_OTHER_TWEETS = "SIMILARITY_WITH_OTHER_TWEETS";
 
 	public static final String MONGO_TOTAL_TWEET_COUNT = "TotalTweetCount";
+	public static final String MONGO_DISTINCT_USER_COUNT = "DistinctUserCount";
 	public static final String MONGO_ALL_TWEET_IDS = "AllTweetIds";
+	public static final String MONGO_ALL_USER_IDS = "AllUserIds";
 	public static final String MONGO_TWEET_WORDS = "TweetWords";
 
 	// Similarity Ranges
@@ -52,6 +54,7 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_RESUME_BREAKPOINT = "resumeBreakPoint";
 	public static final String MONGO_GENARAL_SIMILARITY_CALCULATION = "calculateGeneralSimilarity";
 	public static final String MONGO_HASHTAG_SIMILARITY_CALCULATION = "calculateHashTagSimilarity";
+	public static final String MONGO_BYPASS_TWEET_COLLECTION = "bypassTweetCollection";
 	
 	// legacy direnaj
 	public static final String MONGO_CAMPAIGN_ID = "campaign_id";

@@ -49,7 +49,14 @@ $(document).ready(function() {
             },
             { "mData": "isHashtagRequest" },
             { "mData": "lowerTimeInterval" },
-            { "mData": "upperTimeInterval" }
+            { "mData": "upperTimeInterval" },
+            { "mData": "DistinctUserCount" },
+            { "mData": "TotalTweetCount" },
+            { "mData": "MOST_SIMILAR" },
+            { "mData": "VERY_SIMILAR" },
+            { "mData": "SIMILAR" },
+            { "mData": "SLIGHTLY_SIMILAR" },
+            { "mData": "NON_SIMILAR" }
         ]
     } );
 
@@ -70,6 +77,13 @@ $(document).ready(function() {
                 <th>HashTag Request</th>
                 <th>Lower Time Interval</th>
                 <th>Upper Time Interval</th>
+                <th>Distinct User Count</th>
+                <th>Total Tweet Count</th>
+                <th>MostSimilarTweetPercentage</th>
+                <th>VerySimilarTweetPercentage</th>
+                <th>SimilarTweetPercentage</th>
+                <th>SlightlySimilarTweetPercentage</th>
+                <th>NonSimilarTweetPercentage</th>
             </tr>
         </thead>       
     </table>

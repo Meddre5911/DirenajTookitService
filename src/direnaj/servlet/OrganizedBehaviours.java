@@ -66,10 +66,12 @@ public class OrganizedBehaviours extends HttpServlet {
 							.isEmpty(request.getParameter("calculateHashTagSimilarity"));
 					boolean calculateGeneralSimilarity = !TextUtils
 							.isEmpty(request.getParameter("calculateGeneralSimilarity"));
+					boolean bypassTweetCollection = !TextUtils.isEmpty(request.getParameter("bypassTweetCollection"));
+
 					organizationDetector = new OrganizationDetector(campaignId, topHashTagCount,
 							organizedHashtagDefinition, tracedHashtag,
 							OrganizedBehaviourDetectionRequestType.valueOf(operationType), disableGraphAnalysis,
-							calculateHashTagSimilarity, calculateGeneralSimilarity);
+							calculateHashTagSimilarity, calculateGeneralSimilarity, bypassTweetCollection);
 
 					new Thread(organizationDetector).start();
 					forwardRequest(request, response, "/listOrganizedBehaviourRequests.jsp");

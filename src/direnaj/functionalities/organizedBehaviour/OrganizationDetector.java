@@ -63,10 +63,11 @@ public class OrganizationDetector implements Runnable {
 	private boolean isCleaningDone4ResumeProcess;
 	private boolean calculateHashTagSimilarity;
 	private boolean calculateGeneralSimilarity;
+	private boolean bypassTweetCollection;
 
 	public OrganizationDetector(String campaignId, int topHashtagCount, String requestDefinition, String tracedHashtag,
 			OrganizedBehaviourDetectionRequestType detectionRequestType, boolean disableGraphAnalysis,
-			boolean calculateHashTagSimilarity, boolean calculateGeneralSimilarity) {
+			boolean calculateHashTagSimilarity, boolean calculateGeneralSimilarity, boolean bypassTweetCollection) {
 		direnajDriver = new DirenajDriverVersion2();
 		direnajMongoDriver = DirenajMongoDriver.getInstance();
 		requestId = TextUtils.generateUniqueId4Request();
@@ -82,6 +83,7 @@ public class OrganizationDetector implements Runnable {
 		this.disableGraphAnalysis = disableGraphAnalysis;
 		this.calculateHashTagSimilarity = calculateHashTagSimilarity;
 		this.calculateGeneralSimilarity = calculateGeneralSimilarity;
+		this.bypassTweetCollection = bypassTweetCollection;
 		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 		isCleaningDone4ResumeProcess = false;
 		insertRequest2Mongo();
@@ -279,27 +281,30 @@ public class OrganizationDetector implements Runnable {
 	}
 
 	public void collectTweetsOfAllUsers(String requestId) {
-		// get initial objects
-		DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
-		// get pre process users
-		DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
-		Boolean calculateOnlyTopTrendDate = PropertiesUtil.getInstance()
-				.getBooleanProperty("cosSimilarity.calculateOnlyTopTrendDate", true);
-		DrenajCampaignRecord drenajCampaignRecord = DirenajMongoDriverUtil.getCampaign(campaignId);
-		try {
-			while (preProcessUsers.hasNext()) {
-				DBObject preProcessUser = preProcessUsers.next();
-				try {
-					User user = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
-					Twitter4jUtil.saveTweetsOfUser(user, calculateOnlyTopTrendDate,
-							drenajCampaignRecord.getMinCampaignDate(), drenajCampaignRecord.getMaxCampaignDate());
-				} catch (Exception e) {
-					Logger.getLogger(OrganizationDetector.class.getSimpleName())
-							.error("Twitter4jUtil-collectTweetsOfAllUsers", e);
+		if (!bypassTweetCollection) {
+			// get initial objects
+			DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
+			// get pre process users
+			DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj)
+					.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+			Boolean calculateOnlyTopTrendDate = PropertiesUtil.getInstance()
+					.getBooleanProperty("cosSimilarity.calculateOnlyTopTrendDate", true);
+			DrenajCampaignRecord drenajCampaignRecord = DirenajMongoDriverUtil.getCampaign(campaignId);
+			try {
+				while (preProcessUsers.hasNext()) {
+					DBObject preProcessUser = preProcessUsers.next();
+					try {
+						User user = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
+						Twitter4jUtil.saveTweetsOfUser(user, calculateOnlyTopTrendDate,
+								drenajCampaignRecord.getMinCampaignDate(), drenajCampaignRecord.getMaxCampaignDate());
+					} catch (Exception e) {
+						Logger.getLogger(OrganizationDetector.class.getSimpleName())
+								.error("Twitter4jUtil-collectTweetsOfAllUsers", e);
+					}
 				}
+			} finally {
+				preProcessUsers.close();
 			}
-		} finally {
-			preProcessUsers.close();
 		}
 		updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
 				ResumeBreakPoint.TWEET_COLLECTION_COMPLETED.name());
@@ -528,6 +533,7 @@ public class OrganizationDetector implements Runnable {
 		document.put(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, false);
 		document.put(MongoCollectionFieldNames.MONGO_GENARAL_SIMILARITY_CALCULATION, calculateGeneralSimilarity);
 		document.put(MongoCollectionFieldNames.MONGO_HASHTAG_SIMILARITY_CALCULATION, calculateHashTagSimilarity);
+		document.put(MongoCollectionFieldNames.MONGO_BYPASS_TWEET_COLLECTION, bypassTweetCollection);
 		organizedBehaviorCollection.insert(document);
 	}
 
