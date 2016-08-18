@@ -80,13 +80,17 @@ public class CosineSimilarity {
 		DBCollection orgBehaviourRequestedSimilarityCalculations = DirenajMongoDriver.getInstance()
 				.getOrgBehaviourRequestedSimilarityCalculations();
 		BasicDBObject document = new BasicDBObject();
-		document.put("originalRequestId", originalRequestId);
+		document.put(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, originalRequestId);
 		document.put("requestId", requestData.getRequestId());
 		document.put("isHashtagRequest", requestData.isHashtagSpecificRequest());
 		document.put("lowerTimeInterval", TextUtils.getNotNullValue(requestData.getLowerTime()));
 		document.put("upperTimeInterval", TextUtils.getNotNullValue(requestData.getUpperTime()));
 		document.put(MongoCollectionFieldNames.MONGO_TWEET_FOUND, false);
 		document.put(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT, "");
+		if (requestData.getLowerTime() != null) {
+			document.put(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME,
+					DateTimeUtils.getRataDieFormat4Date(requestData.getLowerTime()));
+		}
 		orgBehaviourRequestedSimilarityCalculations.insert(document);
 	}
 

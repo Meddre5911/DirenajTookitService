@@ -88,6 +88,7 @@ function prepareGraphs(){
 	prepareUserRatiosGraph('visualizeUserFriendFollowerRatio','userFriendFollowerRatiosGraph');
 	prepareMultiLineUserRatiosGraph('visualizeUserRoughTweetCounts','userRoughTweetCountsGraph');
 	prepareUserRatiosGraph('visualizeUserRoughHashtagTweetCounts','userHashtagCountsGraph');
+	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyUserAndTweetCount','hourlyUserAndTweetCountGraph');
 }
 
 </script>
@@ -95,21 +96,32 @@ function prepareGraphs(){
 
 <div class="divTable" style="width: 100%;" >
 <div class="divTableBody">
+
 <div class="divTableRow">
 <div id="creationTimeGraph" class="divTableCell"></div>
+</div>
+
+<div class="divTableRow">
 <div id="userRatiosGraph" class="divTableCell"></div>
 </div>
+
 <div class="divTableRow">
 <div id="userPostDevicesRatiosGraph" class="divTableCell"></div>
+</div>
+<div class="divTableRow">
 <div id="userFriendFollowerRatiosGraph" class="divTableCell"></div>
 </div>
+
 <div class="divTableRow">
 <div id="userRoughTweetCountsGraph" class="divTableCell"></div>
-<div id="userHashtagCountsGraph" class="divTableCell">&nbsp;</div>
 </div>
+
 <div class="divTableRow">
-<div class="divTableCell">&nbsp;</div>
-<div class="divTableCell">&nbsp;</div>
+<div id="userHashtagCountsGraph" class="divTableCell"></div>
+</div>
+
+<div class="divTableRow">
+<div id="hourlyUserAndTweetCountGraph" class="divTableCell"></div>
 </div>
 </div>
 </div>

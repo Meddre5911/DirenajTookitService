@@ -567,6 +567,8 @@ public class OrganizationDetector implements Runnable {
 			userInputData.put(MongoCollectionFieldNames.MONGO_USER_PROTECTED, user.isProtected());
 			userInputData.put(MongoCollectionFieldNames.MONGO_USER_VERIFIED, user.isVerified());
 			userInputData.put(MongoCollectionFieldNames.MONGO_USER_CREATION_DATE, user.getCreationDate().toString());
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE,
+					DateTimeUtils.getRataDieFormat4Date(user.getCreationDate()));
 			allUserInputData.add(userInputData);
 		}
 		if (allUserInputData != null && allUserInputData.size() > 0) {

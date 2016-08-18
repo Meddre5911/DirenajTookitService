@@ -72,6 +72,7 @@ public interface MongoCollectionFieldNames {
 	
 	// preprocess input data
 	public static final String MONGO_USER_CREATION_DATE = "creationDate";
+	public static final String MONGO_USER_CREATION_DATE_IN_RATA_DIE = "creationDateInRataDie";
 	public static final String MONGO_USER_SCREEN_NAME = "userScreenName";
 	public static final String MONGO_USER_CLOSENESS_CENTRALITY = "closenessCentrality";
 	public static final String MONGO_USER_FRIEND_FOLLOWER_RATIO = "friendFollowerRatio";
@@ -87,6 +88,12 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_USER_FAVORITE_COUNT = "favoriteCount";
 	public static final String MONGO_USER_STATUS_COUNT = "statusCount";
 	public static final String MONGO_USER_HASHTAG_POST_COUNT = "hashtagPostCount";
+
+	// Cosine Similarity Request variables
+	public static final String MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME = "lowerTimeIntervalInRataDie";
+	public static final String MONGO_COS_SIM_REQ_ORG_REQUEST_ID = "originalRequestId";
+	
+	
 	
 	
 	
