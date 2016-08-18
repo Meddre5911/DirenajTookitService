@@ -200,8 +200,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 
 			// FIXME 20160813 Sil
 			jsonStr = jsonArray.toString();
-			System.out.println("Request Type : " + requestType);
-			System.out.println("Returned String : " + jsonStr);
+//			System.out.println("Request Type : " + requestType);
+//			System.out.println("Returned String : " + jsonStr);
 		} catch (JSONException e) {
 			Logger.getLogger(MongoPaginationServlet.class)
 					.error("Error in OrganizedBehaviorCampaignVisualizer Servlet.", e);

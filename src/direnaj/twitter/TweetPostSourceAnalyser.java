@@ -64,7 +64,7 @@ public class TweetPostSourceAnalyser {
         String newStr = tweetPostSource.substring(indexOf);
         int indexOf2 = newStr.indexOf("<");
         String sourceValue = newStr.substring(1, indexOf2);
-        System.out.println("Final Tweet Post Source : " + sourceValue);
+//        System.out.println("Final Tweet Post Source : " + sourceValue);
         return sourceValue;
     }
 

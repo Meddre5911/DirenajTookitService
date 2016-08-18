@@ -8,10 +8,10 @@ import direnaj.util.TextUtils;
 public class Deneme {
 
 	public static void main(String[] args) throws InterruptedException {
-		Deneme d = new Deneme();
-		synchronized (String.class) {
-			d.wait();
-		}
+		
+		Double d1 = new Double(4);
+		Double d2 = new Double(3);
+		System.out.println(d1+d2);
 
 	}
 
