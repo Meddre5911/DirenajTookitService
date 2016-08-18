@@ -42,6 +42,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			BasicDBObject query = new BasicDBObject("requestId", requestId);
 			if ("visualizeUserCreationTimes".equals(requestType)) {
 				// get cursor
+				// FIXME 20160818 - Tarihe Göre sırala
 				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
 						.find(query).sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_ID, 1));
 				// get objects from cursor
@@ -61,6 +62,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				}
 			} else if ("visualizeUserTweetEntityRatios".equals(requestType)) {
 				// get cursor
+				
+				// FIXME 20160818 - 3 sorgu ile farklı ratio'lara göre sırala
 				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
 						.find(query).sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_ID, 1));
 				JSONArray urlRatioJsonArray = new JSONArray();
@@ -90,6 +93,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 						.put("values", mentionRatioJsonArray));
 			} else if ("visualizeUserFriendFollowerRatio".equals(requestType)) {
 				// get cursor
+				// FIXME 20160818 - friend follower ratio'lara göre sırala
 				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
 						.find(query).sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_ID, 1));
 				// get objects from cursor
@@ -110,6 +114,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				}
 			} else if ("visualizeUserRoughHashtagTweetCounts".equals(requestType)) {
 				// get cursor
+				// FIXME 20160818 - hashtag post countlara göre sırala
 				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
 						.find(query).sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_ID, 1));
 				// get objects from cursor
@@ -130,6 +135,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				}
 			} else if ("visualizeUserPostDeviceRatios".equals(requestType)) {
 				// get cursor
+				// FIXME 20160818 - 3 sorgu ile farklı ratio'lara göre sırala
 				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
 						.find(query).sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_ID, 1));
 				JSONArray twitterPostDeviceRatioJsonArray = new JSONArray();
@@ -172,6 +178,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 						new JSONObject().put("ratioType", MongoCollectionFieldNames.MONGO_USER_THIRD_PARTY_DEVICE_RATIO)
 								.put("values", thirdPartyPostRatioJsonArray));
 			} else if ("visualizeUserRoughTweetCounts".equals(requestType)) {
+				//buna özel bir müdahale gerekebilir
 				// get cursor
 				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
 						.find(query).sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_ID, 1));
