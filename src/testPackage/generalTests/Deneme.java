@@ -2,16 +2,20 @@ package testPackage.generalTests;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.ParseException;
 
 import direnaj.util.TextUtils;
 
 public class Deneme {
 
-	public static void main(String[] args) throws InterruptedException {
-		
-		Double d1 = new Double(4);
-		Double d2 = new Double(3);
-		System.out.println(d1+d2);
+	public static void main(String[] args) throws InterruptedException, ParseException {
+
+		double value = 0.6505190311418685d;
+		DecimalFormat df = new DecimalFormat("0.0000");
+		String formate = df.format(value);
+		double finalValue = (Double) df.parse(formate);
+		System.out.println("Final Value : " + finalValue);
 
 	}
 

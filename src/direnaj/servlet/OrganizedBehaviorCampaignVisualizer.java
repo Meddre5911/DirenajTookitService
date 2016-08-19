@@ -20,6 +20,7 @@ import com.mongodb.DBObject;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.util.DateTimeUtils;
+import direnaj.util.NumberUtils;
 import direnaj.util.TextUtils;
 
 public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
@@ -280,6 +281,33 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT)
 						.put("values", distinctUserCountsJsonArray));
 
+			} else if ("visualizeHourlyTweetSimilarities".equals(requestType)) {
+				DBCursor paginatedResult = DirenajMongoDriver.getInstance()
+						.getOrgBehaviourRequestedSimilarityCalculations().find(query4CosSimilarityRequest)
+						.sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME, 1));
+				// get objects from cursor
+				while (paginatedResult.hasNext()) {
+					DBObject next = paginatedResult.next();
+					// prepare json object
+					String twitterDateStr = (String) next.get("lowerTimeInterval");
+					String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
+							DateTimeUtils.getTwitterDate(twitterDateStr));
+
+					jsonArray.put(new JSONObject().put("time", twitterDate)
+							.put(MongoCollectionFieldNames.NON_SIMILAR,
+									NumberUtils.roundDouble(4,
+											(double) next.get(MongoCollectionFieldNames.NON_SIMILAR)))
+							.put(MongoCollectionFieldNames.SLIGHTLY_SIMILAR,
+									NumberUtils.roundDouble(4,
+											(double) next.get(MongoCollectionFieldNames.SLIGHTLY_SIMILAR)))
+							.put(MongoCollectionFieldNames.SIMILAR,
+									NumberUtils.roundDouble(4, (double) next.get(MongoCollectionFieldNames.SIMILAR)))
+							.put(MongoCollectionFieldNames.VERY_SIMILAR,
+									NumberUtils.roundDouble(4,
+											(double) next.get(MongoCollectionFieldNames.VERY_SIMILAR)))
+							.put(MongoCollectionFieldNames.MOST_SIMILAR, NumberUtils.roundDouble(4,
+									(double) next.get(MongoCollectionFieldNames.MOST_SIMILAR))));
+				}
 			}
 
 			// FIXME 20160813 Sil

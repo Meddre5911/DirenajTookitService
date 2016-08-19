@@ -432,6 +432,87 @@ function prepareMultiLineUserRatiosGraphInDate(requestType,divId){
 }
 
 
+function prepareSingleLineUserRatiosGraphInDate(requestType,divId){
+
+	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
+		if (error) throw error;
+		
+	 	var parseDate = d3.time.format("%Y%m%d %H:%M").parse;
+
+	    data.forEach(function(d) {
+	    	d.time = parseDate(d.time);
+	    });
+	    
+	    prepareHourlyCosSimGraph(data,divId+"_NON_SIMILAR","NON_SIMILAR");
+	    prepareHourlyCosSimGraph(data,divId+"_SLIGHTLY_SIMILAR","SLIGHTLY_SIMILAR");
+	    prepareHourlyCosSimGraph(data,divId+"_SIMILAR","SIMILAR");
+	    prepareHourlyCosSimGraph(data,divId+"_VERY_SIMILAR","VERY_SIMILAR");
+	    prepareHourlyCosSimGraph(data,divId+"_MOST_SIMILAR","MOST_SIMILAR");
+	    
+	});
+		
+	    
+}
+
+function prepareHourlyCosSimGraph(data,divId,similarityRange){
+	var margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = 700 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+
+	var x = d3.time.scale()
+	    .range([0, width]);
+
+	var y = d3.scale.linear()
+	    .range([height, 0]);
+
+	var xAxis = d3.svg.axis()
+	    .scale(x)
+	    .orient("bottom");
+
+	var yAxis = d3.svg.axis()
+	    .scale(y)
+	    .orient("left");
+
+	var line = d3.svg.line()
+	    .x(function(d) { return x(d.time); })
+	    .y(function(d) { return y(d[similarityRange]); });
+
+	var svg = d3.select("#"+divId).append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	  
+
+	  x.domain([d3.min(data, function(d) { return d.time; }), d3.max(data, function(d) { return d.time; })]);
+	  y.domain([d3.min(data, function(d) { return d[similarityRange]; }), d3.max(data, function(d) { return d[similarityRange]; })]);
+	  
+
+	  svg.append("g")
+	      .attr("class", "x axis")
+	      .attr("transform", "translate(0," + height + ")")
+	      .call(xAxis);
+
+	  svg.append("g")
+	      .attr("class", "y axis")
+	      .call(yAxis)
+	    .append("text")
+	      .attr("transform", "rotate(-90)")
+	      .attr("y", 6)
+	      .attr("dy", ".71em")
+	      .style("text-anchor", "end")
+	      .text("Ratio");
+
+	  svg.append("path")
+	      .datum(data)
+	      .attr("class", "line")
+	      .attr("d", line);
+	
+}
+
+
 
 
 

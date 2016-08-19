@@ -89,6 +89,7 @@ function prepareGraphs(){
 	prepareMultiLineUserRatiosGraph('visualizeUserRoughTweetCounts','userRoughTweetCountsGraph');
 	prepareUserRatiosGraph('visualizeUserRoughHashtagTweetCounts','userHashtagCountsGraph');
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyUserAndTweetCount','hourlyUserAndTweetCountGraph');
+	prepareSingleLineUserRatiosGraphInDate('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities');
 }
 
 </script>
@@ -123,6 +124,24 @@ function prepareGraphs(){
 <div class="divTableRow">
 <div id="hourlyUserAndTweetCountGraph" class="divTableCell"></div>
 </div>
+
+<div class="divTableRow">
+<div id="hourlyTweetSimilarities_MOST_SIMILAR" class="divTableCell"></div>
+</div>
+<div class="divTableRow">
+<div id="hourlyTweetSimilarities_VERY_SIMILAR" class="divTableCell"></div>
+</div>
+<div class="divTableRow">
+<div id="hourlyTweetSimilarities_SIMILAR" class="divTableCell"></div>
+</div>
+<div class="divTableRow">
+<div id="hourlyTweetSimilarities_SLIGHTLY_SIMILAR" class="divTableCell"></div>
+</div>
+<div class="divTableRow">
+<div id="hourlyTweetSimilarities_NON_SIMILAR" class="divTableCell"></div>
+</div>
+
+
 </div>
 </div>
 
