@@ -103,7 +103,7 @@ function prepareUserCreationTimeGraph(){
 	});
 }
 
-function prepareMultiLineUserRatiosGraph(requestType,divId){
+function prepareMultiLineUserRatiosGraph(requestType,divId,yLineText){
 
 	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
 		
@@ -175,7 +175,7 @@ function prepareMultiLineUserRatiosGraph(requestType,divId){
 			    .attr("y", 6)
 			    .attr("dy", ".71em")
 			    .style("text-anchor", "end")
-			    .text("Ratios");
+			    .text(yLineText);
 
 			var city = svg.selectAll(".city")
 			    .data(cities)
@@ -231,7 +231,7 @@ function prepareMultiLineUserRatiosGraph(requestType,divId){
 		});
 }
 
-function prepareUserRatiosGraph(requestType,divId){
+function prepareUserRatiosGraph(requestType,divId,yLineText){
 
 	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
 		if (error) throw error;
@@ -284,7 +284,7 @@ function prepareUserRatiosGraph(requestType,divId){
 		      .attr("y", 6)
 		      .attr("dy", ".71em")
 		      .style("text-anchor", "end")
-		      .text("Ratio");
+		      .text(yLineText);
 	
 		  svg.append("path")
 		      .datum(data)
@@ -295,7 +295,7 @@ function prepareUserRatiosGraph(requestType,divId){
 }
 
 
-function prepareMultiLineUserRatiosGraphInDate(requestType,divId){
+function prepareMultiLineUserRatiosGraphInDate(requestType,divId,yLineText){
 
 	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
 		
@@ -375,7 +375,7 @@ function prepareMultiLineUserRatiosGraphInDate(requestType,divId){
 			    .attr("y", 6)
 			    .attr("dy", ".71em")
 			    .style("text-anchor", "end")
-			    .text("Ratios");
+			    .text(yLineText);
 
 			var city = svg.selectAll(".city")
 			    .data(cities)
@@ -432,7 +432,7 @@ function prepareMultiLineUserRatiosGraphInDate(requestType,divId){
 }
 
 
-function prepareSingleLineUserRatiosGraphInDate(requestType,divId){
+function prepareSingleLineUserRatiosGraphInDate(requestType,divId,yLineText){
 
 	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
 		if (error) throw error;
@@ -443,18 +443,18 @@ function prepareSingleLineUserRatiosGraphInDate(requestType,divId){
 	    	d.time = parseDate(d.time);
 	    });
 	    
-	    prepareHourlyCosSimGraph(data,divId+"_NON_SIMILAR","NON_SIMILAR");
-	    prepareHourlyCosSimGraph(data,divId+"_SLIGHTLY_SIMILAR","SLIGHTLY_SIMILAR");
-	    prepareHourlyCosSimGraph(data,divId+"_SIMILAR","SIMILAR");
-	    prepareHourlyCosSimGraph(data,divId+"_VERY_SIMILAR","VERY_SIMILAR");
-	    prepareHourlyCosSimGraph(data,divId+"_MOST_SIMILAR","MOST_SIMILAR");
+	    prepareHourlyCosSimGraph(data,divId+"_NON_SIMILAR","NON_SIMILAR",yLineText);
+	    prepareHourlyCosSimGraph(data,divId+"_SLIGHTLY_SIMILAR","SLIGHTLY_SIMILAR",yLineText);
+	    prepareHourlyCosSimGraph(data,divId+"_SIMILAR","SIMILAR",yLineText);
+	    prepareHourlyCosSimGraph(data,divId+"_VERY_SIMILAR","VERY_SIMILAR",yLineText);
+	    prepareHourlyCosSimGraph(data,divId+"_MOST_SIMILAR","MOST_SIMILAR",yLineText);
 	    
 	});
 		
 	    
 }
 
-function prepareHourlyCosSimGraph(data,divId,similarityRange){
+function prepareHourlyCosSimGraph(data,divId,similarityRange,yLineText){
 	var margin = {top: 20, right: 20, bottom: 30, left: 50},
     width = 700 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
@@ -503,7 +503,7 @@ function prepareHourlyCosSimGraph(data,divId,similarityRange){
 	      .attr("y", 6)
 	      .attr("dy", ".71em")
 	      .style("text-anchor", "end")
-	      .text("Ratio");
+	      .text(yLineText);
 
 	  svg.append("path")
 	      .datum(data)

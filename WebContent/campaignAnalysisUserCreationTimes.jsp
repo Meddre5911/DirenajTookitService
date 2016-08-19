@@ -1,4 +1,9 @@
 <!DOCTYPE html>
+<%@page import="java.util.List"%>
+<%@page import="com.mongodb.DBObject"%>
+<%@page import="com.mongodb.BasicDBObject"%>
+<%@page import="direnaj.driver.DirenajMongoDriverUtil"%>
+<%@page import="direnaj.driver.DirenajMongoDriver"%>
 <html>
 <meta charset="utf-8">
 
@@ -83,13 +88,13 @@ body {
 
 function prepareGraphs(){ 
 	prepareUserCreationTimeGraph();
-	prepareMultiLineUserRatiosGraph('visualizeUserTweetEntityRatios','userRatiosGraph');
-	prepareMultiLineUserRatiosGraph('visualizeUserPostDeviceRatios','userPostDevicesRatiosGraph');
-	prepareUserRatiosGraph('visualizeUserFriendFollowerRatio','userFriendFollowerRatiosGraph');
-	prepareMultiLineUserRatiosGraph('visualizeUserRoughTweetCounts','userRoughTweetCountsGraph');
-	prepareUserRatiosGraph('visualizeUserRoughHashtagTweetCounts','userHashtagCountsGraph');
-	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyUserAndTweetCount','hourlyUserAndTweetCountGraph');
-	prepareSingleLineUserRatiosGraphInDate('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities');
+	prepareMultiLineUserRatiosGraph('visualizeUserTweetEntityRatios','userRatiosGraph','RatioValue');
+	prepareMultiLineUserRatiosGraph('visualizeUserPostDeviceRatios','userPostDevicesRatiosGraph','PostDeviceRatio');
+	prepareUserRatiosGraph('visualizeUserFriendFollowerRatio','userFriendFollowerRatiosGraph','friendFollowerRatio');
+	prepareMultiLineUserRatiosGraph('visualizeUserRoughTweetCounts','userRoughTweetCountsGraph','Tweet Count');
+	prepareUserRatiosGraph('visualizeUserRoughHashtagTweetCounts','userHashtagCountsGraph','Post Count');
+	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyUserAndTweetCount','hourlyUserAndTweetCountGraph','Count');
+	prepareSingleLineUserRatiosGraphInDate('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Percentage');
 }
 
 </script>
@@ -99,46 +104,67 @@ function prepareGraphs(){
 <div class="divTableBody">
 
 <div class="divTableRow">
-<div id="creationTimeGraph" class="divTableCell"></div>
+<div class="divTableCell">
+	<%
+		BasicDBObject findQuery = new BasicDBObject();
+		findQuery.put("_id", request.getParameter("requestId"));
+		DBObject requestObj = DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection().findOne(findQuery);
+		// retrive features of request object
+		String campaignId = (String) requestObj.get("campaignId");
+		String requestDefinition = (String) requestObj.get("requestDefinition");
+		String tracedHashtag = ((List<String>) requestObj.get("tracedHashtag")).get(0);
+		String linkUrl = "https://twitter.com/hashtag/"+tracedHashtag+"?src=hash";
+	%>
+	<b>Request Summary Info : </b> <br><br>
+	<b>Campaign Id :</b> <%=campaignId%> <br><br>
+	<b>Organized Behaviour Request Definition :</b> <%=requestDefinition%> <br><br>
+	<b>Traced Hashtag :</b><a href=<%=linkUrl %> target="_blank"> #<%=tracedHashtag%></a> <br><br>
+	
+</div>
 </div>
 
 <div class="divTableRow">
-<div id="userRatiosGraph" class="divTableCell"></div>
+<div id="creationTimeGraph" class="divTableCell"><b><big>Creation Times of Users :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
-<div id="userPostDevicesRatiosGraph" class="divTableCell"></div>
-</div>
-<div class="divTableRow">
-<div id="userFriendFollowerRatiosGraph" class="divTableCell"></div>
+
+<div id="userRatiosGraph" class="divTableCell"><b><big>Ratios of Users :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
-<div id="userRoughTweetCountsGraph" class="divTableCell"></div>
+<div id="userPostDevicesRatiosGraph" class="divTableCell"><b><big>Post Device Ratios of Users :</big></b> <br></div>
+</div>
+<div class="divTableRow">
+<div id="userFriendFollowerRatiosGraph" class="divTableCell"><b><big>Friend Follower Ratios of Users :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
-<div id="userHashtagCountsGraph" class="divTableCell"></div>
+<div id="userRoughTweetCountsGraph" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
-<div id="hourlyUserAndTweetCountGraph" class="divTableCell"></div>
+<div id="userHashtagCountsGraph" class="divTableCell"><b><big>Post Counts of Users with Campaign Hashtag :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
-<div id="hourlyTweetSimilarities_MOST_SIMILAR" class="divTableCell"></div>
+<div id="hourlyUserAndTweetCountGraph" class="divTableCell"><b><big>Hour Basis Distinct Tweet & User Count of Campaign :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="hourlyTweetSimilarities_MOST_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Most Similar (btw:0-30) Posts In Campaign Compared to All Posts :</big></b> <br></div>
 </div>
 <div class="divTableRow">
-<div id="hourlyTweetSimilarities_VERY_SIMILAR" class="divTableCell"></div>
+<div id="hourlyTweetSimilarities_VERY_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Very Similar (btw:30-45) Posts In Campaign Compared to All Posts :</big></b></div>
 </div>
 <div class="divTableRow">
-<div id="hourlyTweetSimilarities_SIMILAR" class="divTableCell"></div>
+<div id="hourlyTweetSimilarities_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Similar (btw:45-60) Posts In Campaign Compared to All Posts :</big></b></div>
 </div>
 <div class="divTableRow">
-<div id="hourlyTweetSimilarities_SLIGHTLY_SIMILAR" class="divTableCell"></div>
+<div id="hourlyTweetSimilarities_SLIGHTLY_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Slightly Similar (btw:60-89) Posts In Campaign Compared to All Posts :</big></b></div>
 </div>
 <div class="divTableRow">
-<div id="hourlyTweetSimilarities_NON_SIMILAR" class="divTableCell"></div>
+<div id="hourlyTweetSimilarities_NON_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of None Similar (90 degree) Posts In Campaign Compared to All Posts :</big></b></div>
 </div>
 
 

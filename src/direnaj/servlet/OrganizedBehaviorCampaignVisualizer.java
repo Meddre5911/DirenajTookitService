@@ -76,7 +76,9 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					DBObject next = urlRatioResult.next();
 					userNo++;
 					urlRatioJsonArray.put(new JSONObject()
-							.put("ratioValue", (double) next.get(MongoCollectionFieldNames.MONGO_USER_URL_RATIO))
+							.put("ratioValue",
+									NumberUtils.roundDouble(4,
+											(double) next.get(MongoCollectionFieldNames.MONGO_USER_URL_RATIO)))
 							.put("userSequenceNo", userNo));
 				}
 				// hashtag ratio
@@ -88,8 +90,12 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				while (hashtagRatioResult.hasNext()) {
 					DBObject next = hashtagRatioResult.next();
 					userNo++;
-					hashtagRatioJsonArray.put(new JSONObject()
-							.put("ratioValue", (double) next.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO))
+					hashtagRatioJsonArray
+							.put(new JSONObject()
+									.put("ratioValue",
+											NumberUtils.roundDouble(4,
+													(double) next
+															.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO)))
 							.put("userSequenceNo", userNo));
 				}
 				// mention ratio
@@ -101,8 +107,12 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				while (mentionRatioResult.hasNext()) {
 					DBObject next = mentionRatioResult.next();
 					userNo++;
-					mentionRatioJsonArray.put(new JSONObject()
-							.put("ratioValue", (double) next.get(MongoCollectionFieldNames.MONGO_USER_MENTION_RATIO))
+					mentionRatioJsonArray
+							.put(new JSONObject()
+									.put("ratioValue",
+											NumberUtils.roundDouble(4,
+													(double) next
+															.get(MongoCollectionFieldNames.MONGO_USER_MENTION_RATIO)))
 							.put("userSequenceNo", userNo));
 				}
 				// init to array
@@ -128,8 +138,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_ID,
 							TextUtils.getLongValue((String) next.get(MongoCollectionFieldNames.MONGO_USER_ID)));
 					// get ratios
-					userProcessInputData.put("ratioValue",
-							(double) next.get(MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO));
+					userProcessInputData.put("ratioValue", NumberUtils.roundDouble(4,
+							(double) next.get(MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO)));
 					// init to array
 					jsonArray.put(userProcessInputData);
 				}
@@ -149,8 +159,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					userProcessInputData.put(MongoCollectionFieldNames.MONGO_USER_ID,
 							TextUtils.getLongValue((String) next.get(MongoCollectionFieldNames.MONGO_USER_ID)));
 					// get ratios
-					userProcessInputData.put("ratioValue",
-							(double) next.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT));
+					userProcessInputData.put("ratioValue", NumberUtils.roundDouble(4,
+							(double) next.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT)));
 					// init to array
 					jsonArray.put(userProcessInputData);
 				}
@@ -166,12 +176,12 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					DBObject next = paginatedResult.next();
 					userNo++;
 					// prepare json object
-					twitterPostDeviceRatioJsonArray
-							.put(new JSONObject()
-									.put("ratioValue",
+					twitterPostDeviceRatioJsonArray.put(new JSONObject()
+							.put("ratioValue",
+									NumberUtils.roundDouble(4,
 											(double) next
-													.get(MongoCollectionFieldNames.MONGO_USER_POST_TWITTER_DEVICE_RATIO))
-									.put("userSequenceNo", userNo));
+													.get(MongoCollectionFieldNames.MONGO_USER_POST_TWITTER_DEVICE_RATIO)))
+							.put("userSequenceNo", userNo));
 
 				}
 				paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query)
@@ -183,12 +193,12 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					DBObject next = paginatedResult.next();
 					userNo++;
 					// prepare json object
-					mobilePostDeviceRatioJsonArray
-							.put(new JSONObject()
-									.put("ratioValue",
+					mobilePostDeviceRatioJsonArray.put(new JSONObject()
+							.put("ratioValue",
+									NumberUtils.roundDouble(4,
 											(double) next
-													.get(MongoCollectionFieldNames.MONGO_USER_POST_MOBILE_DEVICE_RATIO))
-									.put("userSequenceNo", userNo));
+													.get(MongoCollectionFieldNames.MONGO_USER_POST_MOBILE_DEVICE_RATIO)))
+							.put("userSequenceNo", userNo));
 
 				}
 				paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query)
@@ -200,12 +210,12 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					DBObject next = paginatedResult.next();
 					userNo++;
 					// prepare json object
-					thirdPartyPostRatioJsonArray
-							.put(new JSONObject()
-									.put("ratioValue",
+					thirdPartyPostRatioJsonArray.put(new JSONObject()
+							.put("ratioValue",
+									NumberUtils.roundDouble(4,
 											(double) next
-													.get(MongoCollectionFieldNames.MONGO_USER_THIRD_PARTY_DEVICE_RATIO))
-									.put("userSequenceNo", userNo));
+													.get(MongoCollectionFieldNames.MONGO_USER_THIRD_PARTY_DEVICE_RATIO)))
+							.put("userSequenceNo", userNo));
 
 				}
 
@@ -293,27 +303,29 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
 							DateTimeUtils.getTwitterDate(twitterDateStr));
 
-					jsonArray.put(new JSONObject().put("time", twitterDate)
-							.put(MongoCollectionFieldNames.NON_SIMILAR,
-									NumberUtils.roundDouble(4,
-											(double) next.get(MongoCollectionFieldNames.NON_SIMILAR)))
+					jsonArray
+							.put(new JSONObject().put("time", twitterDate)
+									.put(MongoCollectionFieldNames.NON_SIMILAR,
+											NumberUtils.roundDouble(4,
+													(double) next.get(MongoCollectionFieldNames.NON_SIMILAR)) * 100d)
 							.put(MongoCollectionFieldNames.SLIGHTLY_SIMILAR,
 									NumberUtils.roundDouble(4,
-											(double) next.get(MongoCollectionFieldNames.SLIGHTLY_SIMILAR)))
+											(double) next.get(MongoCollectionFieldNames.SLIGHTLY_SIMILAR)) * 100d)
 							.put(MongoCollectionFieldNames.SIMILAR,
-									NumberUtils.roundDouble(4, (double) next.get(MongoCollectionFieldNames.SIMILAR)))
+									NumberUtils.roundDouble(4, (double) next.get(MongoCollectionFieldNames.SIMILAR))
+											* 100d)
 							.put(MongoCollectionFieldNames.VERY_SIMILAR,
 									NumberUtils.roundDouble(4,
-											(double) next.get(MongoCollectionFieldNames.VERY_SIMILAR)))
-							.put(MongoCollectionFieldNames.MOST_SIMILAR, NumberUtils.roundDouble(4,
-									(double) next.get(MongoCollectionFieldNames.MOST_SIMILAR))));
+											(double) next.get(MongoCollectionFieldNames.VERY_SIMILAR)) * 100d)
+									.put(MongoCollectionFieldNames.MOST_SIMILAR, NumberUtils.roundDouble(4,
+											(double) next.get(MongoCollectionFieldNames.MOST_SIMILAR)) * 100d));
 				}
 			}
 
 			// FIXME 20160813 Sil
 			jsonStr = jsonArray.toString();
-			System.out.println("Request Type : " + requestType);
-			System.out.println("Returned String : " + jsonStr);
+			// System.out.println("Request Type : " + requestType);
+			// System.out.println("Returned String : " + jsonStr);
 		} catch (JSONException e) {
 			Logger.getLogger(MongoPaginationServlet.class)
 					.error("Error in OrganizedBehaviorCampaignVisualizer Servlet.", e);
