@@ -108,10 +108,9 @@ public class DateTimeUtils {
 
 	public static void main(String[] args) throws Exception {
 		
-		Date date = DateTimeUtils.getTwitterDate("Wed May 12 12:22:10 EEST 2010");
-		String stringOfDate = DateTimeUtils.getStringOfDate("dd-MM-yyyy hh:mm:ss", date);
+		DateTimeUtils.getDate("yyyyMM", "200910");
 		
-		System.out.println(stringOfDate);
+		System.out.println(DateTimeUtils.getDate("yyyyMM", "200910"));
 
 	}
 }

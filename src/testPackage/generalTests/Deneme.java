@@ -11,11 +11,9 @@ public class Deneme {
 
 	public static void main(String[] args) throws InterruptedException, ParseException {
 
-		double value = 0.6505190311418685d;
-		DecimalFormat df = new DecimalFormat("0.0000");
-		String formate = df.format(value);
-		double finalValue = (Double) df.parse(formate);
-		System.out.println("Final Value : " + finalValue);
+		String str = "aa";
+		str.substring(0, 500);
+		
 
 	}
 

@@ -2,6 +2,11 @@ package direnaj.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -19,6 +24,7 @@ import com.mongodb.DBObject;
 
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.MongoCollectionFieldNames;
+import direnaj.util.CollectionUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.NumberUtils;
 import direnaj.util.TextUtils;
@@ -303,29 +309,113 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
 							DateTimeUtils.getTwitterDate(twitterDateStr));
 
-					jsonArray
-							.put(new JSONObject().put("time", twitterDate)
-									.put(MongoCollectionFieldNames.NON_SIMILAR,
-											NumberUtils.roundDouble(4,
-													(double) next.get(MongoCollectionFieldNames.NON_SIMILAR)) * 100d)
+					jsonArray.put(new JSONObject().put("time", twitterDate)
+							.put(MongoCollectionFieldNames.NON_SIMILAR,
+									NumberUtils.roundDouble(4,
+											(double) next.get(MongoCollectionFieldNames.NON_SIMILAR) * 100d, 100d))
 							.put(MongoCollectionFieldNames.SLIGHTLY_SIMILAR,
 									NumberUtils.roundDouble(4,
-											(double) next.get(MongoCollectionFieldNames.SLIGHTLY_SIMILAR)) * 100d)
+											(double) next.get(MongoCollectionFieldNames.SLIGHTLY_SIMILAR) * 100d, 100d))
 							.put(MongoCollectionFieldNames.SIMILAR,
-									NumberUtils.roundDouble(4, (double) next.get(MongoCollectionFieldNames.SIMILAR))
-											* 100d)
+									NumberUtils.roundDouble(4,
+											(double) next.get(MongoCollectionFieldNames.SIMILAR) * 100d, 100d))
 							.put(MongoCollectionFieldNames.VERY_SIMILAR,
 									NumberUtils.roundDouble(4,
-											(double) next.get(MongoCollectionFieldNames.VERY_SIMILAR)) * 100d)
-									.put(MongoCollectionFieldNames.MOST_SIMILAR, NumberUtils.roundDouble(4,
-											(double) next.get(MongoCollectionFieldNames.MOST_SIMILAR)) * 100d));
+											(double) next.get(MongoCollectionFieldNames.VERY_SIMILAR) * 100d, 100d))
+							.put(MongoCollectionFieldNames.MOST_SIMILAR, NumberUtils.roundDouble(4,
+									(double) next.get(MongoCollectionFieldNames.MOST_SIMILAR) * 100d, 100d)));
+				}
+			} else if ("visualizeUserCreationTimesInBarChart".equals(requestType)) {
+				// get cursor
+				// FIXME 20160818 - Tarihe Göre sırala
+				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
+						.find(query);
+				Map<String, Double> usersByDate = new HashMap<>();
+				// get objects from cursor
+				int userCount = 0;
+				while (paginatedResult.hasNext()) {
+					DBObject next = paginatedResult.next();
+					userCount++;
+					String twitterDateStr = (String) next.get(MongoCollectionFieldNames.MONGO_USER_CREATION_DATE);
+					String userCreationDate = DateTimeUtils.getStringOfDate("yyyyMM",
+							DateTimeUtils.getTwitterDate(twitterDateStr));
+					CollectionUtil.incrementKeyValueInMap(usersByDate, userCreationDate);
+				}
+				CollectionUtil.calculatePercentage(usersByDate, userCount);
+				usersByDate = CollectionUtil.sortByComparator4DateKey(usersByDate);
+				for (Entry<String, Double> entry : usersByDate.entrySet()) {
+					JSONObject jsonObject = new JSONObject();
+					jsonObject.put("creationDate", entry.getKey());
+					jsonObject.put("percentage", entry.getValue());
+					jsonArray.put(jsonObject);
+				}
+			} else if ("visualizeUserFriendFollowerRatioInBarChart".equals(requestType)) {
+				// get cursor
+				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
+						.find(query);
+
+				// get objects from cursor
+				int userCount = 0;
+				Map<Double, Double> ratioPercentages = new HashMap<>();
+				while (paginatedResult.hasNext()) {
+					userCount++;
+					DBObject next = paginatedResult.next();
+					double friendFolloweRatio = NumberUtils.roundDouble(1,
+							(double) next.get(MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO));
+					CollectionUtil.incrementKeyValueInMap(ratioPercentages, friendFolloweRatio);
+				}
+				CollectionUtil.calculatePercentage(ratioPercentages, userCount);
+				ratioPercentages = CollectionUtil.sortByComparator4Key(ratioPercentages);
+
+				for (Entry<Double, Double> entry : ratioPercentages.entrySet()) {
+					JSONObject jsonObject = new JSONObject();
+					jsonObject.put("ratio", entry.getKey());
+					jsonObject.put("percentage", entry.getValue());
+					jsonArray.put(jsonObject);
+				}
+			} else if ("visualizeUserRoughHashtagTweetCountsInBarChart".equals(requestType)) {
+				
+				List<String> limits = new ArrayList<>();
+				limits.add("1");
+				limits.add("2");
+				limits.add("3-5");
+				limits.add("6-10");
+				limits.add("11-20");
+				limits.add("21-50");
+				limits.add("51-100");
+				limits.add("100-200");
+				limits.add("200-...");
+				Map<String,Double> rangePercentages = new HashMap<>();
+				for(String limit: limits){
+					rangePercentages.put(limit, 0d);
+				}
+				
+				
+				// get cursor
+				DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData()
+						.find(query);
+				// get objects from cursor
+				int userCount = 0;
+				while (paginatedResult.hasNext()) {
+					userCount++;
+					DBObject next = paginatedResult.next();
+					double userHashtagPostCount = NumberUtils.roundDouble(4,
+							(double) next.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT));
+					CollectionUtil.findGenericRange(limits, rangePercentages, userHashtagPostCount);
+				}
+				CollectionUtil.calculatePercentage(rangePercentages, userCount);
+				for (String limit: limits) {
+					JSONObject jsonObject = new JSONObject();
+					jsonObject.put("ratio", limit);
+					jsonObject.put("percentage", rangePercentages.get(limit));
+					jsonArray.put(jsonObject);
 				}
 			}
 
 			// FIXME 20160813 Sil
 			jsonStr = jsonArray.toString();
-			// System.out.println("Request Type : " + requestType);
-			// System.out.println("Returned String : " + jsonStr);
+			System.out.println("Request Type : " + requestType);
+			System.out.println("Returned String : " + jsonStr);
 		} catch (JSONException e) {
 			Logger.getLogger(MongoPaginationServlet.class)
 					.error("Error in OrganizedBehaviorCampaignVisualizer Servlet.", e);
