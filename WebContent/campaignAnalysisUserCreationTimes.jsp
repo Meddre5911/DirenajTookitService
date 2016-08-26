@@ -101,6 +101,7 @@ function prepareGraphs(){
 	prepareUserRatiosGraphInBarChart('visualizeUserRoughHashtagTweetCountsInBarChart','userHashtagCountsGraph','HashtagPostCounts','(%) Percentage');
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyUserAndTweetCount','hourlyUserAndTweetCountGraph','Count');
 	prepareSingleLineUserRatiosGraphInDate('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Percentage');
+	prepareGroupedBarChart('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Percentage');
 }
 
 </script>
@@ -155,6 +156,10 @@ function prepareGraphs(){
 
 <div class="divTableRow">
 <div id="hourlyUserAndTweetCountGraph" class="divTableCell"><b><big>Hour Basis Distinct Tweet & User Count of Campaign :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="hourlyTweetSimilarities" class="divTableCell"><b><big>Hour Basis Percentages of Most Similar (btw:0-30) Posts In Campaign Compared to All Posts :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
