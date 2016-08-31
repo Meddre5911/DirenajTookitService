@@ -93,8 +93,6 @@ public class MongoTest {
 				+ "return value;" //
 				+ "}";
 
-		System.out.println("Finalize : " + finalizeFunction);
-		
 		MapReduceCommand cmd = new MapReduceCommand(orgBehaviourRequestMeanVarianceCalculations, mapFunction,
 				reduceFunction, null, MapReduceCommand.OutputType.INLINE, query);
 		cmd.setFinalize(finalizeFunction);

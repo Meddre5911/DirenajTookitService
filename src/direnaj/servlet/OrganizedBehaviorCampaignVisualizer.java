@@ -129,6 +129,63 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			jsonArray.put(jsonObject);
 		}
 	}
+	
+	
+	private void visualizeUserTweetEntityRatiosInBarChart(JSONArray jsonArray, BasicDBObject query) throws JSONException {
+		// get cursor
+		DBCursor urlRatioResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
+				
+		JSONArray urlRatioJsonArray = new JSONArray();
+		// get objects from cursor
+		// get url ratio
+		int userNo = 0;
+		while (urlRatioResult.hasNext()) {
+			DBObject next = urlRatioResult.next();
+			userNo++;
+			urlRatioJsonArray.put(new JSONObject()
+					.put("ratioValue",
+							NumberUtils.roundDouble(4,
+									(double) next.get(MongoCollectionFieldNames.MONGO_USER_URL_RATIO)))
+					.put("userSequenceNo", userNo));
+		}
+		// hashtag ratio
+		DBCursor hashtagRatioResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query)
+				.sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO, 1));
+		JSONArray hashtagRatioJsonArray = new JSONArray();
+		// get objects from cursor
+		userNo = 0;
+		while (hashtagRatioResult.hasNext()) {
+			DBObject next = hashtagRatioResult.next();
+			userNo++;
+			hashtagRatioJsonArray.put(new JSONObject()
+					.put("ratioValue",
+							NumberUtils.roundDouble(4,
+									(double) next.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO)))
+					.put("userSequenceNo", userNo));
+		}
+		// mention ratio
+		DBCursor mentionRatioResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query)
+				.sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_MENTION_RATIO, 1));
+		JSONArray mentionRatioJsonArray = new JSONArray();
+		// get objects from cursor
+		userNo = 0;
+		while (mentionRatioResult.hasNext()) {
+			DBObject next = mentionRatioResult.next();
+			userNo++;
+			mentionRatioJsonArray.put(new JSONObject()
+					.put("ratioValue",
+							NumberUtils.roundDouble(4,
+									(double) next.get(MongoCollectionFieldNames.MONGO_USER_MENTION_RATIO)))
+					.put("userSequenceNo", userNo));
+		}
+		// init to array
+		jsonArray.put(new JSONObject().put("ratioType", MongoCollectionFieldNames.MONGO_USER_URL_RATIO).put("values",
+				urlRatioJsonArray));
+		jsonArray.put(new JSONObject().put("ratioType", MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO)
+				.put("values", hashtagRatioJsonArray));
+		jsonArray.put(new JSONObject().put("ratioType", MongoCollectionFieldNames.MONGO_USER_MENTION_RATIO)
+				.put("values", mentionRatioJsonArray));
+	}
 
 	private void visualizeUserFriendFollowerRatioInBarChart(JSONArray jsonArray, BasicDBObject query, String requestId)
 			throws JSONException {
@@ -155,10 +212,17 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			jsonArray.put(jsonObject);
 		}
 
-		DBObject meanVarianceResult = getMeanVariance(query, requestId,
-				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO);
 	}
 
+	/**
+	 * 
+	 * DBObject meanVarianceResult = getMeanVariance(query, requestId,	MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO);
+	 * 
+	 * @param query
+	 * @param requestId
+	 * @param calculationColumn
+	 * @return
+	 */
 	private DBObject getMeanVariance(BasicDBObject query, String requestId, String calculationColumn) {
 		DBObject calculationQuery = new BasicDBObject("requestId", requestId).append("calculationType",
 				calculationColumn);
@@ -166,7 +230,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				.findOne(calculationQuery);
 		if (meanVarianceResult == null) {
 			meanVarianceResult = calculateMeanVariance(
-					DirenajMongoDriver.getInstance().getOrgBehaviourRequestMeanVarianceCalculations(),
+					DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData(),
 					calculationColumn, query, requestId);
 		}
 		return meanVarianceResult;
@@ -465,6 +529,14 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		}
 	}
 
+	/**
+	 * 
+	 * @deprecated
+	 * 
+	 * @param jsonArray
+	 * @param query
+	 * @throws JSONException
+	 */
 	private void visualizeUserTweetEntityRatios(JSONArray jsonArray, BasicDBObject query) throws JSONException {
 		// get cursor
 		DBCursor urlRatioResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query)

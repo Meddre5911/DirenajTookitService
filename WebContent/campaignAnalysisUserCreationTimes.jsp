@@ -140,7 +140,7 @@ function prepareGraphs(){
 </div>
 
 <div class="divTableRow">
-<div id="userPostDevicesRatiosGraph" class="divTableCell"><b><big>Post Device Ratios of Users :</big></b> <br></div>
+<!-- <div id="userPostDevicesRatiosGraph" class="divTableCell"><b><big>Post Device Ratios of Users :</big></b> <br></div> -->
 </div>
 <div class="divTableRow">
 <div id="userFriendFollowerRatiosGraph" class="divTableCell"><b><big>Friend Follower Ratios of Users :</big></b> <br></div>
