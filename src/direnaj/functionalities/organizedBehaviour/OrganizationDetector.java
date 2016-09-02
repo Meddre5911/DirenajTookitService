@@ -554,9 +554,9 @@ public class OrganizationDetector implements Runnable {
 
 			userInputData.put(MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO,
 					accountProperties.getFriendFollowerRatio());
-			userInputData.put(MongoCollectionFieldNames.MONGO_USER_URL_RATIO, accountProperties.getUrlRatio());
-			userInputData.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO, accountProperties.getHashtagRatio());
-			userInputData.put(MongoCollectionFieldNames.MONGO_USER_MENTION_RATIO, accountProperties.getMentionRatio());
+			userInputData.put(MongoCollectionFieldNames.MONGO_URL_RATIO, accountProperties.getUrlRatio());
+			userInputData.put(MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, accountProperties.getHashtagRatio());
+			userInputData.put(MongoCollectionFieldNames.MONGO_MENTION_RATIO, accountProperties.getMentionRatio());
 			userInputData.put(MongoCollectionFieldNames.MONGO_USER_POST_TWITTER_DEVICE_RATIO,
 					accountProperties.getTwitterPostRatio());
 			userInputData.put(MongoCollectionFieldNames.MONGO_USER_POST_MOBILE_DEVICE_RATIO,

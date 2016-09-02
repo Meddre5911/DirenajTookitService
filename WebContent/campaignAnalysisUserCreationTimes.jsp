@@ -89,19 +89,18 @@ body {
 function prepareGraphs(){ 
 // 	prepareUserCreationTimeGraph();
 	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart','creationTimeGraph','userCrationDate','(%) Percentage');
-	prepareMultiLineUserRatiosGraph('visualizeUserTweetEntityRatios','userRatiosGraph','RatioValue');
+	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart','userRatiosGraph','Percentage');
 	prepareMultiLineUserRatiosGraph('visualizeUserPostDeviceRatios','userPostDevicesRatiosGraph','PostDeviceRatio');
 // 	prepareUserRatiosGraph('visualizeUserFriendFollowerRatio','userFriendFollowerRatiosGraph','friendFollowerRatio');
 	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart','userFriendFollowerRatiosGraph','friendFollowerRatio','(%) Percentage');
 	
 	
 	
-	prepareMultiLineUserRatiosGraph('visualizeUserRoughTweetCounts','userRoughTweetCountsGraph','Tweet Count');
-// 	prepareUserRatiosGraph('visualizeUserRoughHashtagTweetCounts','userHashtagCountsGraph','Post Count');
+	prepareGroupedBarChart('visualizeUserRoughTweetCountsInBarChart','userRoughTweetCountsGraph','Percentage');
 	prepareUserRatiosGraphInBarChart('visualizeUserRoughHashtagTweetCountsInBarChart','userHashtagCountsGraph','HashtagPostCounts','(%) Percentage');
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyUserAndTweetCount','hourlyUserAndTweetCountGraph','Count');
 	prepareSingleLineUserRatiosGraphInDate('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Percentage');
-	prepareGroupedBarChart('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Percentage');
+	prepareGroupedBarChartWithTime('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Percentage');
 }
 
 </script>

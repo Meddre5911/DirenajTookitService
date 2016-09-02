@@ -76,9 +76,9 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_USER_SCREEN_NAME = "userScreenName";
 	public static final String MONGO_USER_CLOSENESS_CENTRALITY = "closenessCentrality";
 	public static final String MONGO_USER_FRIEND_FOLLOWER_RATIO = "friendFollowerRatio";
-	public static final String MONGO_USER_URL_RATIO = "urlRatio";
-	public static final String MONGO_USER_HASHTAG_RATIO = "hashtagRatio";
-	public static final String MONGO_USER_MENTION_RATIO = "mentionRatio";
+	public static final String MONGO_URL_RATIO = "urlRatio";
+	public static final String MONGO_HASHTAG_RATIO = "hashtagRatio";
+	public static final String MONGO_MENTION_RATIO = "mentionRatio";
 	public static final String MONGO_USER_POST_TWITTER_DEVICE_RATIO = "postTwitterDeviceRatio";
 	public static final String MONGO_USER_POST_MOBILE_DEVICE_RATIO = "postMobileDeviceRatio";
 	public static final String MONGO_USER_THIRD_PARTY_DEVICE_RATIO = "postThirdPartyDeviceRatio";

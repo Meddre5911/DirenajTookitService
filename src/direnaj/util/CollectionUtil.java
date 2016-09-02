@@ -74,11 +74,27 @@ public class CollectionUtil {
 		}
 	}
 
+	public static <T> void incrementKeyValueInMap(Map<T, Map<String, Double>> map, T key, String subKey) {
+		Double count = map.get(key).get(subKey) + 1;
+		map.get(key).put(subKey, count);
+	}
+
 	public static <T> void calculatePercentage(Map<T, Double> map, double totalNumber) {
 		for (Entry<T, Double> entry : map.entrySet()) {
 			Double value = entry.getValue();
 			Double percentage = NumberUtils.roundDouble(2, (value * 100d) / totalNumber);
 			map.put(entry.getKey(), percentage);
+		}
+	}
+
+	public static void calculatePercentageForNestedMap(Map<String, Map<String, Double>> map, double totalNumber) {
+		for (Entry<String, Map<String, Double>> entrySet : map.entrySet()) {
+			String upperKey = entrySet.getKey();
+			for (Entry<String, Double> entry : entrySet.getValue().entrySet()) {
+				Double value = entry.getValue();
+				Double percentage = NumberUtils.roundDouble(2, (value * 100d) / totalNumber);
+				map.get(upperKey).put(entry.getKey(), percentage);
+			}
 		}
 	}
 
@@ -150,19 +166,42 @@ public class CollectionUtil {
 		for (String range : rangeList) {
 			if (range.contains("-")) {
 				String[] ranges = range.split("-");
-				double lowerRange = Integer.valueOf(ranges[0]);
+				double lowerRange = Double.valueOf(ranges[0]);
 				double upperRange;
 				if ("...".equals(ranges[1])) {
 					upperRange = 9999999;
 				} else {
-					upperRange = Integer.valueOf(ranges[1]);
+					upperRange = Double.valueOf(ranges[1]);
 				}
 				if (value <= upperRange && value >= lowerRange) {
 					incrementKeyValueInMap(map, range);
 				}
 			} else {
-				if(Double.valueOf(range).equals(value))
-				incrementKeyValueInMap(map, range);
+				if (Double.valueOf(range).equals(value))
+					incrementKeyValueInMap(map, range);
+			}
+		}
+
+	}
+
+	public static void findGenericRange(List<String> rangeList, Map<String, Map<String, Double>> map, String key,
+			double value) {
+		for (String range : rangeList) {
+			if (range.contains("-")) {
+				String[] ranges = range.split("-");
+				double lowerRange = Double.valueOf(ranges[0]);
+				double upperRange;
+				if ("...".equals(ranges[1])) {
+					upperRange = 9999999;
+				} else {
+					upperRange = Double.valueOf(ranges[1]);
+				}
+				if (value <= upperRange && value >= lowerRange) {
+					incrementKeyValueInMap(map, range, key);
+				}
+			} else {
+				if (Double.valueOf(range).equals(value))
+					incrementKeyValueInMap(map, range, key);
 			}
 		}
 

@@ -35,6 +35,6 @@ public class NumberUtils {
 	
 	public static void main(String[] args) {
 		double d = 0.9d;
-		System.out.println(NumberUtils.roundDouble(1,d));
+		System.out.println(NumberUtils.roundDouble(0,d));
 	}
 }

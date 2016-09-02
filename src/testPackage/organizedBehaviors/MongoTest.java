@@ -19,7 +19,7 @@ public class MongoTest {
 		String requestId = "201608182253474005f237733-07fd-49d1-af9d-bd34ec20ccee";
 		DBObject query = new BasicDBObject("requestId", requestId);
 
-		MongoTest.calculateMeanVariance(collection, MongoCollectionFieldNames.MONGO_USER_HASHTAG_RATIO, query,
+		MongoTest.calculateMeanVariance(collection, MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, query,
 				requestId);
 	}
 
