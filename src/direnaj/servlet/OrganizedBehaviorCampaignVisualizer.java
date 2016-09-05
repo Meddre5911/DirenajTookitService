@@ -509,7 +509,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				hashtagRatio += (double) (twitter4jStatus.getHashtagEntities().length - 1);
 				urlRatio += (double) (twitter4jStatus.getURLEntities().length);
 				mentionRatio += (double) (twitter4jStatus.getUserMentionEntities().length);
-				if (twitter4jStatus.isRetweet()) {
+				if (twitter4jStatus.getRetweetCount() > 0) {
 					retweetRatio += 1d;
 				}
 			}

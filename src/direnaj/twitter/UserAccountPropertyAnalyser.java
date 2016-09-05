@@ -164,8 +164,11 @@ public class UserAccountPropertyAnalyser {
         return userProbabilities;
     }
 
-    public void calculateUserAccountProperties(User user) {
+    public void calculateUserAccountProperties(User user) {	
         double totalPostCount = user.getPostCount();
+        if(totalPostCount == 0d){
+        	totalPostCount = 1d;
+        }
         // initialize User Account Properties
         UserAccountProperties accountProperties = user.getAccountProperties();
         accountProperties.setProtected(user.isProtected());
