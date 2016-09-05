@@ -137,5 +137,12 @@ public class DirenajMongoDriverUtil {
 
 		}
 	}
+	
+	public static void updateRequestInMongoByColumnName(DBCollection dbCollection, DBObject findQuery,
+			String columnName, Object updateValue) {
+		BasicDBObject updateQuery = new BasicDBObject();
+		updateQuery.append("$set", new BasicDBObject().append(columnName, updateValue));
+		dbCollection.update(findQuery, updateQuery, true, false);
+	}
 
 }

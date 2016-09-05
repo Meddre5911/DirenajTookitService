@@ -27,6 +27,7 @@ import com.mongodb.MapReduceCommand;
 import com.mongodb.MapReduceOutput;
 
 import direnaj.driver.DirenajMongoDriver;
+import direnaj.driver.DirenajMongoDriverUtil;
 import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.util.CollectionUtil;
@@ -81,12 +82,14 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				visualizeUserTweetEntityRatiosInBarChart(jsonArray, query);
 			} else if ("visualizeHourlyEntityRatios".equals(requestType)) {
 				visualizeHourlyEntityRatios(jsonArray, query4CosSimilarityRequest);
+			} else if (("getMeanVariance".equals(requestType))) {
+				getMeanVariance4All(jsonArray, query, requestId);
 			}
 
 			// FIXME 20160813 Sil
 			jsonStr = jsonArray.toString();
-			System.out.println("Request Type : " + requestType);
-			System.out.println("Returned String : " + jsonStr);
+			// System.out.println("Request Type : " + requestType);
+			// System.out.println("Returned String : " + jsonStr);
 		} catch (JSONException e) {
 			Logger.getLogger(MongoPaginationServlet.class)
 					.error("Error in OrganizedBehaviorCampaignVisualizer Servlet.", e);
@@ -235,6 +238,31 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 
 	}
 
+	private void getMeanVariance4All(JSONArray jsonArray, BasicDBObject query, String requestId) {
+		DBObject hashtagRatioMeanVariance = getMeanVariance(query, requestId,
+				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO);
+		DBObject urlRatioMeanVariance = getMeanVariance(query, requestId, MongoCollectionFieldNames.MONGO_URL_RATIO);
+		DBObject mentionRatioMeanVariance = getMeanVariance(query, requestId,
+				MongoCollectionFieldNames.MONGO_MENTION_RATIO);
+		DBObject friendFollowerRatioMeanVariance = getMeanVariance(query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO);
+		DBObject userStatusCountMeanVariance = getMeanVariance(query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT);
+		DBObject userFavoriteCountMeanVariance = getMeanVariance(query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT);
+		DBObject userHashtagPostCountMeanVariance = getMeanVariance(query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT);
+
+		jsonArray.put(hashtagRatioMeanVariance.toMap());
+		jsonArray.put(urlRatioMeanVariance.toMap());
+		jsonArray.put(mentionRatioMeanVariance.toMap());
+		jsonArray.put(friendFollowerRatioMeanVariance.toMap());
+		jsonArray.put(userStatusCountMeanVariance.toMap());
+		jsonArray.put(userFavoriteCountMeanVariance.toMap());
+		jsonArray.put(userHashtagPostCountMeanVariance.toMap());
+
+	}
+
 	/**
 	 * 
 	 * DBObject meanVarianceResult = getMeanVariance(query, requestId,
@@ -277,8 +305,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				+ "var weight = (previous.count * current.count)/(previous.count + current.count); " //
 				+ "return { " //
 				+ "sum: previous.sum + current.sum, " //
-				+ "min: Math.min(previous.min, current.min), " //
-				+ "max: Math.max(previous.max, current.max), " //
+				+ "min: Math.min(previous.min, current.min).toFixed(2), " //
+				+ "max: Math.max(previous.max, current.max).toFixed(2), " //
 				+ "count: previous.count + current.count, " //
 				+ "diff: previous.diff + current.diff + delta*delta*weight " //
 				+ "};" //
@@ -286,9 +314,9 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				+ "}"; //
 
 		String finalizeFunction = "function finalize(key, value){" //
-				+ "value.average = value.sum / value.count;" //
-				+ "value.population_variance = value.diff / value.count;" //
-				+ "value.population_standard_deviation = Math.sqrt(value.population_variance);" //
+				+ "value.average = (value.sum / value.count).toFixed(2);" //
+				+ "value.population_variance = (value.diff / value.count).toFixed(2);" //
+				+ "value.population_standard_deviation = Math.sqrt(value.population_variance).toFixed(2);" //
 				+ "value.sample_variance = value.diff / (value.count - 1);" //
 				+ "value.sample_standard_deviation = Math.sqrt(value.sample_variance);" //
 				+ "value.requestId = \"" + requestId + "\";" //
@@ -296,8 +324,6 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				+ "delete value.diff;" //
 				+ "return value;" //
 				+ "}";
-
-		System.out.println("Finalize : " + finalizeFunction);
 
 		MapReduceCommand cmd = new MapReduceCommand(collection, mapFunction, reduceFunction, null,
 				MapReduceCommand.OutputType.INLINE, query);
@@ -358,19 +384,19 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					DateTimeUtils.getTwitterDate(twitterDateStr));
 
 			jsonArray.put(new JSONObject().put("time", twitterDate)
-					.put(MongoCollectionFieldNames.NON_SIMILAR,
+					.put(MongoCollectionFieldNames.NON_SIMILAR + " (90 Degree)",
 							NumberUtils.roundDouble(4, (double) next.get(MongoCollectionFieldNames.NON_SIMILAR) * 100d,
 									100d))
-					.put(MongoCollectionFieldNames.SLIGHTLY_SIMILAR,
+					.put(MongoCollectionFieldNames.SLIGHTLY_SIMILAR + " (60-89 Degree)",
 							NumberUtils.roundDouble(4,
 									(double) next.get(MongoCollectionFieldNames.SLIGHTLY_SIMILAR) * 100d, 100d))
-					.put(MongoCollectionFieldNames.SIMILAR,
+					.put(MongoCollectionFieldNames.SIMILAR + " (60 Degree)",
 							NumberUtils.roundDouble(4, (double) next.get(MongoCollectionFieldNames.SIMILAR) * 100d,
 									100d))
-					.put(MongoCollectionFieldNames.VERY_SIMILAR,
+					.put(MongoCollectionFieldNames.VERY_SIMILAR + " (30-45 Degree)",
 							NumberUtils.roundDouble(4, (double) next.get(MongoCollectionFieldNames.VERY_SIMILAR) * 100d,
 									100d))
-					.put(MongoCollectionFieldNames.MOST_SIMILAR, NumberUtils.roundDouble(4,
+					.put(MongoCollectionFieldNames.MOST_SIMILAR + " (0-30 Degree)", NumberUtils.roundDouble(4,
 							(double) next.get(MongoCollectionFieldNames.MOST_SIMILAR) * 100d, 100d)));
 		}
 	}
@@ -405,89 +431,115 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 
 	private void visualizeHourlyEntityRatios(JSONArray jsonArray, BasicDBObject query4CosSimilarityRequest)
 			throws Exception, JSONException {
-		 Gson statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
-		DBCollection tweetsCollection = DirenajMongoDriver.getInstance().getTweetsCollection();
 		// check for whether calculation is needed or not
 		DBObject similarityRequest = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
 				.findOne(query4CosSimilarityRequest);
-
-		if (!similarityRequest.containsField(MongoCollectionFieldNames.MONGO_HASHTAG_RATIO)) {
-			// first do calculation
-			DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
-					.find(query4CosSimilarityRequest);
-			while (paginatedResult.hasNext()) {
-				DBObject next = paginatedResult.next();
-				String requestId = (String) next.get("requestId");
-				double totalTweetCount = (double) next.get("TotalTweetCount");
-				DBCollection tweetSimilarityCollection = DirenajMongoDriver.getInstance()
-						.getOrgBehaviourProcessTweetSimilarity();
-				BasicDBObject query = new BasicDBObject("requestId", requestId);
-				DBCursor similarTweets = DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity()
-						.find(query);
-				
-				double hashtagRatio = 0d;
-				double urlRatio = 0d;
-				double mentionRatio = 0d;
-				
-				while(similarTweets.hasNext()){
-					DBObject similarTweet = similarTweets.next();
-					String tweetId = (String) similarTweet.get(MongoCollectionFieldNames.MONGO_TWEET_ID);
-					DBObject tweetQuery = new BasicDBObject();
-					tweetQuery.put("tweet.id", Long.valueOf(tweetId));
-					DBObject status = tweetsCollection.findOne(tweetQuery);
-					Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer, status.toString());
-					hashtagRatio += (double) (twitter4jStatus.getHashtagEntities().length - 1);
-					urlRatio += (double) (twitter4jStatus.getURLEntities().length);
-					mentionRatio += (double) (twitter4jStatus.getUserMentionEntities().length);
-				}
-				
-				hashtagRatio = hashtagRatio/ totalTweetCount;
-				urlRatio = urlRatio/ totalTweetCount;
-				mentionRatio = mentionRatio/ totalTweetCount;
-				
-				// FIXME 20160902
-				// update yap şimdi
-
-				
-				
-			}
-
+		if (!similarityRequest.containsField(MongoCollectionFieldNames.MONGO_RETWEET_RATIO)) {
+			calculateHourlyEntityRatio(query4CosSimilarityRequest);
 		}
 
-		// DBCursor paginatedResult =
-		// DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
-		// .find(query4CosSimilarityRequest)
-		// .sort(new
-		// BasicDBObject(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME,
-		// 1));
-		// JSONArray tweetCountsJsonArray = new JSONArray();
-		// JSONArray distinctUserCountsJsonArray = new JSONArray();
-		// // get objects from cursor
-		// while (paginatedResult.hasNext()) {
-		// DBObject next = paginatedResult.next();
-		// // prepare json object
-		// String twitterDateStr = (String) next.get("lowerTimeInterval");
-		// String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
-		// DateTimeUtils.getTwitterDate(twitterDateStr));
-		//
-		//
-		//
-		// tweetCountsJsonArray.put(new JSONObject().put("time",
-		// twitterDate).put("value",
-		// next.get(MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT)));
-		// // prepare json object
-		// distinctUserCountsJsonArray.put(new JSONObject().put("time",
-		// twitterDate).put("value",
-		// next.get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT)));
+		JSONArray urlRatioJsonArray = new JSONArray();
+		JSONArray hashtagRatioJsonArray = new JSONArray();
+		JSONArray mentionRatioJsonArray = new JSONArray();
+		JSONArray retweetRatioJsonArray = new JSONArray();
+		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
+				.find(query4CosSimilarityRequest)
+				.sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME, 1));
+		// get objects from cursor
+		while (paginatedResult.hasNext()) {
+			DBObject next = paginatedResult.next();
+			// prepare json object
+			String twitterDateStr = (String) next.get("lowerTimeInterval");
+			double urlRatio = (double) next.get(MongoCollectionFieldNames.MONGO_URL_RATIO);
+			double hashtagRatio = (double) next.get(MongoCollectionFieldNames.MONGO_HASHTAG_RATIO);
+			double mentionRatio = (double) next.get(MongoCollectionFieldNames.MONGO_MENTION_RATIO);
+			double retweetRatio = (double) next.get(MongoCollectionFieldNames.MONGO_RETWEET_RATIO);
 
-		// }
-		// // init to array
-		// jsonArray.put(new JSONObject().put("valueType",
-		// MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT)
-		// .put("values", tweetCountsJsonArray));
-		// jsonArray.put(new JSONObject().put("valueType",
-		// MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT).put("values",
-		// distinctUserCountsJsonArray));
+			String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
+					DateTimeUtils.getTwitterDate(twitterDateStr));
+
+			urlRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", urlRatio));
+			hashtagRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", hashtagRatio));
+			mentionRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", mentionRatio));
+			retweetRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", retweetRatio));
+		}
+		// init to array
+		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_URL_RATIO).put("values",
+				urlRatioJsonArray));
+		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_HASHTAG_RATIO).put("values",
+				hashtagRatioJsonArray));
+		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_MENTION_RATIO).put("values",
+				mentionRatioJsonArray));
+		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_RETWEET_RATIO).put("values",
+				retweetRatioJsonArray));
+
+	}
+
+	private void calculateHourlyEntityRatio(BasicDBObject query4CosSimilarityRequest) {
+		Gson statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
+		DBCollection tweetsCollection = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets();
+		// first do calculation
+		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
+				.find(query4CosSimilarityRequest);
+		while (paginatedResult.hasNext()) {
+			DBObject next = paginatedResult.next();
+			String requestId = (String) next.get("requestId");
+			String originalRequestId = (String) next.get("originalRequestId");
+			double totalTweetCount = (double) next.get("TotalTweetCount");
+
+			// get tweet info
+			BasicDBObject query = new BasicDBObject("requestId", requestId);
+			DBCursor similarTweets = DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity()
+					.find(query);
+			//
+			double hashtagRatio = 0d;
+			double urlRatio = 0d;
+			double mentionRatio = 0d;
+			double retweetRatio = 0d;
+
+			while (similarTweets.hasNext()) {
+				DBObject similarTweet = similarTweets.next();
+				String tweetId = (String) similarTweet.get(MongoCollectionFieldNames.MONGO_TWEET_ID);
+				DBObject tweetQuery = new BasicDBObject();
+				tweetQuery.put("id", Long.valueOf(tweetId));
+				BasicDBObject keys = new BasicDBObject("_id", false);
+				DBObject status = tweetsCollection.findOne(tweetQuery, keys);
+				Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
+						status.toString());
+				hashtagRatio += (double) (twitter4jStatus.getHashtagEntities().length - 1);
+				urlRatio += (double) (twitter4jStatus.getURLEntities().length);
+				mentionRatio += (double) (twitter4jStatus.getUserMentionEntities().length);
+				if (twitter4jStatus.isRetweet()) {
+					retweetRatio += 1d;
+				}
+			}
+			// normalize the ratio
+			hashtagRatio = NumberUtils.roundDouble(4, hashtagRatio / totalTweetCount);
+			urlRatio = NumberUtils.roundDouble(4, urlRatio / totalTweetCount);
+			mentionRatio = NumberUtils.roundDouble(4, mentionRatio / totalTweetCount);
+			if (totalTweetCount == 1d) {
+				retweetRatio = 0;
+			} else {
+				retweetRatio = NumberUtils.roundDouble(4, retweetRatio / totalTweetCount);
+			}
+
+			// update
+			DBObject updateQuery = new BasicDBObject();
+			updateQuery.put("requestId", requestId);
+			updateQuery.put("originalRequestId", originalRequestId);
+			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+					DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+					MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, hashtagRatio);
+			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+					DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+					MongoCollectionFieldNames.MONGO_URL_RATIO, urlRatio);
+			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+					DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+					MongoCollectionFieldNames.MONGO_MENTION_RATIO, mentionRatio);
+			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+					DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+					MongoCollectionFieldNames.MONGO_RETWEET_RATIO, retweetRatio);
+		}
 	}
 
 	private void visualizeUserRoughTweetCountsInBarChart(JSONArray jsonArray, BasicDBObject query)

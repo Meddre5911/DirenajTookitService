@@ -165,7 +165,12 @@ function prepareMultiLineUserRatiosGraph(requestType,divId,yLineText){
 			svg.append("g")
 			    .attr("class", "x axis")
 			    .attr("transform", "translate(0," + height + ")")
-			    .call(xAxis.tickFormat(""));
+			    .call(xAxis.tickFormat("")).append("text")
+			      .attr("class", "label")
+			      .attr("x", width)
+			      .attr("y", -6)
+			      .style("text-anchor", "end")
+			      .text("Sepal Width (cm)");
 
 			svg.append("g")
 			    .attr("class", "y axis")
@@ -295,7 +300,7 @@ function prepareUserRatiosGraph(requestType,divId,yLineText){
 }
 
 
-function prepareMultiLineUserRatiosGraphInDate(requestType,divId,yLineText){
+function prepareMultiLineUserRatiosGraphInDate(requestType,divId,xLineText,yLineText){
 
 	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
 		
@@ -313,12 +318,12 @@ function prepareMultiLineUserRatiosGraphInDate(requestType,divId,yLineText){
 			    bottom: 30,
 			    left: 50
 			},
-			width = 700 - margin.left - margin.right,
+			width = 850 - margin.left - margin.right,
 			height = 400 - margin.top - margin.bottom;
 
 
 			var x = d3.time.scale()
-			    .range([0, width]);
+			    .range([0, 700]);
 
 			var y = d3.scale.linear()
 			    .range([height, 0]);
@@ -365,7 +370,12 @@ function prepareMultiLineUserRatiosGraphInDate(requestType,divId,yLineText){
 			svg.append("g")
 			    .attr("class", "x axis")
 			    .attr("transform", "translate(0," + height + ")")
-			    .call(xAxis);
+			    .call(xAxis).append("text")
+			      .attr("class", "label")
+			      .attr("x", width)
+			      .attr("y", -6)
+			      .style("text-anchor", "end")
+			      .text(xLineText);
 
 			svg.append("g")
 			    .attr("class", "y axis")
@@ -405,7 +415,7 @@ function prepareMultiLineUserRatiosGraphInDate(requestType,divId,yLineText){
 			    .attr("x", 3)
 			    .attr("dy", ".35em")
 			    .text(function (d) {
-			        return d.valueType;
+			        return "";
 			});
 		  
 			
@@ -432,7 +442,7 @@ function prepareMultiLineUserRatiosGraphInDate(requestType,divId,yLineText){
 }
 
 
-function prepareSingleLineUserRatiosGraphInDate(requestType,divId,yLineText){
+function prepareSingleLineUserRatiosGraphInDate(requestType,divId,xLineText,yLineText){
 
 	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
 		if (error) throw error;
@@ -443,25 +453,25 @@ function prepareSingleLineUserRatiosGraphInDate(requestType,divId,yLineText){
 	    	d.time = parseDate(d.time);
 	    });
 	    
-	    prepareHourlyCosSimGraph(data,divId+"_NON_SIMILAR","NON_SIMILAR",yLineText);
-	    prepareHourlyCosSimGraph(data,divId+"_SLIGHTLY_SIMILAR","SLIGHTLY_SIMILAR",yLineText);
-	    prepareHourlyCosSimGraph(data,divId+"_SIMILAR","SIMILAR",yLineText);
-	    prepareHourlyCosSimGraph(data,divId+"_VERY_SIMILAR","VERY_SIMILAR",yLineText);
-	    prepareHourlyCosSimGraph(data,divId+"_MOST_SIMILAR","MOST_SIMILAR",yLineText);
+	    prepareHourlyCosSimGraph(data,divId+"_NON_SIMILAR","NON_SIMILAR (90 Degree)",xLineText,yLineText);
+	    prepareHourlyCosSimGraph(data,divId+"_SLIGHTLY_SIMILAR","SLIGHTLY_SIMILAR (60-89 Degree)",xLineText,yLineText);
+	    prepareHourlyCosSimGraph(data,divId+"_SIMILAR","SIMILAR (60 Degree)",xLineText,yLineText);
+	    prepareHourlyCosSimGraph(data,divId+"_VERY_SIMILAR","VERY_SIMILAR (30-45 Degree)",xLineText,yLineText);
+	    prepareHourlyCosSimGraph(data,divId+"_MOST_SIMILAR","MOST_SIMILAR (0-30 Degree)",xLineText,yLineText);
 	    
 	});
 		
 	    
 }
 
-function prepareHourlyCosSimGraph(data,divId,similarityRange,yLineText){
+function prepareHourlyCosSimGraph(data,divId,similarityRange,xLineText,yLineText){
 	var margin = {top: 20, right: 20, bottom: 30, left: 50},
-    width = 700 - margin.left - margin.right,
+    width = 800 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
 
 	var x = d3.time.scale()
-	    .range([0, width]);
+	    .range([0, 700]);
 
 	var y = d3.scale.linear()
 	    .range([height, 0]);
@@ -493,7 +503,14 @@ function prepareHourlyCosSimGraph(data,divId,similarityRange,yLineText){
 	  svg.append("g")
 	      .attr("class", "x axis")
 	      .attr("transform", "translate(0," + height + ")")
-	      .call(xAxis);
+	       .call(xAxis.tickFormat("")).append("text")
+	      .attr("class", "label")
+	      .attr("x", 750)
+	      .attr("y", -6)
+	      .style("text-anchor", "end")
+	      .text(xLineText);
+	  
+	  
 
 	  svg.append("g")
 	      .attr("class", "y axis")
@@ -530,7 +547,7 @@ function prepareUserCreationTimeGraph(requestType,divId,xAxisName, yAxisName){
 		// Parse the date / time
 		var	parseDate = d3.time.format("%Y%m").parse;
 
-		var x = d3.scale.ordinal().rangeRoundBands([0, width], .05);
+		var x = d3.scale.ordinal().rangeRoundBands([0, 900], .05);
 		var y = d3.scale.linear().range([height, 0]);
 
 		var xAxis = d3.svg.axis()
@@ -569,7 +586,20 @@ function prepareUserCreationTimeGraph(requestType,divId,xAxisName, yAxisName){
 		      .style("text-anchor", "end")
 		      .attr("dx", "-.8em")
 		      .attr("dy", "-.55em")
-		      .attr("transform", "rotate(-90)" );
+		      .attr("transform", "rotate(-90)" );		
+		  
+		  
+		  svg.append("g")
+	      .attr("class", "x axis")
+	      .attr("transform", "translate(0," + height + ")")
+	      .call(xAxis.tickFormat(""))
+		   .append("text")
+	      .attr("class", "label")
+	      .attr("x", 1000)
+	      .attr("y", -6)
+	      .style("text-anchor", "end")
+	      .text(xAxisName);
+		  
 
 		  svg.append("g")
 		      .attr("class", "y axis")
@@ -608,10 +638,10 @@ function prepareUserRatiosGraphInBarChart(requestType,divId,xAxisName, yAxisName
 	 d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
 		   
 	    var margin = {top: 20, right: 20, bottom: 70, left: 40},
-		    width = 700 - margin.left - margin.right,
+		    width = 900 - margin.left - margin.right,
 		    height = 500 - margin.top - margin.bottom;
 
-		var x = d3.scale.ordinal().rangeRoundBands([0, width], .05);
+		var x = d3.scale.ordinal().rangeRoundBands([0, 700], 0.3);
 		var y = d3.scale.linear().range([height, 0]);
 
 		
@@ -625,7 +655,7 @@ function prepareUserRatiosGraphInBarChart(requestType,divId,xAxisName, yAxisName
 		    .ticks(10);
 
 		var svg = d3.select("#"+divId).append("svg")
-		    .attr("width", width + margin.left + margin.right)
+		    .attr("width",900)
 		    .attr("height", height + margin.top + margin.bottom)
 		  .append("g")
 		    .attr("transform", 
@@ -633,10 +663,9 @@ function prepareUserRatiosGraphInBarChart(requestType,divId,xAxisName, yAxisName
 
 		  x.domain(data.map(function(d) { return d.ratio; }));
 		  y.domain([0, d3.max(data, function(d) { return d.percentage; })]);
-
 		  
 		  
-		  svg.append("g")
+		 svg.append("g")
 		      .attr("class", "x axis")
 		      .attr("transform", "translate(0," + height + ")")
 		      .call(xAxis)
@@ -645,6 +674,17 @@ function prepareUserRatiosGraphInBarChart(requestType,divId,xAxisName, yAxisName
 		      .attr("dx", "-.8em")
 		      .attr("dy", "-.55em")
 		      .attr("transform", "rotate(-90)" );
+		  
+		  svg.append("g")
+	      .attr("class", "x axis")
+	      .attr("transform", "translate(0," + height + ")")
+	      .call(xAxis.tickFormat("")).append("text")
+	      .attr("class", "label")
+	      .attr("x", width)
+	      .attr("y", -6)
+	      .style("text-anchor", "end")
+	      .text(xAxisName);
+		  
 
 		  svg.append("g")
 		      .attr("class", "y axis")
@@ -670,18 +710,18 @@ function prepareUserRatiosGraphInBarChart(requestType,divId,xAxisName, yAxisName
 }
 
 
-function prepareGroupedBarChartWithTime(requestType,divId,yLineText){
+function prepareGroupedBarChartWithTime(requestType,divId,xLineText,yLineText){
 
 	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
 		if (error) throw error;
 		
 	 	var parseDate = d3.time.format("%Y%m%d %H:%M").parse;
 	    var margin = {top: 20, right: 20, bottom: 30, left: 40},
-	    width = 960 - margin.left - margin.right,
+	    width = 1100 - margin.left - margin.right,
 	    height = 500 - margin.top - margin.bottom;
 
 		var x0 = d3.scale.ordinal()
-		    .rangeRoundBands([0, width], .5);
+		    .rangeRoundBands([0, 900], 0.3);
 	
 		var x1 = d3.scale.ordinal();
 	
@@ -729,6 +769,16 @@ function prepareGroupedBarChartWithTime(requestType,divId,yLineText){
 		      .attr("dx", "-.8em")
 		      .attr("dy", "-.55em")
 		      .attr("transform", "rotate(-90)" );
+		  
+		  svg.append("g")
+	      .attr("class", "x axis")
+	      .attr("transform", "translate(0," + height + ")")
+	      .call(xAxis.tickFormat("")).append("text")
+	      .attr("class", "label")
+	      .attr("x", width)
+	      .attr("y", -6)
+	      .style("text-anchor", "end")
+	      .text(xLineText);
 	
 		  svg.append("g")
 		      .attr("class", "y axis")
@@ -780,16 +830,16 @@ function prepareGroupedBarChartWithTime(requestType,divId,yLineText){
 }
 
 
-function prepareGroupedBarChart(requestType,divId,yLineText){
+function prepareGroupedBarChart(requestType,divId,xLineText,yLineText){
 
 	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
 		if (error) throw error;
 	    var margin = {top: 20, right: 20, bottom: 30, left: 40},
-	    width = 960 - margin.left - margin.right,
+	    width = 1150 - margin.left - margin.right,
 	    height = 500 - margin.top - margin.bottom;
 
 		var x0 = d3.scale.ordinal()
-		    .rangeRoundBands([0, width], .5);
+		    .rangeRoundBands([0, 950], 0.3);
 	
 		var x1 = d3.scale.ordinal();
 	
@@ -837,6 +887,18 @@ function prepareGroupedBarChart(requestType,divId,yLineText){
 		      .attr("dx", "-.8em")
 		      .attr("dy", "-.55em")
 		      .attr("transform", "rotate(-90)" );
+		  
+		  svg.append("g")
+	      .attr("class", "x axis")
+	      .attr("transform", "translate(0," + height + ")")
+	      .call(xAxis.tickFormat("")).append("text")
+	      .attr("class", "label")
+	      .attr("x", width)
+	      .attr("y", -6)
+	      .style("text-anchor", "end")
+	      .text(xLineText);
+		  
+		  
 	
 		  svg.append("g")
 		      .attr("class", "y axis")
@@ -885,6 +947,95 @@ function prepareGroupedBarChart(requestType,divId,yLineText){
 	});
 		
 	    
+}
+
+
+function getMeanVariance(){
+
+	d3.json("organizedBehaviorCampaignVisualizer?requestType=getMeanVariance&requestId=" + $('#requestId').val(), function(error, data) {
+		if (error) throw error;
+	   
+		var userCount = "";
+		var hashtagRatioMeanVariance = "";
+		var urlRatioMeanVariance = "";
+		var mentionRatioMeanVariance = "";
+		var friendFollowerRatioMeanVariance = "";
+		var userFavoriteCountMeanVariance ="";
+		var userStatusCountMeanVariance = "";
+		var userHashtagPostCountMeanVariance = "";
+		
+		  data.forEach(function(d) {
+			if(d.calculationType == "hashtagRatio"){
+				hashtagRatioMeanVariance = getHTMLStr4MeanVariance(d);
+				userCount = d.count;
+			}
+			if(d.calculationType == "urlRatio"){
+				urlRatioMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "mentionRatio"){
+				mentionRatioMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "friendFollowerRatio"){
+				friendFollowerRatioMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "favoriteCount"){
+				userFavoriteCountMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "statusCount"){
+				userStatusCountMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "hashtagPostCount"){
+				userHashtagPostCountMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+		  
+		  });
+		  
+
+
+		  userCount = "<b>Total User Count is : </b>" + userCount + "<br>";
+		  
+		  d3.select("#userRatiosGraphMeanVariance").html(
+				userCount + "<table><tr>"
+						+ hashtagRatioMeanVariance
+						+ "</tr><tr>" + urlRatioMeanVariance
+						+ "</tr><tr>"
+						+ mentionRatioMeanVariance
+						+ "</tr></table>");
+		  
+		  d3.select("#friendFollowerRatiosMeanVariance").html(
+				  userCount + "<table><tr>"
+				  + friendFollowerRatioMeanVariance
+				  + "</tr></table>");
+		  
+		  d3.select("#userRoughTweetCountsMeanVariance").html(
+					userCount + "<table><tr>"
+					+ userFavoriteCountMeanVariance
+					+ "</tr><tr>" + userStatusCountMeanVariance
+					+ "</tr></table>");
+		  
+		  d3.select("#userHashtagPostCountMeanVariance").html(
+				  userCount + "<table><tr>"
+				  + userHashtagPostCountMeanVariance
+				  + "</tr></table>");
+		
+	});
+		
+	    
+}
+
+//function getHTMLStr4MeanVariance(d) {
+//	return "<b>" + d.calculationType + " Analysis </b> - " + "<b> Mean : </b>"
+//			+ d.average + " - <b> Variance : </b>" + d.population_variance
+//			+ " - <b> Standard Deviation </b> : "
+//			+ d.population_standard_deviation + "- <b> Min Value : </b>"
+//			+ d.min + " - <b> Max Value : </b>" + d.max + "<br>";
+//}
+function getHTMLStr4MeanVariance(d) {
+	return "<td><b>" + d.calculationType + "Analysis : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b> " + "</td><td><b> Mean : </b>"
+	+ d.average + "</td><td><b> Variance : </b>" + d.population_variance
+	+ " </td><td><b> Standard Deviation </b> : "
+	+ d.population_standard_deviation + " </td><td> <b> Min Value : </b>"
+	+ d.min + " </td><td> <b> Max Value : </b>" + d.max + "<br></td>";
 }
 
 

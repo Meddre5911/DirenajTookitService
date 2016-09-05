@@ -56,7 +56,10 @@ $(document).ready(function() {
             { "mData": "VERY_SIMILAR" },
             { "mData": "SIMILAR" },
             { "mData": "SLIGHTLY_SIMILAR" },
-            { "mData": "NON_SIMILAR" }
+            { "mData": "NON_SIMILAR" },
+            { "mData": "hashtagRatio" },
+            { "mData": "urlRatio" },
+            { "mData": "mentionRatio" }
         ]
     } );
 
@@ -84,6 +87,9 @@ $(document).ready(function() {
                 <th>SimilarTweetPercentage</th>
                 <th>SlightlySimilarTweetPercentage</th>
                 <th>NonSimilarTweetPercentage</th>
+                <th>Hashtag Ratio</th>
+                <th>Url Ratio</th>
+                <th>Mention Ratio</th>
             </tr>
         </thead>       
     </table>

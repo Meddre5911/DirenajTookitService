@@ -89,18 +89,21 @@ body {
 function prepareGraphs(){ 
 // 	prepareUserCreationTimeGraph();
 	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart','creationTimeGraph','userCrationDate','(%) Percentage');
-	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart','userRatiosGraph','Percentage');
-	prepareMultiLineUserRatiosGraph('visualizeUserPostDeviceRatios','userPostDevicesRatiosGraph','PostDeviceRatio');
+	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart','userRatiosGraph','User Ratio Values','(%) Total User Percentage For Given Ratio');
+// 	prepareMultiLineUserRatiosGraph('visualizeUserPostDeviceRatios','userPostDevicesRatiosGraph','PostDeviceRatio');
 // 	prepareUserRatiosGraph('visualizeUserFriendFollowerRatio','userFriendFollowerRatiosGraph','friendFollowerRatio');
-	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart','userFriendFollowerRatiosGraph','friendFollowerRatio','(%) Percentage');
+	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart','userFriendFollowerRatiosGraph','Friend / Follower Ratio','(%) Percentage');
 	
 	
+	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyEntityRatios','statusHourlyEntityRatios','Tweet Post Time Interval','Ratios');
 	
-	prepareGroupedBarChart('visualizeUserRoughTweetCountsInBarChart','userRoughTweetCountsGraph','Percentage');
-	prepareUserRatiosGraphInBarChart('visualizeUserRoughHashtagTweetCountsInBarChart','userHashtagCountsGraph','HashtagPostCounts','(%) Percentage');
-	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyUserAndTweetCount','hourlyUserAndTweetCountGraph','Count');
-	prepareSingleLineUserRatiosGraphInDate('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Percentage');
-	prepareGroupedBarChartWithTime('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Percentage');
+	prepareGroupedBarChart('visualizeUserRoughTweetCountsInBarChart','userRoughTweetCountsGraph','Tweet Count','(%) Total User Percentage For Given Tweet Count');
+	prepareUserRatiosGraphInBarChart('visualizeUserRoughHashtagTweetCountsInBarChart','userHashtagCountsGraph','Post Counts With Given Hashtag','(%) Percentage of User Based on Their Post Counts With Given Hashtag');
+	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyUserAndTweetCount','hourlyUserAndTweetCountGraph','Tweet Post Time','Tweet / User Count');
+	prepareSingleLineUserRatiosGraphInDate('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
+	prepareGroupedBarChartWithTime('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
+
+	 getMeanVariance();
 }
 
 </script>
@@ -134,8 +137,11 @@ function prepareGraphs(){
 </div>
 
 <div class="divTableRow">
-
 <div id="userRatiosGraph" class="divTableCell"><b><big>Ratios of Users :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraphMeanVariance" class="divTableCell"><b><big>Mean & Variance of Ratios :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
@@ -146,11 +152,27 @@ function prepareGraphs(){
 </div>
 
 <div class="divTableRow">
+<div id="friendFollowerRatiosMeanVariance" class="divTableCell"></div>
+</div>
+
+<div class="divTableRow">
 <div id="userRoughTweetCountsGraph" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
+<div id="userRoughTweetCountsMeanVariance" class="divTableCell"></div>
+</div>
+
+<div class="divTableRow">
 <div id="userHashtagCountsGraph" class="divTableCell"><b><big>Post Counts of Users with Campaign Hashtag :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userHashtagPostCountMeanVariance" class="divTableCell"></div>
+</div>
+
+<div class="divTableRow">
+<div id="statusHourlyEntityRatios" class="divTableCell"><b><big>Hourly Status Entity Ratios :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
