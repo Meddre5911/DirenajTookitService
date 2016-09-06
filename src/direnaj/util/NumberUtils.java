@@ -33,6 +33,8 @@ public class NumberUtils {
 		return roundDouble(2, number);
 	}
 	
+	
+	
 	public static void main(String[] args) {
 		double d = 0.9d;
 		System.out.println(NumberUtils.roundDouble(0,d));

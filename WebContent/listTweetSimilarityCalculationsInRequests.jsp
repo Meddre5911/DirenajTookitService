@@ -52,6 +52,7 @@ $(document).ready(function() {
             { "mData": "upperTimeInterval" },
             { "mData": "DistinctUserCount" },
             { "mData": "TotalTweetCount" },
+            { "mData": "TweetCountUserCountRatio" },
             { "mData": "MOST_SIMILAR" },
             { "mData": "VERY_SIMILAR" },
             { "mData": "SIMILAR" },
@@ -82,6 +83,7 @@ $(document).ready(function() {
                 <th>Upper Time Interval</th>
                 <th>Distinct User Count</th>
                 <th>Total Tweet Count</th>
+                <th>Tweet Distinct User Ratio</th>
                 <th>MostSimilarTweetPercentage</th>
                 <th>VerySimilarTweetPercentage</th>
                 <th>SimilarTweetPercentage</th>

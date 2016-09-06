@@ -107,10 +107,22 @@ public class DateTimeUtils {
 	}
 
 	public static void main(String[] args) throws Exception {
-		
-		DateTimeUtils.getDate("yyyyMM", "200910");
-		
-		System.out.println(DateTimeUtils.getDate("yyyyMM", "200910"));
 
+		Date localDate = getLocalDate();
+		System.out.println(localDate);
+		double rataDieFormat4Date = getRataDieFormat4Date(localDate);
+		System.out.println(rataDieFormat4Date);
+
+		DateTime dateTime = new DateTime(localDate);
+		DateTime minusWeeks = dateTime.minusDays(1);
+		Date localDate1 = minusWeeks.toDate();
+
+		System.out.println(localDate1);
+		double rataDieFormat4Date1 = getRataDieFormat4Date(localDate1);
+		System.out.println(rataDieFormat4Date1);
+
+		Date twitterDateFromRataDieFormat = getTwitterDateFromRataDieFormat(
+				String.valueOf(NumberUtils.roundDouble(0, rataDieFormat4Date1)));
+		System.out.println(twitterDateFromRataDieFormat);
 	}
 }

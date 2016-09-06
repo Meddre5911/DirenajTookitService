@@ -442,7 +442,7 @@ function prepareMultiLineUserRatiosGraphInDate(requestType,divId,xLineText,yLine
 }
 
 
-function prepareSingleLineUserRatiosGraphInDate(requestType,divId,xLineText,yLineText){
+function prepareSingleLineUserRatiosGraphForAllSimilarites(requestType,divId,xLineText,yLineText){
 
 	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
 		if (error) throw error;
@@ -458,6 +458,24 @@ function prepareSingleLineUserRatiosGraphInDate(requestType,divId,xLineText,yLin
 	    prepareHourlyCosSimGraph(data,divId+"_SIMILAR","SIMILAR (60 Degree)",xLineText,yLineText);
 	    prepareHourlyCosSimGraph(data,divId+"_VERY_SIMILAR","VERY_SIMILAR (30-45 Degree)",xLineText,yLineText);
 	    prepareHourlyCosSimGraph(data,divId+"_MOST_SIMILAR","MOST_SIMILAR (0-30 Degree)",xLineText,yLineText);
+	    
+	});
+		
+	    
+}
+
+function prepareSingleLineUserRatiosGraphInDate(requestType,divId,xLineText,yLineText){
+
+	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
+		if (error) throw error;
+		
+	 	var parseDate = d3.time.format("%Y%m%d %H:%M").parse;
+
+	    data.forEach(function(d) {
+	    	d.time = parseDate(d.time);
+	    });
+	    
+	    prepareHourlyCosSimGraph(data,divId,xLineText,yLineText);
 	    
 	});
 		
@@ -955,69 +973,162 @@ function getMeanVariance(){
 	d3.json("organizedBehaviorCampaignVisualizer?requestType=getMeanVariance&requestId=" + $('#requestId').val(), function(error, data) {
 		if (error) throw error;
 	   
-		var userCount = "";
-		var hashtagRatioMeanVariance = "";
-		var urlRatioMeanVariance = "";
-		var mentionRatioMeanVariance = "";
-		var friendFollowerRatioMeanVariance = "";
-		var userFavoriteCountMeanVariance ="";
-		var userStatusCountMeanVariance = "";
-		var userHashtagPostCountMeanVariance = "";
+		var userCount ='';
+		var hashtagRatioMeanVariance = '';
+		var urlRatioMeanVariance = '';
+		var mentionRatioMeanVariance = '';
+		var friendFollowerRatioMeanVariance = '';
+		var userFavoriteCountMeanVariance ='';
+		var userStatusCountMeanVariance = '';
+		var userHashtagPostCountMeanVariance = '';
+		var userCreationDateMeanVariance = '';
+		
+		
+		var mostSimilarTweetsMeanVariance = '';
+		var verySimilarTweetsMeanVariance = '';
+		var similarTweetsMeanVariance = '';
+		var slightlySimilarTweetsMeanVariance = '';
+		var noneSimilarTweetsMeanVariance = '';
+		
+		var hourlyTweetHashtagRatio = '';
+		var hourlyTweetUrlRatio = '';
+		var hourlyTweetMentionRatio = '';
+		var hourlyTweetRetweetRatio = '';
+		var hourlyTweetUserCountRatio = '';
 		
 		  data.forEach(function(d) {
-			if(d.calculationType == "hashtagRatio"){
+			if(d.calculationType == "hashtagRatio" && d.calculationDomain == "USER"){
 				hashtagRatioMeanVariance = getHTMLStr4MeanVariance(d);
 				userCount = d.count;
 			}
-			if(d.calculationType == "urlRatio"){
+			if(d.calculationType == "creationDateInRataDie" && d.calculationDomain == "USER"){
+				userCreationDateMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "urlRatio" && d.calculationDomain == "USER"){
 				urlRatioMeanVariance = getHTMLStr4MeanVariance(d);
 			}
-			if(d.calculationType == "mentionRatio"){
+			if(d.calculationType == "mentionRatio" && d.calculationDomain == "USER"){
 				mentionRatioMeanVariance = getHTMLStr4MeanVariance(d);
 			}
-			if(d.calculationType == "friendFollowerRatio"){
+			if(d.calculationType == "friendFollowerRatio" && d.calculationDomain == "USER"){
 				friendFollowerRatioMeanVariance = getHTMLStr4MeanVariance(d);
 			}
-			if(d.calculationType == "favoriteCount"){
+			if(d.calculationType == "favoriteCount" && d.calculationDomain == "USER"){
 				userFavoriteCountMeanVariance = getHTMLStr4MeanVariance(d);
 			}
-			if(d.calculationType == "statusCount"){
+			if(d.calculationType == "statusCount" && d.calculationDomain == "USER"){
 				userStatusCountMeanVariance = getHTMLStr4MeanVariance(d);
 			}
-			if(d.calculationType == "hashtagPostCount"){
+			if(d.calculationType == "hashtagPostCount" && d.calculationDomain == "USER"){
 				userHashtagPostCountMeanVariance = getHTMLStr4MeanVariance(d);
 			}
+			
+			
+			if(d.calculationType == "MOST_SIMILAR" && d.calculationDomain == "COS_SIM"){
+				mostSimilarTweetsMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "VERY_SIMILAR" && d.calculationDomain == "COS_SIM"){
+				verySimilarTweetsMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "SIMILAR" && d.calculationDomain == "COS_SIM"){
+				similarTweetsMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "SLIGHTLY_SIMILAR" && d.calculationDomain == "COS_SIM"){
+				slightlySimilarTweetsMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "NON_SIMILAR" && d.calculationDomain == "COS_SIM"){
+				noneSimilarTweetsMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			
+			if(d.calculationType == "hashtagRatio" && d.calculationDomain == "COS_SIM"){
+				hourlyTweetHashtagRatio = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "urlRatio" && d.calculationDomain == "COS_SIM"){
+				hourlyTweetUrlRatio = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "mentionRatio" && d.calculationDomain == "COS_SIM"){
+				hourlyTweetMentionRatio = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "retweetRatio" && d.calculationDomain == "COS_SIM"){
+				hourlyTweetRetweetRatio = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "TweetCountUserCountRatio" && d.calculationDomain == "COS_SIM"){
+				hourlyTweetUserCountRatio = getHTMLStr4MeanVariance(d);
+			}
+			
+			
+			
+			
 		  
 		  });
 		  
 
 
-		  userCount = "<b>Total User Count is : </b>" + userCount + "<br>";
+		  userCount = '&nbsp;&nbsp;<b>Total User Count is : </b>' + userCount + '<br><br>';
 		  
-		  d3.select("#userRatiosGraphMeanVariance").html(
-				userCount + "<table><tr>"
+		  var sumaryHtml =  d3.select("#summaryInfo").html();
+		  sumaryHtml = sumaryHtml + userCount;
+		  
+		  d3.select("#userRatiosGraphMeanVariance").html(sumaryHtml+
+				  '<table><tr>'
 						+ hashtagRatioMeanVariance
-						+ "</tr><tr>" + urlRatioMeanVariance
-						+ "</tr><tr>"
+						+ '</tr><tr>' + urlRatioMeanVariance
+						+ '</tr><tr>'
 						+ mentionRatioMeanVariance
-						+ "</tr></table>");
+						+ '</tr></table>');
 		  
-		  d3.select("#friendFollowerRatiosMeanVariance").html(
-				  userCount + "<table><tr>"
+		  d3.select("#friendFollowerRatiosMeanVariance").html(sumaryHtml+
+				 "<table><tr>"
 				  + friendFollowerRatioMeanVariance
 				  + "</tr></table>");
 		  
-		  d3.select("#userRoughTweetCountsMeanVariance").html(
-					userCount + "<table><tr>"
+		  d3.select("#userRoughTweetCountsMeanVariance").html(sumaryHtml+
+					 "<table><tr>"
 					+ userFavoriteCountMeanVariance
 					+ "</tr><tr>" + userStatusCountMeanVariance
 					+ "</tr></table>");
 		  
-		  d3.select("#userHashtagPostCountMeanVariance").html(
-				  userCount + "<table><tr>"
+		  
+		  d3.select("#userHashtagPostCountMeanVariance").html(sumaryHtml+
+				 "<table><tr>"
 				  + userHashtagPostCountMeanVariance
 				  + "</tr></table>");
-		
+		  
+		  
+		  d3.select("#hourlyTweetUserCountRatioMeanVariance").html(sumaryHtml+
+				  "<table><tr>"
+				  + hourlyTweetUserCountRatio
+				  + "</tr></table>");
+		  
+		  
+
+		  d3.select("#hourlyTweetSimilaritiesMeanVariance").html(sumaryHtml + "<table><tr>"
+				+ mostSimilarTweetsMeanVariance
+				+ "</tr><tr>"
+				+ verySimilarTweetsMeanVariance
+				+ "</tr><tr>"
+				+ similarTweetsMeanVariance + 
+				"</tr><tr>"
+				+ slightlySimilarTweetsMeanVariance
+				+ "</tr><tr>"
+				+ noneSimilarTweetsMeanVariance
+				+ "</tr></table>");
+
+		  d3.select("#statusHourlyEntityRatiosMeanVariance").html(sumaryHtml + "<table><tr>"
+				  + hourlyTweetHashtagRatio
+				  + "</tr><tr>"
+				  + hourlyTweetUrlRatio
+				  + "</tr><tr>"
+				  + hourlyTweetMentionRatio
+				  + "</tr></table>");
+		  
+		  d3.select("#hourlyRetweetRatiosMeanVariance").html(sumaryHtml + "<table><tr>"
+				  + hourlyTweetRetweetRatio
+				  + "</tr></table>");
+
+		  d3.select("#userCreationDateMeanVariance").html(sumaryHtml + "<table><tr>"
+				  + userCreationDateMeanVariance
+				  + "</tr></table>");
 	});
 		
 	    
@@ -1031,11 +1142,14 @@ function getMeanVariance(){
 //			+ d.min + " - <b> Max Value : </b>" + d.max + "<br>";
 //}
 function getHTMLStr4MeanVariance(d) {
-	return "<td><b>" + d.calculationType + "Analysis : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b> " + "</td><td><b> Mean : </b>"
-	+ d.average + "</td><td><b> Variance : </b>" + d.population_variance
-	+ " </td><td><b> Standard Deviation </b> : "
-	+ d.population_standard_deviation + " </td><td> <b> Min Value : </b>"
-	+ d.min + " </td><td> <b> Max Value : </b>" + d.max + "<br></td>";
+	return '<td><b>' + d.calculationType
+			+ 'Analysis : </b> '
+			+ '</td><td><b> Mean : </b>' + d.average
+			+ '</td><td><b> Variance : </b>' + d.population_variance
+			+ ' </td><td><b> Standard Deviation </b> : '
+			+ d.population_standard_deviation
+			+ ' </td><td> <b> Min Value : </b>' + d.min
+			+ ' </td><td> <b> Max Value : </b>' + d.max + '<br></td>';
 }
 
 

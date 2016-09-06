@@ -100,10 +100,12 @@ function prepareGraphs(){
 	prepareGroupedBarChart('visualizeUserRoughTweetCountsInBarChart','userRoughTweetCountsGraph','Tweet Count','(%) Total User Percentage For Given Tweet Count');
 	prepareUserRatiosGraphInBarChart('visualizeUserRoughHashtagTweetCountsInBarChart','userHashtagCountsGraph','Post Counts With Given Hashtag','(%) Percentage of User Based on Their Post Counts With Given Hashtag');
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyUserAndTweetCount','hourlyUserAndTweetCountGraph','Tweet Post Time','Tweet / User Count');
-	prepareSingleLineUserRatiosGraphInDate('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
+	prepareSingleLineUserRatiosGraphForAllSimilarites('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
 	prepareGroupedBarChartWithTime('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
 
-	 getMeanVariance();
+	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyRetweetRatios','hourlyRetweetRatios','Time','(%) Percentage of Retweets');
+
+	getMeanVariance();
 }
 
 </script>
@@ -113,7 +115,6 @@ function prepareGraphs(){
 <div class="divTableBody">
 
 <div class="divTableRow">
-<div class="divTableCell">
 	<%
 		BasicDBObject findQuery = new BasicDBObject();
 		findQuery.put("_id", request.getParameter("requestId"));
@@ -124,11 +125,10 @@ function prepareGraphs(){
 		String tracedHashtag = ((List<String>) requestObj.get("tracedHashtag")).get(0);
 		String linkUrl = "https://twitter.com/hashtag/"+tracedHashtag+"?src=hash";
 	%>
-	<b>Request Summary Info : </b> <br><br>
-	<b>Campaign Id :</b> <%=campaignId%> <br><br>
-	<b>Organized Behaviour Request Definition :</b> <%=requestDefinition%> <br><br>
-	<b>Traced Hashtag :</b><a href=<%=linkUrl %> target="_blank"> #<%=tracedHashtag%></a> <br><br>
-	
+<div id="summaryInfo" class="divTableCell">
+	<b>Request Campaign Id :</b> <%=campaignId%> 
+	&nbsp;&nbsp;<b>Description :</b> <%=requestDefinition%> 
+	&nbsp;&nbsp;<b>Traced Hashtag :</b><a href=<%=linkUrl %> target="_blank"> #<%=tracedHashtag%></a>
 </div>
 </div>
 
@@ -137,11 +137,17 @@ function prepareGraphs(){
 </div>
 
 <div class="divTableRow">
+<div id="userCreationDateMeanVariance" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
 <div id="userRatiosGraph" class="divTableCell"><b><big>Ratios of Users :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
-<div id="userRatiosGraphMeanVariance" class="divTableCell"><b><big>Mean & Variance of Ratios :</big></b> <br></div>
+<div id="userRatiosGraphMeanVariance" class="divTableCell">
+</div>
 </div>
 
 <div class="divTableRow">
@@ -152,7 +158,8 @@ function prepareGraphs(){
 </div>
 
 <div class="divTableRow">
-<div id="friendFollowerRatiosMeanVariance" class="divTableCell"></div>
+<div id="friendFollowerRatiosMeanVariance" class="divTableCell">
+</div>
 </div>
 
 <div class="divTableRow">
@@ -160,7 +167,9 @@ function prepareGraphs(){
 </div>
 
 <div class="divTableRow">
-<div id="userRoughTweetCountsMeanVariance" class="divTableCell"></div>
+<div id="userRoughTweetCountsMeanVariance" class="divTableCell">
+
+</div>
 </div>
 
 <div class="divTableRow">
@@ -168,7 +177,8 @@ function prepareGraphs(){
 </div>
 
 <div class="divTableRow">
-<div id="userHashtagPostCountMeanVariance" class="divTableCell"></div>
+<div id="userHashtagPostCountMeanVariance" class="divTableCell">
+</div>
 </div>
 
 <div class="divTableRow">
@@ -176,28 +186,51 @@ function prepareGraphs(){
 </div>
 
 <div class="divTableRow">
+<div id="statusHourlyEntityRatiosMeanVariance" class="divTableCell"></div>
+</div>
+
+<div class="divTableRow">
+<div id="hourlyRetweetRatios" class="divTableCell"><b><big>Hourly Retweet Ratios :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="hourlyRetweetRatiosMeanVariance" class="divTableCell"></div>
+</div>
+
+
+<div class="divTableRow">
 <div id="hourlyUserAndTweetCountGraph" class="divTableCell"><b><big>Hour Basis Distinct Tweet & User Count of Campaign :</big></b> <br></div>
 </div>
+
+<div class="divTableRow">
+<div id="hourlyTweetUserCountRatioMeanVariance" class="divTableCell"></div>
+</div>
+
 
 <div class="divTableRow">
 <div id="hourlyTweetSimilarities" class="divTableCell"><b><big>Hour Basis Percentages of Most Similar (btw:0-30) Posts In Campaign Compared to All Posts :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
-<div id="hourlyTweetSimilarities_MOST_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Most Similar (btw:0-30) Posts In Campaign Compared to All Posts :</big></b> <br></div>
+<div id="hourlyTweetSimilaritiesMeanVariance" class="divTableCell"></div>
 </div>
-<div class="divTableRow">
-<div id="hourlyTweetSimilarities_VERY_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Very Similar (btw:30-45) Posts In Campaign Compared to All Posts :</big></b></div>
-</div>
-<div class="divTableRow">
-<div id="hourlyTweetSimilarities_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Similar (btw:45-60) Posts In Campaign Compared to All Posts :</big></b></div>
-</div>
-<div class="divTableRow">
-<div id="hourlyTweetSimilarities_SLIGHTLY_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Slightly Similar (btw:60-89) Posts In Campaign Compared to All Posts :</big></b></div>
-</div>
-<div class="divTableRow">
-<div id="hourlyTweetSimilarities_NON_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of None Similar (90 degree) Posts In Campaign Compared to All Posts :</big></b></div>
-</div>
+
+
+<!-- <div class="divTableRow"> -->
+<!-- <div id="hourlyTweetSimilarities_MOST_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Most Similar (btw:0-30) Posts In Campaign Compared to All Posts :</big></b> <br></div> -->
+<!-- </div> -->
+<!-- <div class="divTableRow"> -->
+<!-- <div id="hourlyTweetSimilarities_VERY_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Very Similar (btw:30-45) Posts In Campaign Compared to All Posts :</big></b></div> -->
+<!-- </div> -->
+<!-- <div class="divTableRow"> -->
+<!-- <div id="hourlyTweetSimilarities_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Similar (btw:45-60) Posts In Campaign Compared to All Posts :</big></b></div> -->
+<!-- </div> -->
+<!-- <div class="divTableRow"> -->
+<!-- <div id="hourlyTweetSimilarities_SLIGHTLY_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of Slightly Similar (btw:60-89) Posts In Campaign Compared to All Posts :</big></b></div> -->
+<!-- </div> -->
+<!-- <div class="divTableRow"> -->
+<!-- <div id="hourlyTweetSimilarities_NON_SIMILAR" class="divTableCell"><b><big>Hour Basis Percentages of None Similar (90 degree) Posts In Campaign Compared to All Posts :</big></b></div> -->
+<!-- </div> -->
 
 
 </div>

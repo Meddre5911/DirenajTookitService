@@ -98,6 +98,8 @@ public class CosineSimilarityUtil {
 	public static void calculateAvarage(Map<String, Double> similarityComparisonOfAllTweets, double allTweetCount) {
 		if (allTweetCount > 1d) {
 			allTweetCount = allTweetCount - 1;
+		} else if (allTweetCount == 0d) {
+			allTweetCount = 1;
 		}
 		similarityComparisonOfAllTweets.put(MongoCollectionFieldNames.NON_SIMILAR,
 				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.NON_SIMILAR) / allTweetCount);
