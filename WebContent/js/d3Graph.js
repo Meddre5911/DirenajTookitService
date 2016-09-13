@@ -1143,7 +1143,7 @@ function getMeanVariance(){
 //}
 function getHTMLStr4MeanVariance(d) {
 	return '<td><b>' + d.calculationType
-			+ 'Analysis : </b> '
+			+ ' Analysis : </b> '
 			+ '</td><td><b> Mean : </b>' + d.average
 			+ '</td><td><b> Variance : </b>' + d.population_variance
 			+ ' </td><td><b> Standard Deviation </b> : '

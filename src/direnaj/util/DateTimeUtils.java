@@ -19,60 +19,51 @@ public class DateTimeUtils {
 	private static TimeZone localTZ = TimeZone.getTimeZone(DEFAULT_TIMEZONE);
 	public static final String STANDARD_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS";
 	public static final String TWITTER_FORMAT = "EEE MMM dd HH:mm:ss ZZZZZ yyyy";
-	public static final SimpleDateFormat STANDARD_SIMPLE_DATE_FORMAT = new SimpleDateFormat(
-			STANDARD_FORMAT);
+	public static final SimpleDateFormat STANDARD_SIMPLE_DATE_FORMAT = new SimpleDateFormat(STANDARD_FORMAT);
 
 	public static Date getTwitterDate(String date) throws Exception {
 		if (!TextUtils.isEmpty(date)) {
 			// Example : Thu Nov 03 11:37:45 +0000 2011
-			SimpleDateFormat sf = new SimpleDateFormat(TWITTER_FORMAT,
-					Locale.ENGLISH);
+			SimpleDateFormat sf = new SimpleDateFormat(TWITTER_FORMAT, Locale.ENGLISH);
 			sf.setLenient(false);
 			return sf.parse(date);
 		}
 		return null;
 	}
 
-	public static Date getDate(String dateFormatInStr, String dateInStr)
-			throws Exception {
+	public static Date getDate(String dateFormatInStr, String dateInStr) throws Exception {
 		SimpleDateFormat formatter = new SimpleDateFormat(dateFormatInStr);
 		Date date = formatter.parse(dateInStr);
 		return date;
 	}
 
-	public static String getStringOfDate(String dateFormatInStr, Date date)
-			throws Exception {
+	public static String getStringOfDate(String dateFormatInStr, Date date) throws Exception {
 		SimpleDateFormat formatter = new SimpleDateFormat(dateFormatInStr);
 		String reportDate = formatter.format(date);
 		return reportDate;
 	}
 
-	public static Date getTwitterDateFromRataDieFormat(String dateInRataDie)
-			throws Exception {
+	public static Date getTwitterDateFromRataDieFormat(String dateInRataDie) throws Exception {
 		BigDecimal date = new BigDecimal(dateInRataDie);
 		BigDecimal daysNumberUntilJan1970 = new BigDecimal("719529.0");
 		BigDecimal subtract = date.subtract(daysNumberUntilJan1970);
-		BigDecimal dateInMiliSeconds = subtract.multiply(new BigDecimal(
-				"86400000"));
+		BigDecimal dateInMiliSeconds = subtract.multiply(new BigDecimal("86400000"));
 		long longValue = dateInMiliSeconds.longValue();
 		return new Date(longValue);
 	}
 
-	public static Date getUTCDateFromRataDieFormat(String dateInRataDie)
-			throws Exception {
+	public static Date getUTCDateFromRataDieFormat(String dateInRataDie) throws Exception {
 		BigDecimal date = new BigDecimal(dateInRataDie);
 		BigDecimal daysNumberUntilJan1970 = new BigDecimal("719529.0");
 		BigDecimal subtract = date.subtract(daysNumberUntilJan1970);
-		BigDecimal dateInMiliSeconds = subtract.multiply(new BigDecimal(
-				"86400000"));
+		BigDecimal dateInMiliSeconds = subtract.multiply(new BigDecimal("86400000"));
 		long longValue = dateInMiliSeconds.longValue();
 		return getUTCDateTime(new Date(longValue));
 	}
 
 	public static double getRataDieFormat4Date(Date date) {
 		BigDecimal time = new BigDecimal(date.getTime());
-		BigDecimal divide = time.divide(new BigDecimal("86400000"), 10,
-				RoundingMode.CEILING);
+		BigDecimal divide = time.divide(new BigDecimal("86400000"), 10, RoundingMode.CEILING);
 		BigDecimal daysNumberUntilJan1970 = new BigDecimal("719529.0");
 		BigDecimal actualDate = daysNumberUntilJan1970.add(divide);
 		return actualDate.doubleValue();
@@ -81,8 +72,7 @@ public class DateTimeUtils {
 	public static double getUTCRataDieFormat4Date(Date date) {
 		Date utcDateTime = getUTCDateTime(date);
 		BigDecimal time = new BigDecimal(utcDateTime.getTime());
-		BigDecimal divide = time.divide(new BigDecimal("86400000"), 10,
-				RoundingMode.CEILING);
+		BigDecimal divide = time.divide(new BigDecimal("86400000"), 10, RoundingMode.CEILING);
 		BigDecimal daysNumberUntilJan1970 = new BigDecimal("719529.0");
 		BigDecimal actualDate = daysNumberUntilJan1970.add(divide);
 		return actualDate.doubleValue();
@@ -103,8 +93,7 @@ public class DateTimeUtils {
 			}
 			return null;
 		} catch (Exception e) {
-			Logger.getLogger(DateTimeUtils.class).error(
-					"Error During Conversion of Object to Date", e);
+			Logger.getLogger(DateTimeUtils.class).error("Error During Conversion of Object to Date", e);
 			return null;
 		}
 	}
@@ -182,9 +171,25 @@ public class DateTimeUtils {
 		return getUTCDateTime(c);
 	}
 
+	public static String getUTCDateTimeStringInGenericFormat(Date inpDate) {
+		if (inpDate == null)
+			return "";
+
+		Calendar c = Calendar.getInstance();
+		c.setTimeInMillis(inpDate.getTime());
+		Date utcDateTime = getUTCDateTime(c);
+
+		String original = utcDateTime.toString();
+		String firstPart = original.substring(0, 19);
+
+		int length = original.length();
+		String secondPart = original.substring(length - 4);
+
+		return firstPart + " GMT " + secondPart;
+	}
+
 	public static Date getUTCDateTime(Calendar c) {
-		return new Date(c.getTimeInMillis()
-				- localTZ.getOffset(c.getTimeInMillis()));
+		return new Date(c.getTimeInMillis() - localTZ.getOffset(c.getTimeInMillis()));
 	}
 
 	public static Date getUTCDateTime(Calendar c, long utcOffSet) {
@@ -219,8 +224,7 @@ public class DateTimeUtils {
 		if (utcDate == null) {
 			return null;
 		}
-		return new Date(utcDate.getTime()
-				+ localTZ.getOffset(utcDate.getTime()));
+		return new Date(utcDate.getTime() + localTZ.getOffset(utcDate.getTime()));
 	}
 
 	/**
@@ -244,69 +248,37 @@ public class DateTimeUtils {
 	 * @param format
 	 * @return
 	 */
-	public String getFormattedDateFromUTC(Date dateTime, DateFormat format) {
-		return format.format(new Date(dateTime.getTime()
-				+ this.localTZ.getOffset(dateTime.getTime())));
+	public static String getFormattedDateFromUTC(Date dateTime, DateFormat format) {
+		return format.format(new Date(dateTime.getTime() + localTZ.getOffset(dateTime.getTime())));
 	}
 
 	public static void main(String[] args) throws Exception {
 
-		// Date localDate = getLocalDate();
-		// System.out.println(localDate);
-		// double rataDieFormat4Date = getRataDieFormat4Date(localDate);
-		// System.out.println(rataDieFormat4Date);
-		//
-		// SimpleDateFormat sdf = new SimpleDateFormat(
-		// "EEE MMM dd HH:mm:ss ZZZZZ yyyy", Locale.US);
-		// sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
-		// System.out.println(sdf.parse(DateTimeUtils
-		// .getTwitterDateFromRataDieFormat(
-		// String.valueOf(rataDieFormat4Date)).toString()));
-		//
-		// BigDecimal date = new BigDecimal(736582.5019621413d);
-		// BigDecimal daysNumberUntilJan1970 = new BigDecimal("719529.0");
-		// BigDecimal subtract = date.subtract(daysNumberUntilJan1970);
-		// BigDecimal dateInMiliSeconds = subtract.multiply(new BigDecimal(
-		// "86400000"));
-		// long longValue = dateInMiliSeconds.longValue();
-		// Date localDate2 = new Date(longValue);
-		//
-		// System.out
-		// .println(new Date(longValue - localDate2.getTimezoneOffset()));
-
-		// Date localDate = DateTimeUtils.getLocalDate();
-		// System.out.println(localDate);
-		// System.out.println(DateTimeUtils.getUTCDateTime(localDate));
-		//
-		// double localRataDie = DateTimeUtils.getRataDieFormat4Date(localDate);
-		// System.out.println(localRataDie);
-		//
-		// double utcRataDieFormat4Date =
-		// DateTimeUtils.getUTCRataDieFormat4Date(localDate);
-		// System.out.println(utcRataDieFormat4Date);
-		//
-		// System.out.println(DateTimeUtils.getTwitterDateFromRataDieFormat(String.valueOf(localRataDie)));
-		// System.out.println(DateTimeUtils.getTwitterDateFromRataDieFormat(String.valueOf(utcRataDieFormat4Date)));
-		//
-
-		Date twitterDate = DateTimeUtils
-				.getTwitterDate("Wed Jan 13 04:33:39 EET 2010");
-		System.out.println("Offset : " + twitterDate.getTimezoneOffset()
-				* 60000);
+		Date twitterDate = DateTimeUtils.getTwitterDate("Wed Jan 13 04:33:39 EET 2010");
+		System.out.println("Offset : " + twitterDate.getTimezoneOffset() * 60000);
 		Date utcDateTime = DateTimeUtils.getUTCDateTimeWithOffset(twitterDate);
 
 		System.out.println(twitterDate);
 		System.out.println(utcDateTime);
 
-		Date twitterDate2 = DateTimeUtils
-				.getTwitterDate("Tue Aug 23 19:00:00 EEST 2016");
-		System.out.println("Offset : " + twitterDate2.getTimezoneOffset()
-				* 60000);
-		Date utcDateTime2 = DateTimeUtils
-				.getUTCDateTimeWithOffset(twitterDate2);
+		Date twitterDate2 = DateTimeUtils.getTwitterDate("Tue Aug 23 19:00:00 EEST 2016");
 
-		System.out.println(twitterDate2);
-		System.out.println(utcDateTime2);
+		System.out.println(DateTimeUtils.getRataDieFormat4Date(twitterDate2));
+
+		String utcDateStr = DateTimeUtils.getUTCDateTimeStringInGenericFormat(twitterDate2);
+		System.out.println(utcDateStr);
+
+		Date utcDate = DateTimeUtils.getTwitterDate(utcDateStr);
+
+		System.out.println(utcDate);
+		System.out.println(DateTimeUtils.getRataDieFormat4Date(utcDate));
+
+		// DBCollection testCollection =
+		// DirenajMongoDriver.getInstance().getTestCollection();
+		// testCollection.insert(new
+		// BasicDBObject("twitterDate2",twitterDate2));
+		// testCollection.insert(new
+		// BasicDBObject("utcDateTime2",utcDateTime2));
 
 	}
 }
