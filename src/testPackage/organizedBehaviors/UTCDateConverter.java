@@ -42,7 +42,7 @@ public class UTCDateConverter {
 				findQuery.put(MongoCollectionFieldNames.MONGO_USER_ID, userId);
 
 				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(orgBehaviourProcessInputData, findQuery,
-						MongoCollectionFieldNames.MONGO_USER_CREATION_DATE, utcDateTimeStringInGenericFormat);
+						MongoCollectionFieldNames.MONGO_USER_CREATION_DATE, utcDateTimeStringInGenericFormat, "$set");
 			}
 
 			Logger.getLogger(getClass()).debug("orgBehaviourProcessInputData -  convertUTC completed");
@@ -68,7 +68,7 @@ public class UTCDateConverter {
 					DBObject findQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
 
 					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(orgBehaviourRequestedSimilarityCalculations,
-							findQuery, "lowerTimeInterval", utcDateTimeStringInGenericFormat);
+							findQuery, "lowerTimeInterval", utcDateTimeStringInGenericFormat, "$set");
 
 				}
 				if (!TextUtils.isEmpty(upperTimeInterval)) {
@@ -79,7 +79,7 @@ public class UTCDateConverter {
 					DBObject findQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
 
 					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(orgBehaviourRequestedSimilarityCalculations,
-							findQuery, "upperTimeInterval", utcDateTimeStringInGenericFormat);
+							findQuery, "upperTimeInterval", utcDateTimeStringInGenericFormat, "$set");
 
 				}
 

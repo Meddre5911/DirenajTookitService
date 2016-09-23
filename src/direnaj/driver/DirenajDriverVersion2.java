@@ -96,7 +96,8 @@ public class DirenajDriverVersion2 {
 				JSONObject direnajTweetObject = new JSONObject(tweetCursor.next().toString());
 				// "retrieved_by" : "drenaj_toolkit",
 				if ("drenaj_toolkit".equals(direnajTweetObject.get("retrieved_by"))) {
-					Logger.getLogger(DirenajDriverVersion2.class).debug("Tweet is retrieved by : drenaj_toolkit");
+					// Logger.getLogger(DirenajDriverVersion2.class).trace("Tweet
+					// is retrieved by : drenaj_toolkit");
 					Gson gsonObject4Deserialization = Twitter4jUtil.getGsonObject4Deserialization();
 					Status status = Twitter4jUtil.deserializeTwitter4jStatusFromGson(gsonObject4Deserialization,
 							DirenajDriverUtils.getTweet(direnajTweetObject).toString());

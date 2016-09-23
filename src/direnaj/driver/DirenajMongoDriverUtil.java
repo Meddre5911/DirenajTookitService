@@ -15,10 +15,8 @@ import com.mongodb.DBObject;
 import direnaj.domain.User;
 import direnaj.functionalities.organizedBehaviour.CosineSimilarityRequestData;
 import direnaj.functionalities.organizedBehaviour.ResumeBreakPoint;
-import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.twitter.twitter4j.external.DrenajCampaignRecord;
 import direnaj.util.TextUtils;
-import twitter4j.Status;
 
 public class DirenajMongoDriverUtil {
 
@@ -34,8 +32,8 @@ public class DirenajMongoDriverUtil {
 		user.setCampaignTweetId((String) preProcessUser.get(MongoCollectionFieldNames.MONGO_USER_POST_TWEET_ID));
 		return user;
 	}
-	
-	public static DrenajCampaignRecord getCampaign(String campaignId){
+
+	public static DrenajCampaignRecord getCampaign(String campaignId) {
 		DBCollection campaignsCollection = DirenajMongoDriver.getInstance().getCampaignsCollection();
 		BasicDBObject findQuery = new BasicDBObject();
 		findQuery.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
@@ -44,7 +42,6 @@ public class DirenajMongoDriverUtil {
 		return gsonObject4Deserialization.fromJson(campaignJson.toString(), DrenajCampaignRecord.class);
 	}
 
-	
 	public static List<DBObject> insertBulkData2CollectionIfNeeded(DBCollection dbCollection, List<DBObject> dbObjects,
 			boolean saveAnyway) {
 		if (dbObjects.size() > 0
@@ -83,8 +80,8 @@ public class DirenajMongoDriverUtil {
 		return TextUtils.getNotNullValue(findOne.get("text"));
 	}
 
-
-	public static void cleanData4ResumeProcess(DBObject requestObj, ResumeBreakPoint resumeBreakPoint) {
+	public static void cleanData4ResumeProcess(String requestId, DBObject requestObj,
+			ResumeBreakPoint resumeBreakPoint) {
 		if (resumeBreakPoint != null) {
 			switch (resumeBreakPoint) {
 			case INIT:
@@ -98,6 +95,29 @@ public class DirenajMongoDriverUtil {
 				break;
 			case USER_ANALYZE_COMPLETED:
 				break;
+			case STATISCTIC_CALCULATED:
+				DBObject updateQuery = new BasicDBObject();
+				updateQuery.put("originalRequestId", requestId);
+				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+						MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "", "$unset");
+				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+						MongoCollectionFieldNames.MONGO_URL_RATIO, "", "$unset");
+				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+						MongoCollectionFieldNames.MONGO_MENTION_RATIO, "", "$unset");
+				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+						MongoCollectionFieldNames.MONGO_RETWEET_RATIO, "", "$unset");
+				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+						MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT_DISTINCT_USER_RATIO, "", "$unset");
+
+				DirenajMongoDriver.getInstance().getOrgBehaviourRequestMeanVarianceCalculations().remove(requestObj);
+				Logger.getLogger(DirenajMongoDriverUtil.class)
+						.debug("STATISCTIC_CALCULATED phase unnecessary data is removed");
+
 			default:
 			}
 
@@ -137,12 +157,12 @@ public class DirenajMongoDriverUtil {
 
 		}
 	}
-	
+
 	public static void updateRequestInMongoByColumnName(DBCollection dbCollection, DBObject findQuery,
-			String columnName, Object updateValue) {
+			String columnName, Object updateValue, String updateOperationType) {
 		BasicDBObject updateQuery = new BasicDBObject();
-		updateQuery.append("$set", new BasicDBObject().append(columnName, updateValue));
-		dbCollection.update(findQuery, updateQuery, true, false);
+		updateQuery.append(updateOperationType, new BasicDBObject().append(columnName, updateValue));
+		dbCollection.update(findQuery, updateQuery, true, true);
 	}
 
 }

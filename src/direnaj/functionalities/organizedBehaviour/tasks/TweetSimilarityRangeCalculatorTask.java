@@ -42,13 +42,13 @@ public class TweetSimilarityRangeCalculatorTask implements Runnable {
 	@Override
 	public void run() {
 		try {
-			Logger.getLogger(TweetSimilarityRangeCalculatorTask.class)
-					.debug("TweetSimilarityRangeCalculatorTask starts execution.");
+//			Logger.getLogger(TweetSimilarityRangeCalculatorTask.class)
+//					.trace("TweetSimilarityRangeCalculatorTask starts execution.");
 			CosineSimilarityUtil.calculateTweetSimilarityRangesInSingleThread(tweetTFIdfQueryObj, actualTweetId,
 					actualTweetRetweetId, queryTweetWords, tfIdfList, tweetWordTfIdfMap, tweetVectorLength,
 					similarityOfTweetWithOtherTweets);
-			Logger.getLogger(TweetSimilarityRangeCalculatorTask.class)
-					.debug("TweetSimilarityRangeCalculatorTask finished execution.");
+//			Logger.getLogger(TweetSimilarityRangeCalculatorTask.class)
+//					.trace("TweetSimilarityRangeCalculatorTask finished execution.");
 			cyclicBarrier.await();
 		} catch (InterruptedException | BrokenBarrierException e) {
 			Logger.getLogger(TweetSimilarityRangeCalculatorTask.class)

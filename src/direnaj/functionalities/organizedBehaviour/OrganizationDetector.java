@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -41,6 +40,7 @@ import direnaj.util.DateTimeUtils;
 import direnaj.util.ListUtils;
 import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
+import twitter4j.HashtagEntity;
 import twitter4j.Status;
 
 public class OrganizationDetector implements Runnable {
@@ -215,7 +215,7 @@ public class OrganizationDetector implements Runnable {
 
 	public void detectOrganizedBehaviourInHashtags() {
 		try {
-			DirenajMongoDriverUtil.cleanData4ResumeProcess(requestIdObj, resumeBreakPoint);
+			DirenajMongoDriverUtil.cleanData4ResumeProcess(requestId, requestIdObj, resumeBreakPoint);
 			isCleaningDone4ResumeProcess = true;
 			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.INIT, resumeBreakPoint)) {
 				Map<String, Double> hashtagCounts = direnajDriver.getHashtagCounts(campaignId);
@@ -239,7 +239,7 @@ public class OrganizationDetector implements Runnable {
 	public void getMetricsOfUsersOfHashTag() throws DirenajInvalidJSONException, Exception {
 		try {
 			if (!isCleaningDone4ResumeProcess) {
-				DirenajMongoDriverUtil.cleanData4ResumeProcess(requestIdObj, resumeBreakPoint);
+				DirenajMongoDriverUtil.cleanData4ResumeProcess(requestId, requestIdObj, resumeBreakPoint);
 			}
 			// FIXME burayi tek bir hashtag icin olacak sekilde degistirecez
 			for (String tracedHashtag : tracedHashtagList) {
@@ -257,8 +257,10 @@ public class OrganizationDetector implements Runnable {
 				}
 			}
 			calculateTweetSimilarities();
-			
-			
+			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.STATISCTIC_CALCULATED,
+					resumeBreakPoint)) {
+				calculateStatistics();
+			}
 			changeRequestStatusInMongo(true);
 			// removePreProcessUsers();
 			Logger.getLogger(OrganizationDetector.class.getSimpleName())
@@ -267,6 +269,14 @@ public class OrganizationDetector implements Runnable {
 			updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, Boolean.TRUE);
 			throw e;
 		}
+	}
+
+	private void calculateStatistics() {
+		BasicDBObject query4CosSimilarityRequest = new BasicDBObject(
+				MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
+		StatisticCalculator statisticCalculator = new StatisticCalculator(requestId, requestIdObj,
+				query4CosSimilarityRequest);
+		statisticCalculator.calculateStatistics();
 	}
 
 	/**
@@ -373,9 +383,15 @@ public class OrganizationDetector implements Runnable {
 				domainUser.setWholeStatusesCount(twitter4jStatus.getUser().getStatusesCount());
 				// get user tweet data
 				UserTweets userTweet = new UserTweets();
-				if (twitter4jStatus.getText().toLowerCase(Locale.US).contains(tracedSingleHashtag)) {
-					userTweet.setHashtagTweet(true);
-					domainUser.incrementHashtagPostCount();
+				if (twitter4jStatus.getHashtagEntities() != null) {
+					HashtagEntity[] hashtagEntities = twitter4jStatus.getHashtagEntities();
+					for (HashtagEntity hashtagEntity : hashtagEntities) {
+						if (hashtagEntity.getText().equalsIgnoreCase(tracedSingleHashtag)) {
+							userTweet.setHashtagTweet(true);
+							domainUser.incrementHashtagPostCount();
+							break;
+						}
+					}
 				}
 				// check earliest tweet date
 				if (earliestTweetDate == null) {
