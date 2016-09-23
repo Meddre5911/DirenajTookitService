@@ -257,6 +257,8 @@ public class OrganizationDetector implements Runnable {
 				}
 			}
 			calculateTweetSimilarities();
+			
+			
 			changeRequestStatusInMongo(true);
 			// removePreProcessUsers();
 			Logger.getLogger(OrganizationDetector.class.getSimpleName())

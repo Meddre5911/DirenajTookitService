@@ -9,9 +9,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
 import org.apache.log4j.Logger;
 
+import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.Bytes;
 import com.mongodb.DBCollection;
@@ -21,21 +24,26 @@ import com.mongodb.DBObject;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.DirenajMongoDriverUtil;
 import direnaj.driver.MongoCollectionFieldNames;
+import direnaj.functionalities.organizedBehaviour.tasks.TweetSimilarityRangeCalculatorTask;
+import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.twitter.twitter4j.external.DrenajCampaignRecord;
 import direnaj.util.CosineSimilarityUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
+import twitter4j.Status;
 
 public class CosineSimilarity {
 
 	private String originalRequestId;
 	private List<CosineSimilarityRequestData> requestDataList;
+	private Gson statusDeserializer;
 
 	public CosineSimilarity(String requestId, boolean calculateGeneralSimilarity, boolean calculateHashTagSimilarity,
 			Date earliestTweetDate, Date latestTweetDate, String campaignId) throws Exception {
 		requestDataList = new ArrayList<>();
 		originalRequestId = requestId;
+		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 		// first assume as resume process
 		check4ExistingCosSimilarityCalculationRequests();
 
@@ -217,70 +225,53 @@ public class CosineSimilarity {
 				.get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
 		ArrayList<String> allTweetIds = (ArrayList<String>) requestTweetsShortInfoObject
 				.get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
-		ArrayList<String> allTweetIdsClone = (ArrayList<String>) allTweetIds.clone();
 		List<DBObject> tweetSimilarityWithOtherTweets = new ArrayList<>(
 				DirenajMongoDriver.getInstance().getBulkInsertSize());
 
 		Map<String, Double> similarityComparisonOfAllTweets = CosineSimilarityUtil.getEmptyMap4SimilarityDecisionTree();
 
-		for (String queryTweetId : allTweetIds) {
+		BasicDBObject tweetTFIdfQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
+				requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID,
+						new BasicDBObject("$in", allTweetIds));
+		DBCursor actualTweetCursor = DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityTF_IDF()
+				.find(tweetTFIdfQueryObj).batchSize(50).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+		try {
+			while (actualTweetCursor.hasNext()) {
+				DBObject tweetTfIdfValueObject = actualTweetCursor.next();
+				String actualTweetId = (String) tweetTfIdfValueObject.get(MongoCollectionFieldNames.MONGO_TWEET_ID);
+				String actualTweetRetweetId = (String) tweetTfIdfValueObject
+						.get(MongoCollectionFieldNames.MONGO_RETWEETED_TWEET_ID);
 
-			BasicDBObject queryTweetTFIdfQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
-					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, queryTweetId);
-			BasicDBObject tweetTfIdfValueObject = (BasicDBObject) DirenajMongoDriver.getInstance()
-					.getOrgBehaviourProcessCosSimilarityTF_IDF().findOne(queryTweetTFIdfQueryObj);
+				BasicDBObject tweetSimilarityObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
+						requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, actualTweetId);
 
-			if (Boolean.valueOf(
-					PropertiesUtil.getInstance().getProperty("tweet.calculateSimilarity.showTweetTexts", "false"))) {
-				String tweetText = DirenajMongoDriverUtil.getTweetText4CosSimilarity(Long.valueOf(queryTweetId));
-				queryTweetTFIdfQueryObj.put(MongoCollectionFieldNames.MONGO_TWEET_TEXT, tweetText);
+				tweetSimilarityObj.put(MongoCollectionFieldNames.MONGO_TWEET_TEXT,
+						tweetTfIdfValueObject.get(MongoCollectionFieldNames.MONGO_TWEET_TEXT));
+
+				ArrayList<String> queryTweetWords = (ArrayList<String>) tweetTfIdfValueObject
+						.get(MongoCollectionFieldNames.MONGO_TWEET_WORDS);
+				List<BasicDBObject> tfIdfList = (List<BasicDBObject>) tweetTfIdfValueObject
+						.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_LIST);
+				Map<String, Double> tweetWordTfIdfMap = (Map<String, Double>) tweetTfIdfValueObject
+						.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_HASHMAP);
+
+				Map<String, Double> similarityOfTweetWithOtherTweets = calculateTweetSimilarityRanges(
+						tweetTFIdfQueryObj, actualTweetId, actualTweetRetweetId, queryTweetWords, tfIdfList,
+						tweetWordTfIdfMap, allTweetIds, requestData.getRequestId());
+
+				tweetSimilarityObj.append(MongoCollectionFieldNames.MONGO_TWEET_SIMILARITY_WITH_OTHER_TWEETS,
+						similarityOfTweetWithOtherTweets);
+				CosineSimilarityUtil.addSimilarities2General(similarityComparisonOfAllTweets,
+						similarityOfTweetWithOtherTweets, allTweetCount);
+				tweetSimilarityWithOtherTweets.add(tweetSimilarityObj);
+				tweetSimilarityWithOtherTweets = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+						DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity(),
+						tweetSimilarityWithOtherTweets, false);
+
 			}
-			ArrayList<String> queryTweetWords = (ArrayList<String>) tweetTfIdfValueObject
-					.get(MongoCollectionFieldNames.MONGO_TWEET_WORDS);
-			List<BasicDBObject> tfIdfList = (List<BasicDBObject>) tweetTfIdfValueObject
-					.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_LIST);
-			Map<String, Double> tweetWordTfIdfMap = (Map<String, Double>) tweetTfIdfValueObject
-					.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_HASHMAP);
-			double tweetVectorLength = CosineSimilarityUtil.calculateVectorLength(tfIdfList);
-			Map<String, Double> similarityOfTweetWithOtherTweets = CosineSimilarityUtil
-					.getEmptyMap4SimilarityDecisionTree();
-			// get cursor for clone
-			for (String tweetId : allTweetIdsClone) {
-				// FIXME Burada 2 retweet tweet'i hiç karşılaştırmayacak şekilde
-				// bir logic koyalım
-				if (!queryTweetId.equals(tweetId)) {
-					Logger.getLogger(CosineSimilarity.class)
-							.trace("Comparing TweetId : " + queryTweetId + " to TweetId : " + tweetId);
-					BasicDBObject comparedTweetTFIdfValueObj = new BasicDBObject(
-							MongoCollectionFieldNames.MONGO_REQUEST_ID, requestData.getRequestId())
-									.append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
-					BasicDBObject queryTfIdfValues = (BasicDBObject) DirenajMongoDriver.getInstance()
-							.getOrgBehaviourProcessCosSimilarityTF_IDF().findOne(comparedTweetTFIdfValueObj);
-					List<BasicDBObject> comparedTfIdfList = (List<BasicDBObject>) queryTfIdfValues
-							.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_LIST);
-
-					Map<String, Double> comparedTweetWordTfIdfMap = (Map<String, Double>) queryTfIdfValues
-							.get(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_HASHMAP);
-
-					double comparedTweetVectorLength = CosineSimilarityUtil
-							.calculateVectorLengthBasedOnComparedWordList(queryTweetWords, comparedTfIdfList);
-					double dotProduct = CosineSimilarityUtil.calculateDotProduct(queryTweetWords, tweetWordTfIdfMap,
-							comparedTweetWordTfIdfMap);
-					Logger.getLogger(CosineSimilarity.class).trace("Dot Product is : " + dotProduct
-							+ " - comparedTweetVectorLength : " + comparedTweetVectorLength);
-					CosineSimilarityUtil.findTweetSimilarityRange(similarityOfTweetWithOtherTweets, dotProduct,
-							tweetVectorLength, comparedTweetVectorLength);
-				}
-			}
-			queryTweetTFIdfQueryObj.append(MongoCollectionFieldNames.MONGO_TWEET_SIMILARITY_WITH_OTHER_TWEETS,
-					similarityOfTweetWithOtherTweets);
-			CosineSimilarityUtil.addSimilarities2General(similarityComparisonOfAllTweets,
-					similarityOfTweetWithOtherTweets, allTweetCount);
-			tweetSimilarityWithOtherTweets.add(queryTweetTFIdfQueryObj);
-			tweetSimilarityWithOtherTweets = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
-					DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity(),
-					tweetSimilarityWithOtherTweets, false);
-
+		} finally {
+			if (actualTweetCursor != null)
+				actualTweetCursor.close();
 		}
 		DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
 				DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity(),
@@ -299,6 +290,54 @@ public class CosineSimilarity {
 		updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.MOST_SIMILAR,
 				similarityComparisonOfAllTweets.get(MongoCollectionFieldNames.MOST_SIMILAR));
 
+	}
+
+	private Map<String, Double> calculateTweetSimilarityRanges(BasicDBObject tweetTFIdfQueryObj, String actualTweetId,
+			String actualTweetRetweetId, ArrayList<String> queryTweetWords, List<BasicDBObject> tfIdfList,
+			Map<String, Double> tweetWordTfIdfMap, ArrayList<String> allTweetIds, String requestId) {
+		double tweetVectorLength = CosineSimilarityUtil.calculateVectorLength(tfIdfList);
+		Map<String, Double> similarityOfTweetWithOtherTweets = CosineSimilarityUtil
+				.getEmptyMap4SimilarityDecisionTree();
+
+		Integer twitter4jUserCount = PropertiesUtil.getInstance()
+				.getIntProperty("toolkit.cosSimilarity.multiThread.thresholdTweetCount", 100);
+		if (allTweetIds.size() < twitter4jUserCount) {
+			Logger.getLogger(CosineSimilarity.class).debug("Comparison will be done with single thread.");
+			CosineSimilarityUtil.calculateTweetSimilarityRangesInSingleThread(tweetTFIdfQueryObj, actualTweetId,
+					actualTweetRetweetId, queryTweetWords, tfIdfList, tweetWordTfIdfMap, tweetVectorLength,
+					similarityOfTweetWithOtherTweets);
+		} else {
+			Logger.getLogger(CosineSimilarity.class).debug("Comparison will be done in multi-thread.");
+			int oneThreadTweetSize2Compare = allTweetIds.size() / 4;
+			try {
+				CyclicBarrier barrier = new CyclicBarrier(5);
+				for (int i = 0; i < 4; i++) {
+					int subListUpperLimit = (i + 1) * oneThreadTweetSize2Compare;
+					if (i == 3) {
+						subListUpperLimit = allTweetIds.size();
+					}
+					List<String> subList = allTweetIds.subList(i * oneThreadTweetSize2Compare, subListUpperLimit);
+					BasicDBObject tweetTFIdfQueryObj4Thread = new BasicDBObject(
+							MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId).append(
+									MongoCollectionFieldNames.MONGO_TWEET_ID, new BasicDBObject("$in", subList));
+					TweetSimilarityRangeCalculatorTask tweetSimilarityRangeCalculatorTask = new TweetSimilarityRangeCalculatorTask(
+							barrier, tweetTFIdfQueryObj4Thread, actualTweetId, actualTweetRetweetId, queryTweetWords,
+							tfIdfList, tweetWordTfIdfMap, tweetVectorLength, similarityOfTweetWithOtherTweets);
+					Thread thread = new Thread(tweetSimilarityRangeCalculatorTask);
+					thread.start();
+					Logger.getLogger(CosineSimilarity.class).debug(
+							"Thread for TweetSimilarityRangeCalculatorTask is started. Thread Sequence is : " + i);
+				}
+				barrier.await();
+				Logger.getLogger(CosineSimilarity.class)
+						.debug("All Threads are finished calculations. Parent method resumes the execution.");
+			} catch (InterruptedException | BrokenBarrierException e) {
+				Logger.getLogger(CosineSimilarity.class).error(
+						"Exception is taken during execution of Parent Method of TweetSimilarityRangeCalculatorTask.",
+						e);
+			}
+		}
+		return similarityOfTweetWithOtherTweets;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -346,6 +385,22 @@ public class CosineSimilarity {
 			// get tf values for words in the tweet
 			DBObject tfQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 					requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID, tweetId);
+
+			// FIXME 20160922 burayıda bulk olacak şekilde değiştrelim
+			BasicDBObject query = new BasicDBObject("id", Long.valueOf(tweetId));
+			DBObject twitter4JStatusJSon = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().findOne(query);
+
+			// FIXME tweet'leri system.out'a yazmak istediğinde aç
+			// System.out.println(string + ",");
+
+			Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
+					twitter4JStatusJSon.toString());
+			String tweetText = twitter4jStatus.getText();
+			String retweetedTweetId = "";
+			if (twitter4jStatus.getRetweetedStatus() != null) {
+				retweetedTweetId = String.valueOf(twitter4jStatus.getRetweetedStatus().getId());
+			}
+
 			DBCursor wordTFValues = DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().find(tfQueryObj)
 					.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 			List<DBObject> wordTfIdfValuesList = new ArrayList<>(20);
@@ -374,6 +429,8 @@ public class CosineSimilarity {
 				tweetTFIdfValues.put(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_LIST, wordTfIdfValuesList);
 				tweetTFIdfValues.put(MongoCollectionFieldNames.MONGO_WORD_TF_IDF_HASHMAP, wordTfIdfHashMap);
 				tweetTFIdfValues.put(MongoCollectionFieldNames.MONGO_TWEET_WORDS, tweetWords);
+				tweetTFIdfValues.put(MongoCollectionFieldNames.MONGO_TWEET_TEXT, tweetText);
+				tweetTFIdfValues.put(MongoCollectionFieldNames.MONGO_RETWEETED_TWEET_ID, retweetedTweetId);
 				allTweetTFIdfValues.add(tweetTFIdfValues);
 				allTweetTFIdfValues = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
 						DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityTF_IDF(),

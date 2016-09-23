@@ -6,10 +6,11 @@ public interface MongoCollectionFieldNames {
 	public final static String MONGO_USER_ID = "userId";
 
 	public static final String MONGO_TWEET_ID = "tweetId";
+	public static final String MONGO_RETWEETED_TWEET_ID = "retweetedTweetId";
 	public static final String MONGO_TWEET_TEXT = "tweetText";
 	public static final String MONGO_IS_HASHTAG_TWEET = "isHashtagTweet";
 	public static final String MONGO_TWEET_CREATION_DATE = "tweetCreationDate";
-	
+
 	public static final String MONGO_TWEET_FOUND = "tweetFound";
 
 	public static final String MONGO_WORD = "word";
@@ -48,17 +49,17 @@ public interface MongoCollectionFieldNames {
 
 	public static final String MONGO_LATEST_TWEET_TIME = "latestTweetTimeInRequest";
 	public static final String MONGO_EARLIEST_TWEET_TIME = "earliestTweetTimeInRequest";
-	
+
 	// Cosine Similarity Requests
 	public static final String MONGO_RESUME_PROCESS = "resumeProcess";
 	public static final String MONGO_RESUME_BREAKPOINT = "resumeBreakPoint";
 	public static final String MONGO_GENARAL_SIMILARITY_CALCULATION = "calculateGeneralSimilarity";
 	public static final String MONGO_HASHTAG_SIMILARITY_CALCULATION = "calculateHashTagSimilarity";
 	public static final String MONGO_BYPASS_TWEET_COLLECTION = "bypassTweetCollection";
-	
+
 	// legacy direnaj
 	public static final String MONGO_CAMPAIGN_ID = "campaign_id";
-	
+
 	// campaign statistics
 	public static final String MONGO_CAMPAIGN_TOTAL_TWEET_COUNT = "totalTweetCount";
 	public static final String MONGO_CAMPAIGN_RETWEET_COUNT = "retweetedTweetCount";
@@ -69,7 +70,7 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT = "totalDistinctWordCount";
 	public static final String MONGO_CAMPAIGN_WORD_FREQUENCIES = "wordFrequencies";
 	public static final String MONGO_CAMPAIGN_HASHTAG_COUNTS = "hashTagCounts";
-	
+
 	// preprocess input data
 	public static final String MONGO_USER_CREATION_DATE = "creationDate";
 	public static final String MONGO_USER_CREATION_DATE_IN_RATA_DIE = "creationDateInRataDie";
@@ -86,7 +87,7 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_USER_THIRD_PARTY_DEVICE_RATIO = "postThirdPartyDeviceRatio";
 	public static final String MONGO_USER_PROTECTED = "isProtected";
 	public static final String MONGO_USER_VERIFIED = "isVerified";
-	
+
 	public static final String MONGO_USER_FAVORITE_COUNT = "favoriteCount";
 	public static final String MONGO_USER_STATUS_COUNT = "statusCount";
 	public static final String MONGO_USER_HASHTAG_POST_COUNT = "hashtagPostCount";
@@ -94,11 +95,5 @@ public interface MongoCollectionFieldNames {
 	// Cosine Similarity Request variables
 	public static final String MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME = "lowerTimeIntervalInRataDie";
 	public static final String MONGO_COS_SIM_REQ_ORG_REQUEST_ID = "originalRequestId";
-	
-	
-	
-	
-	
-	
-	
+
 }
