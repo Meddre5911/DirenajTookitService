@@ -92,7 +92,7 @@ function prepareGraphs(){
 	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart','userRatiosGraph','User Ratio Values','(%) Total User Percentage For Given Ratio');
 // 	prepareMultiLineUserRatiosGraph('visualizeUserPostDeviceRatios','userPostDevicesRatiosGraph','PostDeviceRatio');
 // 	prepareUserRatiosGraph('visualizeUserFriendFollowerRatio','userFriendFollowerRatiosGraph','friendFollowerRatio');
-	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart','userFriendFollowerRatiosGraph','Friend / Follower Ratio','(%) Percentage');
+	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart','userFriendFollowerRatiosGraph','Followers Count / Total Friend Follower Count','(%) Percentage');
 	
 	
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyEntityRatios','statusHourlyEntityRatios','Tweet Post Time Interval','Ratios');

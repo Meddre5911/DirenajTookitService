@@ -254,31 +254,16 @@ public class DateTimeUtils {
 
 	public static void main(String[] args) throws Exception {
 
-		Date twitterDate = DateTimeUtils.getTwitterDate("Wed Jan 13 04:33:39 EET 2010");
-		System.out.println("Offset : " + twitterDate.getTimezoneOffset() * 60000);
-		Date utcDateTime = DateTimeUtils.getUTCDateTimeWithOffset(twitterDate);
-
+//		String rataDie = "736005.928275463";
+//		System.out.println(DateTimeUtils.getTwitterDateFromRataDieFormat(rataDie));
+//		System.out.println(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie));
+//		System.out.println(DateTimeUtils.getUTCDateTimeStringInGenericFormat(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie)));
+		
+		
+		Date twitterDate2 = DateTimeUtils.getTwitterDate("Sat Sep 03 21:00:00 GMT 2016");
+		String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
+				DateTimeUtils.getUTCDateTime(twitterDate2));
 		System.out.println(twitterDate);
-		System.out.println(utcDateTime);
-
-		Date twitterDate2 = DateTimeUtils.getTwitterDate("Tue Aug 23 19:00:00 EEST 2016");
-
-		System.out.println(DateTimeUtils.getRataDieFormat4Date(twitterDate2));
-
-		String utcDateStr = DateTimeUtils.getUTCDateTimeStringInGenericFormat(twitterDate2);
-		System.out.println(utcDateStr);
-
-		Date utcDate = DateTimeUtils.getTwitterDate(utcDateStr);
-
-		System.out.println(utcDate);
-		System.out.println(DateTimeUtils.getRataDieFormat4Date(utcDate));
-
-		// DBCollection testCollection =
-		// DirenajMongoDriver.getInstance().getTestCollection();
-		// testCollection.insert(new
-		// BasicDBObject("twitterDate2",twitterDate2));
-		// testCollection.insert(new
-		// BasicDBObject("utcDateTime2",utcDateTime2));
 
 	}
 }

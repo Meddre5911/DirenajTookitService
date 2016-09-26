@@ -52,7 +52,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			BasicDBObject query4CosSimilarityRequest = new BasicDBObject(
 					MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
 			query4CosSimilarityRequest.put(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT,
-					new BasicDBObject("$gt", 1));
+					new BasicDBObject("$gt", 5));
 			if ("visualizeUserCreationTimes".equals(requestType)) {
 				visualizeUserCreationTimes(jsonArray, query);
 			} else if ("visualizeUserTweetEntityRatios".equals(requestType)) {
@@ -88,8 +88,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 
 			// FIXME 20160813 Sil
 			jsonStr = jsonArray.toString();
-//			System.out.println("Request Type : " + requestType);
-//			System.out.println("Returned String : " + jsonStr);
+			// System.out.println("Request Type : " + requestType);
+			// System.out.println("Returned String : " + jsonStr);
 		} catch (JSONException e) {
 			Logger.getLogger(MongoPaginationServlet.class)
 					.error("Error in OrganizedBehaviorCampaignVisualizer Servlet.", e);
@@ -145,7 +145,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		Map<String, Map<String, Double>> ratioValues = new HashMap<>();
 		// define limits
 		List<String> limits = new ArrayList<>();
-		limits.add("0-0.5");
+		limits.add("0");
+		limits.add("0.0001-0.5");
 		limits.add("0.6-0.9");
 		for (int i = 1; i <= 20; i++) {
 			limits.add(String.valueOf(i));
@@ -267,13 +268,14 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		String minCreationDateStr = String.valueOf(userCreationDateMeanVariance.get("min"));
 		String maxCreationDateStr = String.valueOf(userCreationDateMeanVariance.get("max"));
 
-		Date averageCreationDate = DateTimeUtils.getTwitterDateFromRataDieFormat(averageCreationDateStr);
-		Date minCreationDate = DateTimeUtils.getTwitterDateFromRataDieFormat(minCreationDateStr);
-		Date maxCreationDate = DateTimeUtils.getTwitterDateFromRataDieFormat(maxCreationDateStr);
+		Date averageCreationDate = DateTimeUtils.getUTCDateFromRataDieFormat(averageCreationDateStr);
+		Date minCreationDate = DateTimeUtils.getUTCDateFromRataDieFormat(minCreationDateStr);
+		Date maxCreationDate = DateTimeUtils.getUTCDateFromRataDieFormat(maxCreationDateStr);
 
-		userCreationDateMeanVariance.put("average", averageCreationDate);
-		userCreationDateMeanVariance.put("min", minCreationDate);
-		userCreationDateMeanVariance.put("max", maxCreationDate);
+		userCreationDateMeanVariance.put("average",
+				DateTimeUtils.getUTCDateTimeStringInGenericFormat(averageCreationDate));
+		userCreationDateMeanVariance.put("min", DateTimeUtils.getUTCDateTimeStringInGenericFormat(minCreationDate));
+		userCreationDateMeanVariance.put("max", DateTimeUtils.getUTCDateTimeStringInGenericFormat(maxCreationDate));
 
 		jsonArray.put(hashtagRatioMeanVariance.toMap());
 		jsonArray.put(urlRatioMeanVariance.toMap());
@@ -350,7 +352,6 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		return meanVarianceResult;
 	}
 
-	
 	private void visualizeUserCreationTimesInBarChart(JSONArray jsonArray, BasicDBObject query)
 			throws Exception, JSONException {
 		// get cursor
@@ -388,7 +389,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			// prepare json object
 			String twitterDateStr = (String) next.get("lowerTimeInterval");
 			String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
-					DateTimeUtils.getTwitterDate(twitterDateStr));
+					DateTimeUtils.getUTCDateTime(DateTimeUtils.getTwitterDate(twitterDateStr)));
 
 			jsonArray.put(new JSONObject().put("time", twitterDate)
 					.put(MongoCollectionFieldNames.NON_SIMILAR + " (90 Degree)",
@@ -421,7 +422,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			// prepare json object
 			String twitterDateStr = (String) next.get("lowerTimeInterval");
 			String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
-					DateTimeUtils.getTwitterDate(twitterDateStr));
+					DateTimeUtils.getUTCDateTime(DateTimeUtils.getTwitterDate(twitterDateStr)));
 			tweetCountsJsonArray.put(new JSONObject().put("time", twitterDate).put("value",
 					next.get(MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT)));
 			// prepare json object
@@ -454,7 +455,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			double mentionRatio = (double) next.get(MongoCollectionFieldNames.MONGO_MENTION_RATIO);
 
 			String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
-					DateTimeUtils.getTwitterDate(twitterDateStr));
+					DateTimeUtils.getUTCDateTime(DateTimeUtils.getTwitterDate(twitterDateStr)));
 
 			urlRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", urlRatio));
 			hashtagRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", hashtagRatio));
@@ -485,7 +486,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					(double) next.get(MongoCollectionFieldNames.MONGO_RETWEET_RATIO), 1) * 100d;
 
 			String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
-					DateTimeUtils.getTwitterDate(twitterDateStr));
+					DateTimeUtils.getUTCDateTime(DateTimeUtils.getTwitterDate(twitterDateStr)));
 
 			retweetRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", retweetRatio));
 		}
@@ -495,8 +496,6 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 
 	}
 
-
-
 	private void visualizeUserRoughTweetCountsInBarChart(JSONArray jsonArray, BasicDBObject query)
 			throws JSONException {
 
@@ -504,7 +503,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		// define limits
 		List<String> limits = new ArrayList<>();
 		// limits between 0 - 1000
-		int previous = 0;
+		limits.add("0");
+		int previous = 1;
 		for (int i = 100; i <= 1000; i = i + 100) {
 			limits.add(previous + "-" + i);
 			previous = i + 1;
