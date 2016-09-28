@@ -76,7 +76,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			} else if ("visualizeUserCreationTimesInBarChart".equals(requestType)) {
 				visualizeUserCreationTimesInBarChart(jsonArray, query, userPostCountWithHashtag);
 			} else if ("visualizeUserFriendFollowerRatioInBarChart".equals(requestType)) {
-				visualizeUserFriendFollowerRatioInBarChart(jsonArray, query, requestId);
+				visualizeUserFriendFollowerRatioInBarChart(jsonArray, query, requestId, userPostCountWithHashtag);
 			} else if ("visualizeUserRoughHashtagTweetCountsInBarChart".equals(requestType)) {
 				visualizeUserRoughHashtagTweetCountsInBarChart(jsonArray, query, requestId);
 			} else if ("visualizeUserTweetEntityRatiosInBarChart".equals(requestType)) {
@@ -217,14 +217,29 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		}
 	}
 
-	private void visualizeUserFriendFollowerRatioInBarChart(JSONArray jsonArray, BasicDBObject query, String requestId)
-			throws JSONException {
+	private void visualizeUserFriendFollowerRatioInBarChart(JSONArray jsonArray, BasicDBObject query, String requestId,
+			int userPostCountWithHashtag) throws JSONException {
+
+		// Collection initialization
+		List<String> limits = new ArrayList<>();
+		limits.add("0");
+		for (int i = 1; i <= 9; i++) {
+			limits.add("0." + i);
+		}
+		limits.add("1");
+		Map<Double, Double> ratioPercentages = new HashMap<>();
+		for (String limit : limits) {
+			ratioPercentages.put(Double.valueOf(limit), 0d);
+		}
+
 		// get cursor
+		query.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
+				new BasicDBObject("$gte", userPostCountWithHashtag));
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
 
 		// get objects from cursor
 		int userCount = 0;
-		Map<Double, Double> ratioPercentages = new HashMap<>();
+
 		while (paginatedResult.hasNext()) {
 			userCount++;
 			DBObject next = paginatedResult.next();
@@ -258,8 +273,11 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		getUserRatioMeanVariances(jsonArray, query, requestId, orgBehaviourProcessInputData, "_10");
 		getUserRatioMeanVariances(jsonArray, query, requestId, orgBehaviourProcessInputData, "_50");
 
-		DBObject friendFollowerRatioMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
-				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER");
+		getFriendFollowerRatioMeanVariances(jsonArray, query, requestId, orgBehaviourProcessInputData, "");
+		getFriendFollowerRatioMeanVariances(jsonArray, query, requestId, orgBehaviourProcessInputData, "_2");
+		getFriendFollowerRatioMeanVariances(jsonArray, query, requestId, orgBehaviourProcessInputData, "_10");
+		getFriendFollowerRatioMeanVariances(jsonArray, query, requestId, orgBehaviourProcessInputData, "_50");
+
 		DBObject userStatusCountMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
 				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER");
 		DBObject userFavoriteCountMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
@@ -276,7 +294,6 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		getUserCreationTimeMeanVariance(jsonArray, query, requestId, orgBehaviourProcessInputData,
 				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE + "_50");
 
-		jsonArray.put(friendFollowerRatioMeanVariance.toMap());
 		jsonArray.put(userStatusCountMeanVariance.toMap());
 		jsonArray.put(userFavoriteCountMeanVariance.toMap());
 		jsonArray.put(userHashtagPostCountMeanVariance.toMap());
@@ -323,6 +340,13 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		Logger.getLogger(MongoPaginationServlet.class)
 				.debug("getMeanVariance4All is finished for requestId : " + requestId);
 
+	}
+
+	private void getFriendFollowerRatioMeanVariances(JSONArray jsonArray, BasicDBObject query, String requestId,
+			DBCollection orgBehaviourProcessInputData, String userPostCount) {
+		DBObject friendFollowerRatioMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO + userPostCount, "USER");
+		jsonArray.put(friendFollowerRatioMeanVariance.toMap());
 	}
 
 	private void getUserRatioMeanVariances(JSONArray jsonArray, BasicDBObject query, String requestId,

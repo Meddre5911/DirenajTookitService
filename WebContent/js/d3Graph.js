@@ -992,6 +992,12 @@ function getMeanVariance(){
 		var mentionRatioMeanVariance_50 = '';
 		
 		var friendFollowerRatioMeanVariance = '';
+		var friendFollowerRatioMeanVariance_2 = '';
+		var friendFollowerRatioMeanVariance_10 = '';
+		var friendFollowerRatioMeanVariance_50 = '';
+		
+		
+		
 		var userFavoriteCountMeanVariance ='';
 		var userStatusCountMeanVariance = '';
 		var userHashtagPostCountMeanVariance = '';
@@ -1086,6 +1092,18 @@ function getMeanVariance(){
 			if(d.calculationType == "friendFollowerRatio" && d.calculationDomain == "USER"){
 				friendFollowerRatioMeanVariance = getHTMLStr4MeanVariance(d);
 			}
+			if(d.calculationType == "friendFollowerRatio_2" && d.calculationDomain == "USER"){
+				friendFollowerRatioMeanVariance_2 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "friendFollowerRatio_10" && d.calculationDomain == "USER"){
+				friendFollowerRatioMeanVariance_10 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "friendFollowerRatio_50" && d.calculationDomain == "USER"){
+				friendFollowerRatioMeanVariance_50 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			
+			
+			
 			if(d.calculationType == "favoriteCount" && d.calculationDomain == "USER"){
 				userFavoriteCountMeanVariance = getHTMLStr4MeanVariance(d);
 			}
@@ -1149,6 +1167,7 @@ function getMeanVariance(){
 						+ '</tr><tr>'
 						+ mentionRatioMeanVariance
 						+ '</tr></table>');
+		  
 		  d3.select("#userRatiosGraphMeanVariance_2").html(sumaryHtml+
 				  '<table><tr>'
 				  + hashtagRatioMeanVariance_2
@@ -1156,6 +1175,7 @@ function getMeanVariance(){
 				  + '</tr><tr>'
 				  + mentionRatioMeanVariance_2
 				  + '</tr></table>');
+		  
 		  d3.select("#userRatiosGraphMeanVariance_10").html(sumaryHtml+
 				  '<table><tr>'
 				  + hashtagRatioMeanVariance_10
@@ -1163,6 +1183,7 @@ function getMeanVariance(){
 				  + '</tr><tr>'
 				  + mentionRatioMeanVariance_10
 				  + '</tr></table>');
+		  
 		  d3.select("#userRatiosGraphMeanVariance_50").html(sumaryHtml+
 				  '<table><tr>'
 				  + hashtagRatioMeanVariance_50
@@ -1174,6 +1195,21 @@ function getMeanVariance(){
 		  d3.select("#friendFollowerRatiosMeanVariance").html(sumaryHtml+
 				 "<table><tr>"
 				  + friendFollowerRatioMeanVariance
+				  + "</tr></table>");
+		  
+		  d3.select("#friendFollowerRatiosMeanVariance_2").html(sumaryHtml+
+				  "<table><tr>"
+				  + friendFollowerRatioMeanVariance_2
+				  + "</tr></table>");
+		  
+		  d3.select("#friendFollowerRatiosMeanVariance_10").html(sumaryHtml+
+				  "<table><tr>"
+				  + friendFollowerRatioMeanVariance_10
+				  + "</tr></table>");
+		  
+		  d3.select("#friendFollowerRatiosMeanVariance_50").html(sumaryHtml+
+				  "<table><tr>"
+				  + friendFollowerRatioMeanVariance_50
 				  + "</tr></table>");
 		  
 		  d3.select("#userRoughTweetCountsMeanVariance").html(sumaryHtml+

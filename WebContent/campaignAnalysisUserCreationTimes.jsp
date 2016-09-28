@@ -100,7 +100,11 @@ function prepareGraphs(){
 
 	// 	prepareMultiLineUserRatiosGraph('visualizeUserPostDeviceRatios','userPostDevicesRatiosGraph','PostDeviceRatio');
 // 	prepareUserRatiosGraph('visualizeUserFriendFollowerRatio','userFriendFollowerRatiosGraph','friendFollowerRatio');
-	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart','userFriendFollowerRatiosGraph','Followers Count / Total Friend Follower Count','(%) Percentage');
+	
+	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart&userHashtagPostCount=0','userFriendFollowerRatiosGraph','Followers Count / Total Friend Follower Count','(%) Percentage');
+	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart&userHashtagPostCount=2','userFriendFollowerRatiosGraph_2','Followers Count / Total Friend Follower Count','(%) Percentage');
+	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart&userHashtagPostCount=10','userFriendFollowerRatiosGraph_10','Followers Count / Total Friend Follower Count','(%) Percentage');
+	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart&userHashtagPostCount=50','userFriendFollowerRatiosGraph_50','Followers Count / Total Friend Follower Count','(%) Percentage');
 	
 	
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyEntityRatios','statusHourlyEntityRatios','Tweet Post Time Interval','Ratios');
@@ -208,13 +212,15 @@ function prepareGraphs(){
 </div>
 
 <div class="divTableRow">
-<div id="userRatiosGraphMeanVariance50" class="divTableCell">
+<div id="userRatiosGraphMeanVariance_50" class="divTableCell">
 </div>
 </div>
 
 <div class="divTableRow">
 <!-- <div id="userPostDevicesRatiosGraph" class="divTableCell"><b><big>Post Device Ratios of Users :</big></b> <br></div> -->
 </div>
+
+
 <div class="divTableRow">
 <div id="userFriendFollowerRatiosGraph" class="divTableCell"><b><big>Friend Follower Ratios of Users :</big></b> <br></div>
 </div>
@@ -223,6 +229,43 @@ function prepareGraphs(){
 <div id="friendFollowerRatiosMeanVariance" class="divTableCell">
 </div>
 </div>
+
+<div class="divTableRow">
+<div id="userFriendFollowerRatiosGraph_2" class="divTableCell"><b><big>Friend Follower Ratios of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="friendFollowerRatiosMeanVariance_2" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userFriendFollowerRatiosGraph_10" class="divTableCell"><b><big>Friend Follower Ratios of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="friendFollowerRatiosMeanVariance_10" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userFriendFollowerRatiosGraph_50" class="divTableCell"><b><big>Friend Follower Ratios of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="friendFollowerRatiosMeanVariance_50" class="divTableCell">
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
 
 <div class="divTableRow">
 <div id="userRoughTweetCountsGraph" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users :</big></b> <br></div>
