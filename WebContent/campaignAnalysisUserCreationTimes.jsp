@@ -109,7 +109,11 @@ function prepareGraphs(){
 	
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyEntityRatios','statusHourlyEntityRatios','Tweet Post Time Interval','Ratios');
 	
-	prepareGroupedBarChart('visualizeUserRoughTweetCountsInBarChart','userRoughTweetCountsGraph','Tweet Count','(%) Total User Percentage For Given Tweet Count');
+	prepareGroupedBarChart('visualizeUserRoughTweetCountsInBarChart&userHashtagPostCount=0','userRoughTweetCountsGraph','Tweet Count','(%) Total User Percentage For Given Tweet Count');
+	prepareGroupedBarChart('visualizeUserRoughTweetCountsInBarChart&userHashtagPostCount=2','userRoughTweetCountsGraph_2','Tweet Count','(%) Total User Percentage For Given Tweet Count');
+	prepareGroupedBarChart('visualizeUserRoughTweetCountsInBarChart&userHashtagPostCount=10','userRoughTweetCountsGraph_10','Tweet Count','(%) Total User Percentage For Given Tweet Count');
+	prepareGroupedBarChart('visualizeUserRoughTweetCountsInBarChart&userHashtagPostCount=50','userRoughTweetCountsGraph_50','Tweet Count','(%) Total User Percentage For Given Tweet Count');
+	
 	prepareUserRatiosGraphInBarChart('visualizeUserRoughHashtagTweetCountsInBarChart','userHashtagCountsGraph','Post Counts With Given Hashtag','(%) Percentage of User Based on Their Post Counts With Given Hashtag');
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyUserAndTweetCount','hourlyUserAndTweetCountGraph','Tweet Post Time','Tweet / User Count');
 	prepareSingleLineUserRatiosGraphForAllSimilarites('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
@@ -276,6 +280,38 @@ function prepareGraphs(){
 
 </div>
 </div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsGraph_2" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsMeanVariance_2" class="divTableCell">
+
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsGraph_10" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsMeanVariance_10" class="divTableCell">
+
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsGraph_50" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsMeanVariance_50" class="divTableCell">
+
+</div>
+</div>
+
+
 
 <div class="divTableRow">
 <div id="userHashtagCountsGraph" class="divTableCell"><b><big>Post Counts of Users with Campaign Hashtag :</big></b> <br></div>

@@ -1000,6 +1000,18 @@ function getMeanVariance(){
 		
 		var userFavoriteCountMeanVariance ='';
 		var userStatusCountMeanVariance = '';
+		
+		var userFavoriteCountMeanVariance_2 ='';
+		var userStatusCountMeanVariance_2 = '';
+		
+		var userFavoriteCountMeanVariance_10 ='';
+		var userStatusCountMeanVariance_10 = '';
+		
+		var userFavoriteCountMeanVariance_50 ='';
+		var userStatusCountMeanVariance_50 = '';
+		
+		
+		
 		var userHashtagPostCountMeanVariance = '';
 		var userCreationDateMeanVariance = '';
 		var userCreationDateMeanVariance_2 = '';
@@ -1110,6 +1122,30 @@ function getMeanVariance(){
 			if(d.calculationType == "statusCount" && d.calculationDomain == "USER"){
 				userStatusCountMeanVariance = getHTMLStr4MeanVariance(d);
 			}
+			
+			if(d.calculationType == "favoriteCount_2" && d.calculationDomain == "USER"){
+				userFavoriteCountMeanVariance_2 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "statusCount_2" && d.calculationDomain == "USER"){
+				userStatusCountMeanVariance_2 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			
+			if(d.calculationType == "favoriteCount_10" && d.calculationDomain == "USER"){
+				userFavoriteCountMeanVariance_10 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "statusCount_10" && d.calculationDomain == "USER"){
+				userStatusCountMeanVariance_10 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			
+			if(d.calculationType == "favoriteCount_50" && d.calculationDomain == "USER"){
+				userFavoriteCountMeanVariance_50 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "statusCount_50" && d.calculationDomain == "USER"){
+				userStatusCountMeanVariance_50 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			
+			
+			
 			if(d.calculationType == "hashtagPostCount" && d.calculationDomain == "USER"){
 				userHashtagPostCountMeanVariance = getHTMLStr4MeanVariance(d);
 			}
@@ -1217,6 +1253,24 @@ function getMeanVariance(){
 					+ userFavoriteCountMeanVariance
 					+ "</tr><tr>" + userStatusCountMeanVariance
 					+ "</tr></table>");
+		  
+		  d3.select("#userRoughTweetCountsMeanVariance_2").html(sumaryHtml+
+				  "<table><tr>"
+				  + userFavoriteCountMeanVariance_2
+				  + "</tr><tr>" + userStatusCountMeanVariance_2
+				  + "</tr></table>");
+		  
+		  d3.select("#userRoughTweetCountsMeanVariance_10").html(sumaryHtml+
+				  "<table><tr>"
+				  + userFavoriteCountMeanVariance_10
+				  + "</tr><tr>" + userStatusCountMeanVariance_10
+				  + "</tr></table>");
+		  
+		  d3.select("#userRoughTweetCountsMeanVariance_50").html(sumaryHtml+
+				  "<table><tr>"
+				  + userFavoriteCountMeanVariance_50
+				  + "</tr><tr>" + userStatusCountMeanVariance_50
+				  + "</tr></table>");
 		  
 		  
 		  d3.select("#userHashtagPostCountMeanVariance").html(sumaryHtml+

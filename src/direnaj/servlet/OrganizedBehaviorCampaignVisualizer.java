@@ -67,7 +67,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			} else if ("visualizeUserPostDeviceRatios".equals(requestType)) {
 				visualizeUserPostDeviceRatios(jsonArray, query);
 			} else if ("visualizeUserRoughTweetCountsInBarChart".equals(requestType)) {
-				visualizeUserRoughTweetCountsInBarChart(jsonArray, query);
+				visualizeUserRoughTweetCountsInBarChart(jsonArray, query,userPostCountWithHashtag);
 			} else if ("visualizeHourlyUserAndTweetCount".equals(requestType)) {
 				query4CosSimilarityRequest.remove(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
 				visualizeHourlyUserAndTweetCount(jsonArray, query4CosSimilarityRequest);
@@ -91,8 +91,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 
 			// FIXME 20160813 Sil
 			jsonStr = jsonArray.toString();
-			System.out.println("Request Type : " + requestType);
-			System.out.println("Returned String : " + jsonStr);
+//			System.out.println("Request Type : " + requestType);
+//			System.out.println("Returned String : " + jsonStr);
 		} catch (JSONException e) {
 			Logger.getLogger(MongoPaginationServlet.class)
 					.error("Error in OrganizedBehaviorCampaignVisualizer Servlet.", e);
@@ -278,12 +278,15 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		getFriendFollowerRatioMeanVariances(jsonArray, query, requestId, orgBehaviourProcessInputData, "_10");
 		getFriendFollowerRatioMeanVariances(jsonArray, query, requestId, orgBehaviourProcessInputData, "_50");
 
-		DBObject userStatusCountMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
-				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER");
-		DBObject userFavoriteCountMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
-				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, "USER");
-		DBObject userHashtagPostCountMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
-				MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT, "USER");
+		getRougtTweetCountsMeanVariance(jsonArray, query, requestId, orgBehaviourProcessInputData,"");
+		getRougtTweetCountsMeanVariance(jsonArray, query, requestId, orgBehaviourProcessInputData,"_2");
+		getRougtTweetCountsMeanVariance(jsonArray, query, requestId, orgBehaviourProcessInputData,"_10");
+		getRougtTweetCountsMeanVariance(jsonArray, query, requestId, orgBehaviourProcessInputData,"_50");
+		
+		
+		
+		
+
 
 		getUserCreationTimeMeanVariance(jsonArray, query, requestId, orgBehaviourProcessInputData,
 				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE);
@@ -294,8 +297,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		getUserCreationTimeMeanVariance(jsonArray, query, requestId, orgBehaviourProcessInputData,
 				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE + "_50");
 
-		jsonArray.put(userStatusCountMeanVariance.toMap());
-		jsonArray.put(userFavoriteCountMeanVariance.toMap());
+		DBObject userHashtagPostCountMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT, "USER");
 		jsonArray.put(userHashtagPostCountMeanVariance.toMap());
 
 		// get cos similarity ratios
@@ -340,6 +343,16 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		Logger.getLogger(MongoPaginationServlet.class)
 				.debug("getMeanVariance4All is finished for requestId : " + requestId);
 
+	}
+
+	private void getRougtTweetCountsMeanVariance(JSONArray jsonArray, BasicDBObject query, String requestId,
+			DBCollection orgBehaviourProcessInputData, String userPostCount) {
+		DBObject userStatusCountMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT+ userPostCount, "USER");
+		DBObject userFavoriteCountMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT+ userPostCount, "USER");
+		jsonArray.put(userStatusCountMeanVariance.toMap());
+		jsonArray.put(userFavoriteCountMeanVariance.toMap());
 	}
 
 	private void getFriendFollowerRatioMeanVariances(JSONArray jsonArray, BasicDBObject query, String requestId,
@@ -575,7 +588,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 
 	}
 
-	private void visualizeUserRoughTweetCountsInBarChart(JSONArray jsonArray, BasicDBObject query)
+	private void visualizeUserRoughTweetCountsInBarChart(JSONArray jsonArray, BasicDBObject query, int userPostCountWithHashtag)
 			throws JSONException {
 
 		Map<String, Map<String, Double>> ratioValues = new HashMap<>();
@@ -615,6 +628,9 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		}
 
 		// get cursor
+		// get cursor
+		query.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
+				new BasicDBObject("$gte", userPostCountWithHashtag));
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
 		// get objects from cursor
 		int userCount = 0;

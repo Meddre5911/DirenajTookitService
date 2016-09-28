@@ -53,18 +53,15 @@ public class StatisticCalculator {
 
 		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
 
-		calculateUserRatios(query4UsersHave2AndMorePosts,query4UsersHave10AndMorePosts, query4UsersHave50AndMorePosts, orgBehaviourProcessInputData);
+		calculateUserRatios(query4UsersHave2AndMorePosts, query4UsersHave10AndMorePosts, query4UsersHave50AndMorePosts,
+				orgBehaviourProcessInputData);
 
 		calculateFriendFollowerRatios(query4UsersHave2AndMorePosts, query4UsersHave10AndMorePosts,
 				query4UsersHave50AndMorePosts, orgBehaviourProcessInputData);
-		
-		
-		
-		
-		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER", null);
-		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, "USER", null);
+
+		calculateRouthTweetCountsMeanVariance(query4UsersHave2AndMorePosts, query4UsersHave10AndMorePosts,
+				query4UsersHave50AndMorePosts, orgBehaviourProcessInputData);
+
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
 				MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT, "USER", null);
 
@@ -98,17 +95,50 @@ public class StatisticCalculator {
 
 	}
 
+	private void calculateRouthTweetCountsMeanVariance(DBObject query4UsersHave2AndMorePosts,
+			DBObject query4UsersHave10AndMorePosts, DBObject query4UsersHave50AndMorePosts,
+			DBCollection orgBehaviourProcessInputData) {
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER", null);
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, "USER", null);
+
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave2AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER",
+				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT + "_2");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave2AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, "USER",
+				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT + "_2");
+
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER",
+				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT + "_10");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, "USER",
+				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT + "_10");
+
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave50AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER",
+				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT + "_50");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave50AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, "USER",
+				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT + "_50");
+	}
+
 	private void calculateFriendFollowerRatios(DBObject query4UsersHave2AndMorePosts,
 			DBObject query4UsersHave10AndMorePosts, DBObject query4UsersHave50AndMorePosts,
 			DBCollection orgBehaviourProcessInputData) {
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
 				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER", null);
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave2AndMorePosts, requestId,
-				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER", MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO+"_2");
+				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO + "_2");
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
-				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER", MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO+"_10");
+				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO + "_10");
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave50AndMorePosts, requestId,
-				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER", MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO+"_50");
+				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO + "_50");
 	}
 
 	private void calculateUserCreationDates(DBObject query4UsersHave2AndMorePosts,
@@ -128,8 +158,8 @@ public class StatisticCalculator {
 				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE + "_50");
 	}
 
-	private void calculateUserRatios(DBObject query4UsersHave2AndMorePosts,DBObject query4UsersHave10AndMorePosts, DBObject query4UsersHave50AndMorePosts,
-			 DBCollection orgBehaviourProcessInputData) {
+	private void calculateUserRatios(DBObject query4UsersHave2AndMorePosts, DBObject query4UsersHave10AndMorePosts,
+			DBObject query4UsersHave50AndMorePosts, DBCollection orgBehaviourProcessInputData) {
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
 				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "USER", null);
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
