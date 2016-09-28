@@ -94,8 +94,6 @@ public class DirenajMongoDriverUtil {
 						.debug("TWEET_COLLECTION_COMPLETED phase unnecessary data is removed");
 				break;
 			case USER_ANALYZE_COMPLETED:
-				break;
-			case STATISCTIC_CALCULATED:
 				DBObject updateQuery = new BasicDBObject();
 				updateQuery.put("originalRequestId", requestId);
 				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
@@ -116,8 +114,9 @@ public class DirenajMongoDriverUtil {
 
 				DirenajMongoDriver.getInstance().getOrgBehaviourRequestMeanVarianceCalculations().remove(requestObj);
 				Logger.getLogger(DirenajMongoDriverUtil.class)
-						.debug("STATISCTIC_CALCULATED phase unnecessary data is removed");
-
+						.debug("USER_ANALYZE_COMPLETED phase unnecessary data is removed");
+				break;
+			case STATISCTIC_CALCULATED:
 			default:
 			}
 

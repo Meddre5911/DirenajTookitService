@@ -974,14 +974,31 @@ function getMeanVariance(){
 		if (error) throw error;
 	   
 		var userCount ='';
+		
 		var hashtagRatioMeanVariance = '';
 		var urlRatioMeanVariance = '';
 		var mentionRatioMeanVariance = '';
+		
+		var hashtagRatioMeanVariance_2 = '';
+		var urlRatioMeanVariance_2 = '';
+		var mentionRatioMeanVariance_2 = '';
+		
+		var hashtagRatioMeanVariance_10 = '';
+		var urlRatioMeanVariance_10 = '';
+		var mentionRatioMeanVariance_10 = '';
+		
+		var hashtagRatioMeanVariance_50 = '';
+		var urlRatioMeanVariance_50 = '';
+		var mentionRatioMeanVariance_50 = '';
+		
 		var friendFollowerRatioMeanVariance = '';
 		var userFavoriteCountMeanVariance ='';
 		var userStatusCountMeanVariance = '';
 		var userHashtagPostCountMeanVariance = '';
 		var userCreationDateMeanVariance = '';
+		var userCreationDateMeanVariance_2 = '';
+		var userCreationDateMeanVariance_10 = '';
+		var userCreationDateMeanVariance_50 = '';
 		
 		
 		var mostSimilarTweetsMeanVariance = '';
@@ -997,12 +1014,27 @@ function getMeanVariance(){
 		var hourlyTweetUserCountRatio = '';
 		
 		  data.forEach(function(d) {
-			if(d.calculationType == "hashtagRatio" && d.calculationDomain == "USER"){
-				hashtagRatioMeanVariance = getHTMLStr4MeanVariance(d);
-				userCount = d.count;
-			}
+				if(d.calculationType == "hashtagRatio" && d.calculationDomain == "USER"){
+					userCount = d.count;
+				}
+		  });
+		
+		  data.forEach(function(d) {
 			if(d.calculationType == "creationDateInRataDie" && d.calculationDomain == "USER"){
 				userCreationDateMeanVariance = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "creationDateInRataDie_2" && d.calculationDomain == "USER"){
+				userCreationDateMeanVariance_2 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "creationDateInRataDie_10" && d.calculationDomain == "USER"){
+				userCreationDateMeanVariance_10 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "creationDateInRataDie_50" && d.calculationDomain == "USER"){
+				userCreationDateMeanVariance_50 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			
+			if(d.calculationType == "hashtagRatio" && d.calculationDomain == "USER"){
+				hashtagRatioMeanVariance = getHTMLStr4MeanVariance(d);
 			}
 			if(d.calculationType == "urlRatio" && d.calculationDomain == "USER"){
 				urlRatioMeanVariance = getHTMLStr4MeanVariance(d);
@@ -1010,6 +1042,47 @@ function getMeanVariance(){
 			if(d.calculationType == "mentionRatio" && d.calculationDomain == "USER"){
 				mentionRatioMeanVariance = getHTMLStr4MeanVariance(d);
 			}
+			
+			
+			if(d.calculationType == "hashtagRatio_2" && d.calculationDomain == "USER"){
+				hashtagRatioMeanVariance_2 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "urlRatio_2" && d.calculationDomain == "USER"){
+				urlRatioMeanVariance_2 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "mentionRatio_2" && d.calculationDomain == "USER"){
+				mentionRatioMeanVariance_2 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			
+			
+			if(d.calculationType == "hashtagRatio_10" && d.calculationDomain == "USER"){
+				hashtagRatioMeanVariance_10 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "urlRatio_10" && d.calculationDomain == "USER"){
+				urlRatioMeanVariance_10 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "mentionRatio_10" && d.calculationDomain == "USER"){
+				mentionRatioMeanVariance_10 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			
+			
+			if(d.calculationType == "hashtagRatio_50" && d.calculationDomain == "USER"){
+				hashtagRatioMeanVariance_50 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "urlRatio_50" && d.calculationDomain == "USER"){
+				urlRatioMeanVariance_50 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "mentionRatio_50" && d.calculationDomain == "USER"){
+				mentionRatioMeanVariance_50 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			
+			
+			
+			
+			
+			
+			
+			
 			if(d.calculationType == "friendFollowerRatio" && d.calculationDomain == "USER"){
 				friendFollowerRatioMeanVariance = getHTMLStr4MeanVariance(d);
 			}
@@ -1076,6 +1149,27 @@ function getMeanVariance(){
 						+ '</tr><tr>'
 						+ mentionRatioMeanVariance
 						+ '</tr></table>');
+		  d3.select("#userRatiosGraphMeanVariance_2").html(sumaryHtml+
+				  '<table><tr>'
+				  + hashtagRatioMeanVariance_2
+				  + '</tr><tr>' + urlRatioMeanVariance_2
+				  + '</tr><tr>'
+				  + mentionRatioMeanVariance_2
+				  + '</tr></table>');
+		  d3.select("#userRatiosGraphMeanVariance_10").html(sumaryHtml+
+				  '<table><tr>'
+				  + hashtagRatioMeanVariance_10
+				  + '</tr><tr>' + urlRatioMeanVariance_10
+				  + '</tr><tr>'
+				  + mentionRatioMeanVariance_10
+				  + '</tr></table>');
+		  d3.select("#userRatiosGraphMeanVariance_50").html(sumaryHtml+
+				  '<table><tr>'
+				  + hashtagRatioMeanVariance_50
+				  + '</tr><tr>' + urlRatioMeanVariance_50
+				  + '</tr><tr>'
+				  + mentionRatioMeanVariance_50
+				  + '</tr></table>');
 		  
 		  d3.select("#friendFollowerRatiosMeanVariance").html(sumaryHtml+
 				 "<table><tr>"
@@ -1129,6 +1223,15 @@ function getMeanVariance(){
 		  d3.select("#userCreationDateMeanVariance").html(sumaryHtml + "<table><tr>"
 				  + userCreationDateMeanVariance
 				  + "</tr></table>");
+		  d3.select("#userCreationDateMeanVariance_2").html(sumaryHtml + "<table><tr>"
+				  + userCreationDateMeanVariance_2
+				  + "</tr></table>");
+		  d3.select("#userCreationDateMeanVariance_10").html(sumaryHtml + "<table><tr>"
+				  + userCreationDateMeanVariance_10
+				  + "</tr></table>");
+		  d3.select("#userCreationDateMeanVariance_50").html(sumaryHtml + "<table><tr>"
+				  + userCreationDateMeanVariance_50
+				  + "</tr></table>");
 	});
 		
 	    
@@ -1142,7 +1245,7 @@ function getMeanVariance(){
 //			+ d.min + " - <b> Max Value : </b>" + d.max + "<br>";
 //}
 function getHTMLStr4MeanVariance(d) {
-	return '<td><b>' + d.calculationType
+	var str = '<td><b>' + d.calculationType
 			+ ' Analysis : </b> '
 			+ '</td><td><b> Mean : </b>' + d.average
 			+ '</td><td><b> Variance : </b>' + d.population_variance
@@ -1150,6 +1253,23 @@ function getHTMLStr4MeanVariance(d) {
 			+ d.population_standard_deviation
 			+ ' </td><td> <b> Min Value : </b>' + d.min
 			+ ' </td><td> <b> Max Value : </b>' + d.max + '<br></td>';
+	return str;
+}
+function getHTMLStr4MeanVarianceUserCount(d, userCount) {
+	var str = '<td><b>' + d.calculationType + ' Analysis : </b> '
+			+ '</td><td><b> Mean : </b>' + d.average
+			+ '</td><td><b> Variance : </b>' + d.population_variance
+			+ ' </td><td><b> Standard Deviation </b> : '
+			+ d.population_standard_deviation
+			+ ' </td><td> <b> Min Value : </b>' + d.min
+			+ ' </td><td> <b> Max Value : </b>' + d.max + '<br></td>';
+	if (d.calculationDomain == "USER") {
+		str += ' <td> <b> User Count In Analysis : </b>' + d.count
+				+ '<br></td>';
+		str += ' <td> <b> Percentage of Users : </b> %' + ((d.count * 100)/ userCount).toFixed(2) + '<br></td>';
+	}
+
+	return str;
 }
 
 

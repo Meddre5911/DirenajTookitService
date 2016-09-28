@@ -32,11 +32,17 @@ public class NumberUtils {
 	public static double roundDouble(double number) {
 		return roundDouble(2, number);
 	}
-	
-	
-	
+
+	public static int getInt(String value) {
+		try {
+			return Integer.valueOf(value);
+		} catch (Exception e) {
+			return 0;
+		}
+	}
+
 	public static void main(String[] args) {
 		double d = 0.9d;
-		System.out.println(NumberUtils.roundDouble(0,d));
+		System.out.println(NumberUtils.roundDouble(0, d));
 	}
 }

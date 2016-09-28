@@ -15,6 +15,7 @@ import direnaj.driver.DirenajMongoDriverUtil;
 import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.util.NumberUtils;
+import direnaj.util.TextUtils;
 import twitter4j.Status;
 
 public class StatisticCalculator {
@@ -39,49 +40,112 @@ public class StatisticCalculator {
 	}
 
 	private void calculateMeanVariance4All() {
+
+		DBObject query4UsersHave2AndMorePosts = new BasicDBObject("requestId", requestId);
+		query4UsersHave2AndMorePosts.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
+				new BasicDBObject("$gte", 2));
+		DBObject query4UsersHave10AndMorePosts = new BasicDBObject("requestId", requestId);
+		query4UsersHave10AndMorePosts.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
+				new BasicDBObject("$gte", 10));
+		DBObject query4UsersHave50AndMorePosts = new BasicDBObject("requestId", requestId);
+		query4UsersHave50AndMorePosts.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
+				new BasicDBObject("$gte", 50));
+
 		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
+
+		calculateUserRatios(query4UsersHave10AndMorePosts, query4UsersHave50AndMorePosts, orgBehaviourProcessInputData);
+
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "USER");
+				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER", null);
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_URL_RATIO, "USER");
+				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER", null);
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "USER");
+				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, "USER", null);
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER");
-		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER");
-		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, "USER");
-		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT, "USER");
-		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE, "USER");
+				MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT, "USER", null);
+
+		calculateUserCreationDates(query4UsersHave2AndMorePosts, query4UsersHave10AndMorePosts,
+				query4UsersHave50AndMorePosts, orgBehaviourProcessInputData);
 
 		// get cos similarity ratios
 		DBCollection orgBehaviourRequestedSimilarityCalculations = DirenajMongoDriver.getInstance()
 				.getOrgBehaviourRequestedSimilarityCalculations();
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "COS_SIM");
+				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "COS_SIM");
+				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.MONGO_URL_RATIO, "COS_SIM");
+				MongoCollectionFieldNames.MONGO_URL_RATIO, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.MONGO_RETWEET_RATIO, "COS_SIM");
+				MongoCollectionFieldNames.MONGO_RETWEET_RATIO, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT_DISTINCT_USER_RATIO, "COS_SIM");
+				MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT_DISTINCT_USER_RATIO, "COS_SIM", null);
 		// tweet similarity
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.MOST_SIMILAR, "COS_SIM");
+				MongoCollectionFieldNames.MOST_SIMILAR, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.VERY_SIMILAR, "COS_SIM");
+				MongoCollectionFieldNames.VERY_SIMILAR, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.SIMILAR, "COS_SIM");
+				MongoCollectionFieldNames.SIMILAR, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.SLIGHTLY_SIMILAR, "COS_SIM");
+				MongoCollectionFieldNames.SLIGHTLY_SIMILAR, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.NON_SIMILAR, "COS_SIM");
+				MongoCollectionFieldNames.NON_SIMILAR, "COS_SIM", null);
 
+	}
+
+	private void calculateUserCreationDates(DBObject query4UsersHave2AndMorePosts,
+			DBObject query4UsersHave10AndMorePosts, DBObject query4UsersHave50AndMorePosts,
+			DBCollection orgBehaviourProcessInputData) {
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE, "USER", null);
+		// for users with multiple posts
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave2AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE, "USER",
+				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE + "_2");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE, "USER",
+				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE + "_10");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave50AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE, "USER",
+				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE + "_50");
+	}
+
+	private void calculateUserRatios(DBObject query4UsersHave10AndMorePosts, DBObject query4UsersHave50AndMorePosts,
+			DBCollection orgBehaviourProcessInputData) {
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "USER", null);
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_URL_RATIO, "USER", null);
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "USER", null);
+
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO + "_2");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_URL_RATIO, "USER", MongoCollectionFieldNames.MONGO_URL_RATIO + "_2");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_MENTION_RATIO + "_2");
+
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO + "_10");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_URL_RATIO, "USER", MongoCollectionFieldNames.MONGO_URL_RATIO + "_10");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_MENTION_RATIO + "_10");
+
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave50AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO + "_50");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave50AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_URL_RATIO, "USER", MongoCollectionFieldNames.MONGO_URL_RATIO + "_50");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave50AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_MENTION_RATIO + "_50");
 	}
 
 	private void calculateHourlyEntityRatio() {
@@ -165,7 +229,11 @@ public class StatisticCalculator {
 	}
 
 	private void calculateMeanVariance(DBCollection collection, DBObject query, String requestId,
-			String calculationField, String calculationDomain) {
+			String calculationField, String calculationDomain, String reduceCalculationType) {
+
+		if (TextUtils.isEmpty(reduceCalculationType)) {
+			reduceCalculationType = calculationField;
+		}
 
 		String mapFunction = "function map(){" //
 				+ "emit(1, {" //
@@ -191,7 +259,7 @@ public class StatisticCalculator {
 				+ "})" //
 				+ "}"; //
 
-		if (MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE.equals(calculationField)) {
+		if (calculationField.startsWith(MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE)) {
 
 			reduceFunction = "function reduce(key, values){" //
 					+ "return values.reduce(function reduce(previous, current, index, array) {" //
@@ -209,13 +277,22 @@ public class StatisticCalculator {
 		}
 
 		String finalizeFunction = "function finalize(key, value){" //
+
+				+ "if(isNaN(value.diff / (value.count - 1))){" //
+				+ "value.sample_variance = 0;" //
+				+ "value.sample_standard_deviation = 0;" //
+				+ "value.average = 0;" //
+				+ "value.population_variance = 0;" //
+				+ "value.population_standard_deviation = 0;"//
+				+ "} else {" //
 				+ "value.average = (value.sum / value.count).toFixed(2);" //
 				+ "value.population_variance = (value.diff / value.count).toFixed(2);" //
-				+ "value.population_standard_deviation = Math.sqrt(value.population_variance).toFixed(2);" //
+				+ "value.population_standard_deviation = Math.sqrt(value.population_variance).toFixed(2);"//
 				+ "value.sample_variance = value.diff / (value.count - 1);" //
 				+ "value.sample_standard_deviation = Math.sqrt(value.sample_variance);" //
+				+ "}" //
 				+ "value.requestId = \"" + requestId + "\";" //
-				+ "value.calculationType =\"" + calculationField + "\";" //
+				+ "value.calculationType =\"" + reduceCalculationType + "\";" //
 				+ "value.calculationDomain =\"" + calculationDomain + "\";" //
 				+ "delete value.diff;" //
 				+ "return value;" //

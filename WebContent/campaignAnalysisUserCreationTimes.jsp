@@ -88,9 +88,17 @@ body {
 
 function prepareGraphs(){ 
 // 	prepareUserCreationTimeGraph();
-	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart','creationTimeGraph','userCrationDate','(%) Percentage');
-	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart','userRatiosGraph','User Ratio Values','(%) Total User Percentage For Given Ratio');
-// 	prepareMultiLineUserRatiosGraph('visualizeUserPostDeviceRatios','userPostDevicesRatiosGraph','PostDeviceRatio');
+	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart&userHashtagPostCount=0','creationTimeGraph','userCrationDate','(%) Percentage');
+	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart&userHashtagPostCount=2','creationTimeGraph_2','userCrationDate','(%) Percentage');
+	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart&userHashtagPostCount=10','creationTimeGraph_10','userCrationDate','(%) Percentage');
+	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart&userHashtagPostCount=50','creationTimeGraph_50','userCrationDate','(%) Percentage');
+	
+	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart&userHashtagPostCount=0','userRatiosGraph','User Ratio Values','(%) Total User Percentage For Given Ratio');
+	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart&userHashtagPostCount=2','userRatiosGraph_2','User Ratio Values','(%) Total User Percentage For Given Ratio');
+	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart&userHashtagPostCount=10','userRatiosGraph_10','User Ratio Values','(%) Total User Percentage For Given Ratio');
+	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart&userHashtagPostCount=50','userRatiosGraph_50','User Ratio Values','(%) Total User Percentage For Given Ratio');
+
+	// 	prepareMultiLineUserRatiosGraph('visualizeUserPostDeviceRatios','userPostDevicesRatiosGraph','PostDeviceRatio');
 // 	prepareUserRatiosGraph('visualizeUserFriendFollowerRatio','userFriendFollowerRatiosGraph','friendFollowerRatio');
 	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart','userFriendFollowerRatiosGraph','Followers Count / Total Friend Follower Count','(%) Percentage');
 	
@@ -142,11 +150,65 @@ function prepareGraphs(){
 </div>
 
 <div class="divTableRow">
+<div id="creationTimeGraph_2" class="divTableCell"><b><big>Creation Times of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userCreationDateMeanVariance_2" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="creationTimeGraph_10" class="divTableCell"><b><big>Creation Times of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userCreationDateMeanVariance_10" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="creationTimeGraph_50" class="divTableCell"><b><big>Creation Times of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userCreationDateMeanVariance_50" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
 <div id="userRatiosGraph" class="divTableCell"><b><big>Ratios of Users :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
 <div id="userRatiosGraphMeanVariance" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraph_2" class="divTableCell"><b><big>Ratios of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraphMeanVariance_2" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraph_10" class="divTableCell"><b><big>Ratios of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraphMeanVariance_10" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraph_50" class="divTableCell"><b><big>Ratios of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraphMeanVariance50" class="divTableCell">
 </div>
 </div>
 
