@@ -11,7 +11,6 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 
 import direnaj.util.PropertiesUtil;
-import testPackage.organizedBehaviors.UTCDateConverter;
 
 public class DirenajMongoDriver {
 

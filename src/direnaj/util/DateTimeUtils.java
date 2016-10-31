@@ -112,11 +112,32 @@ public class DateTimeUtils {
 		return dateAfterProcess;
 	}
 
+	public static Date subtractDaysFromDateInDateFormat(Date date, int i) {
+		DateTime dateTime = new DateTime(date);
+		DateTime minusDays = dateTime.minusDays(i);
+		Date dateAfterProcess = minusDays.toDate();
+		return dateAfterProcess;
+	}
+
 	public static double addWeeksToDate(Date date, int i) {
 		DateTime dateTime = new DateTime(date);
 		DateTime plusWeeks = dateTime.plusWeeks(i);
 		Date dateAfterProcess = plusWeeks.toDate();
 		return getRataDieFormat4Date(dateAfterProcess);
+	}
+	
+	public static double addDaysToDate(Date date, int i) {
+		DateTime dateTime = new DateTime(date);
+		DateTime plusDays = dateTime.plusDays(i);
+		Date dateAfterProcess = plusDays.toDate();
+		return getRataDieFormat4Date(dateAfterProcess);
+	}
+	
+	public static Date addDaysToDateInDateFormat(Date date, int i) {
+		DateTime dateTime = new DateTime(date);
+		DateTime plusDays = dateTime.plusDays(i);
+		Date dateAfterProcess = plusDays.toDate();
+		return dateAfterProcess;
 	}
 
 	public static Date addHoursToDate(Date date, int i) {
@@ -254,16 +275,16 @@ public class DateTimeUtils {
 
 	public static void main(String[] args) throws Exception {
 
-//		String rataDie = "736005.928275463";
-//		System.out.println(DateTimeUtils.getTwitterDateFromRataDieFormat(rataDie));
-//		System.out.println(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie));
-//		System.out.println(DateTimeUtils.getUTCDateTimeStringInGenericFormat(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie)));
+		String rataDie = "736626.3775";
+		System.out.println(DateTimeUtils.getTwitterDateFromRataDieFormat(rataDie));
+		System.out.println(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie));
+		System.out.println(DateTimeUtils.getUTCDateTimeStringInGenericFormat(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie)));
 		
 		
-		Date twitterDate2 = DateTimeUtils.getTwitterDate("Sat Sep 03 21:00:00 GMT 2016");
-		String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
-				DateTimeUtils.getUTCDateTime(twitterDate2));
-		System.out.println(twitterDate);
+//		Date twitterDate2 = DateTimeUtils.getTwitterDate("Sat Sep 03 21:00:00 GMT 2016");
+//		String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
+//				DateTimeUtils.getUTCDateTime(twitterDate2));
+//		System.out.println(twitterDate);
 
 	}
 }

@@ -143,7 +143,7 @@ public class CosineSimilarity {
 		orgBehaviourRequestedSimilarityCalculations.update(findQuery, updateQuery, true, true);
 	}
 
-	public void calculateTweetSimilarities() {
+	public void calculateTweetSimilarities() throws Exception {
 		// first insert requests
 		for (CosineSimilarityRequestData requestData : requestDataList) {
 			if (requestData.getResumeBreakPoint() == null) {
@@ -159,7 +159,7 @@ public class CosineSimilarity {
 			// calculate similarity
 			// calculate TF values
 			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.TF_CALCULATION_COMPLETED,
-					requestData.getResumeBreakPoint())) {
+					requestData.getResumeBreakPoint(), null)) {
 				Logger.getLogger(CosineSimilarity.class)
 						.debug("TF Values are getting calculated for requestId : " + requestData.getRequestId());
 				calculateTFValues(requestData);
@@ -167,7 +167,7 @@ public class CosineSimilarity {
 						ResumeBreakPoint.TF_CALCULATION_COMPLETED.name());
 			}
 			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.IDF_CALCULATION_COMPLETED,
-					requestData.getResumeBreakPoint())) {
+					requestData.getResumeBreakPoint(), null)) {
 				// calculate IDF values
 				Logger.getLogger(CosineSimilarity.class)
 						.debug("IDF Values are getting calculated for requestId : " + requestData.getRequestId());
@@ -176,7 +176,7 @@ public class CosineSimilarity {
 						ResumeBreakPoint.IDF_CALCULATION_COMPLETED.name());
 			}
 			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.TF_IDF_CALCULATION_COMPLETED,
-					requestData.getResumeBreakPoint())) {
+					requestData.getResumeBreakPoint(), null)) {
 				// calculate TF IDF values
 				Logger.getLogger(CosineSimilarity.class)
 						.debug("TF_IDF Values are getting calculated for requestId : " + requestData.getRequestId());
@@ -185,7 +185,7 @@ public class CosineSimilarity {
 						ResumeBreakPoint.TF_IDF_CALCULATION_COMPLETED.name());
 			}
 			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.SIMILARTY_CALCULATED,
-					requestData.getResumeBreakPoint())) {
+					requestData.getResumeBreakPoint(), null)) {
 				// calculate Similarities
 				Logger.getLogger(CosineSimilarity.class)
 						.debug("Similarity is getting calculated for requestId : " + requestData.getRequestId());

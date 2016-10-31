@@ -46,6 +46,11 @@ public class OrganizedBehaviours extends HttpServlet {
 				String password = params.get("pass")[0];
 				String operationType = params.get("operationType")[0];
 				String campaignId = request.getParameter("campaignId");
+
+				String workUntilBreakPoint = null;
+				if (params.get("resumeBreakPoint") != null && params.get("resumeBreakPoint").length > 0) {
+					workUntilBreakPoint = params.get("resumeBreakPoint")[0];
+				}
 				Logger.getLogger(OrganizedBehaviours.class).debug("Operation type : " + operationType);
 
 				// getting parameters from html form
@@ -71,7 +76,8 @@ public class OrganizedBehaviours extends HttpServlet {
 					organizationDetector = new OrganizationDetector(campaignId, topHashTagCount,
 							organizedHashtagDefinition, tracedHashtag,
 							OrganizedBehaviourDetectionRequestType.valueOf(operationType), disableGraphAnalysis,
-							calculateHashTagSimilarity, calculateGeneralSimilarity, bypassTweetCollection);
+							calculateHashTagSimilarity, calculateGeneralSimilarity, bypassTweetCollection,
+							workUntilBreakPoint);
 
 					new Thread(organizationDetector).start();
 					forwardRequest(request, response, "/listOrganizedBehaviourRequests.jsp");

@@ -416,4 +416,10 @@ public final class DrenajStatusJSONImpl implements Status, java.io.Serializable 
 	public void setQuotedStatusId(long quotedStatusId) {
 		this.quotedStatusId = quotedStatusId;
 	}
+
+	@Override
+	public String getCampaign_id() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

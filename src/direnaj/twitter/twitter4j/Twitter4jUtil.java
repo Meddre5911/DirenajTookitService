@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
 import org.apache.log4j.Logger;
 
@@ -24,6 +26,7 @@ import com.mongodb.util.JSON;
 import direnaj.domain.User;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
+import direnaj.functionalities.organizedBehaviour.tasks.UserTweetCollectorTask;
 import direnaj.twitter.twitter4j.external.DrenajCampaignRecord;
 import direnaj.twitter.twitter4j.external.DrenajCampaignStatus;
 import direnaj.twitter.twitter4j.external.DrenajStatusJSONImpl;
@@ -43,31 +46,30 @@ import twitter4j.TwitterException;
 public class Twitter4jUtil {
 
 	public static void saveTweetsOfUser(User user, Boolean calculateOnlyTopTrendDate, Date minCampaignDate,
-			Date maxCampaignDate) {
+			Date maxCampaignDate, String campaignId) {
 		try {
-			getEarliestTweets(user, calculateOnlyTopTrendDate, minCampaignDate);
-			Logger.getLogger(Twitter4jUtil.class.getSimpleName())
-					.debug("Earliest Tweets has been collected for User Name :" + user.getUserScreenName()
-							+ ", User Id :" + user.getUserId());
-			getRecentTweets(user, calculateOnlyTopTrendDate, maxCampaignDate);
-			Logger.getLogger(Twitter4jUtil.class.getSimpleName())
-					.debug("Recent Tweets has been collected for User Name :" + user.getUserScreenName() + ", User Id :"
-							+ user.getUserId());
-		} catch (TwitterException e) {
+			CyclicBarrier barrier = new CyclicBarrier(3);
+			UserTweetCollectorTask earlierTweetsCollector = new UserTweetCollectorTask(barrier, true, user,
+					calculateOnlyTopTrendDate, minCampaignDate, maxCampaignDate, campaignId);
+			UserTweetCollectorTask recentTweetsCollector = new UserTweetCollectorTask(barrier, false, user,
+					calculateOnlyTopTrendDate, minCampaignDate, maxCampaignDate, campaignId);
+			new Thread(earlierTweetsCollector).start();
+			new Thread(recentTweetsCollector).start();
+			barrier.await();
+		} catch (InterruptedException | BrokenBarrierException e) {
 			Logger.getLogger(Twitter4jUtil.class.getSimpleName()).error("Twitter4jUtil saveTweetsOfUser", e);
 			e.printStackTrace();
 		}
 	}
 
-	private static void getEarliestTweets(User user, Boolean calculateOnlyTopTrendDate, Date minCampaignDate)
-			throws TwitterException {
+	public static void getEarliestTweets(User user, Boolean calculateOnlyTopTrendDate, Date minCampaignDate,
+			String campaignId) throws TwitterException {
 		Date lowestDate;
 		if (calculateOnlyTopTrendDate && minCampaignDate != null) {
 			lowestDate = minCampaignDate;
 		} else {
-			Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inWeeks", 2);
-			lowestDate = DateTimeUtils.subtractWeeksFromDateInDateFormat(user.getCampaignTweetPostDate(),
-					tweetDuration);
+			Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inDays", 4);
+			lowestDate = DateTimeUtils.subtractDaysFromDateInDateFormat(user.getCampaignTweetPostDate(), tweetDuration);
 		}
 		// first collect earlier tweets
 		int pageNumber = 1;
@@ -77,7 +79,7 @@ public class Twitter4jUtil {
 			boolean isEarlierTweetsRemaining = false;
 			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
 					.getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE)
-					.getUserTimeline(Long.valueOf(user.getUserId()), paging);
+					.getUserTimeline(Long.valueOf(user.getUserId()), paging, campaignId);
 			saveTweets(userTimeline);
 			// Status To JSON String
 			int arraySize = userTimeline.size();
@@ -104,8 +106,17 @@ public class Twitter4jUtil {
 		}
 	}
 
-	private static void getRecentTweets(User user, Boolean calculateOnlyTopTrendDate, Date maxCampaignDate)
-			throws TwitterException {
+	public static void getRecentTweets(User user, Boolean calculateOnlyTopTrendDate, Date maxCampaignDate,
+			String campaignId) throws TwitterException {
+
+		Date highestDate;
+		if (calculateOnlyTopTrendDate && maxCampaignDate != null) {
+			highestDate = maxCampaignDate;
+		} else {
+			Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inDays", 4);
+			highestDate = DateTimeUtils.addDaysToDateInDateFormat(user.getCampaignTweetPostDate(), tweetDuration);
+		}
+
 		// first collect earlier tweets
 		int pageNumber = 1;
 		Paging paging = new Paging(1, 200);
@@ -114,8 +125,7 @@ public class Twitter4jUtil {
 			boolean isRecentTweetsRemaining = false;
 			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
 					.getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE)
-					.getUserTimeline(Long.valueOf(user.getUserId()), paging);
-			saveTweets(userTimeline);
+					.getUserTimeline(Long.valueOf(user.getUserId()), paging, campaignId);
 			// Status To JSON String
 			int arraySize = userTimeline.size();
 			if (arraySize >= 1) {
@@ -124,19 +134,21 @@ public class Twitter4jUtil {
 				Date tweetCreationDateOfFirstTweet = userTimeline.get(0).getCreatedAt();
 				Date tweetCreationDateOfLastTweet = userTimeline.get(arraySize - 1).getCreatedAt();
 
-				Logger.getLogger(Twitter4jUtil.class)
-						.debug("User Campaign Tweet Post Date :"
-								+ DateTimeUtils.getRataDieFormat4Date(user.getCampaignTweetPostDate())
-								+ " - RecentTweets Rata Die Interval of Retrieved Tweets : "
-								+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet) + " - "
-								+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet));
-
-				// Date tweetCreationDate = userTimeline.get(arraySize -
-				// 1).getCreatedAt();
-				// if (highestDate.before(tweetCreationDate)) {
-				// paging.setPage(++pageNumber);
-				// isRecentTweetsRemaining = true;
-				// }
+				if (highestDate.after(tweetCreationDateOfFirstTweet)
+						|| highestDate.after(tweetCreationDateOfLastTweet)) {
+					saveTweets(userTimeline);
+					Logger.getLogger(Twitter4jUtil.class)
+							.debug("Saved. User Campaign Tweet Post Date :"
+									+ DateTimeUtils.getRataDieFormat4Date(user.getCampaignTweetPostDate())
+									+ " - RecentTweets Rata Die Interval of Retrieved Tweets : "
+									+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet) + " - "
+									+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet));
+				} else {
+					Logger.getLogger(Twitter4jUtil.class)
+							.debug("Collected Tweets Not in Range - RecentTweets Rata Die Interval of Retrieved Tweets : "
+									+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet) + " - "
+									+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet));
+				}
 			}
 			if (!isRecentTweetsRemaining) {
 				break;
@@ -156,6 +168,7 @@ public class Twitter4jUtil {
 			@SuppressWarnings("unchecked")
 			List<DBObject> mongoDbObject = (List<DBObject>) JSON.parse(json);
 			DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().insert(mongoDbObject);
+
 		}
 	}
 
@@ -227,6 +240,7 @@ public class Twitter4jUtil {
 		};
 		// get gson
 		Gson gson = new GsonBuilder().registerTypeAdapter(Date.class, ser).create();
+
 		return gson;
 	}
 
@@ -286,7 +300,7 @@ public class Twitter4jUtil {
 					query.setMaxId(maxId);
 				}
 				QueryResult queryResult = availableTwitterObject.search(query);
-				
+
 				// FIXME 20160805 next Query şeklinde kullanalım
 				queryResult.nextQuery();
 				List<Status> tweets = queryResult.getTweets();

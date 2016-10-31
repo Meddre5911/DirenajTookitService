@@ -64,10 +64,12 @@ public class OrganizationDetector implements Runnable {
 	private boolean calculateHashTagSimilarity;
 	private boolean calculateGeneralSimilarity;
 	private boolean bypassTweetCollection;
+	private ResumeBreakPoint workUntilBreakPoint;
 
 	public OrganizationDetector(String campaignId, int topHashtagCount, String requestDefinition, String tracedHashtag,
 			OrganizedBehaviourDetectionRequestType detectionRequestType, boolean disableGraphAnalysis,
-			boolean calculateHashTagSimilarity, boolean calculateGeneralSimilarity, boolean bypassTweetCollection) {
+			boolean calculateHashTagSimilarity, boolean calculateGeneralSimilarity, boolean bypassTweetCollection,
+			String workUntilBreakPoint) {
 		direnajDriver = new DirenajDriverVersion2();
 		direnajMongoDriver = DirenajMongoDriver.getInstance();
 		requestId = TextUtils.generateUniqueId4Request();
@@ -87,6 +89,10 @@ public class OrganizationDetector implements Runnable {
 		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 		isCleaningDone4ResumeProcess = false;
 		insertRequest2Mongo();
+
+		if (!TextUtils.isEmpty(workUntilBreakPoint)) {
+			this.workUntilBreakPoint = ResumeBreakPoint.valueOf(workUntilBreakPoint);
+		}
 	}
 
 	public OrganizationDetector(String requestId) {
@@ -217,7 +223,7 @@ public class OrganizationDetector implements Runnable {
 		try {
 			DirenajMongoDriverUtil.cleanData4ResumeProcess(requestId, requestIdObj, resumeBreakPoint);
 			isCleaningDone4ResumeProcess = true;
-			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.INIT, resumeBreakPoint)) {
+			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.INIT, resumeBreakPoint,workUntilBreakPoint)) {
 				Map<String, Double> hashtagCounts = direnajDriver.getHashtagCounts(campaignId);
 				// get hashtag users
 				LinkedHashMap<String, Double> topHashtagCounts = CollectionUtil.discardOtherElementsOfMap(hashtagCounts,
@@ -247,21 +253,26 @@ public class OrganizationDetector implements Runnable {
 						.debug("Analysis For Hashtag : " + tracedHashtag);
 				tracedSingleHashtag = tracedHashtag;
 				if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.TWEET_COLLECTION_COMPLETED,
-						resumeBreakPoint)) {
+						resumeBreakPoint,workUntilBreakPoint)) {
 					direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
 					collectTweetsOfAllUsers(requestId);
 				}
 				if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.USER_ANALYZE_COMPLETED,
-						resumeBreakPoint)) {
+						resumeBreakPoint,workUntilBreakPoint)) {
 					saveData4UserAnalysis();
 				}
 			}
 			calculateTweetSimilarities();
 			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.STATISCTIC_CALCULATED,
-					resumeBreakPoint)) {
+					resumeBreakPoint,workUntilBreakPoint)) {
 				calculateStatistics();
 			}
-			changeRequestStatusInMongo(true);
+			if(workUntilBreakPoint != null){
+				updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, Boolean.TRUE);
+			}else{
+				changeRequestStatusInMongo(true);
+			}
+			
 			// removePreProcessUsers();
 			Logger.getLogger(OrganizationDetector.class.getSimpleName())
 					.debug("Hashtag Analysis is Finished for requestId : " + requestId);
@@ -274,8 +285,7 @@ public class OrganizationDetector implements Runnable {
 	private void calculateStatistics() {
 		BasicDBObject query4CosSimilarityRequest = new BasicDBObject(
 				MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
-		query4CosSimilarityRequest.put(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT,
-				new BasicDBObject("$gt", 5));
+		query4CosSimilarityRequest.put(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT, new BasicDBObject("$gt", 5));
 		StatisticCalculator statisticCalculator = new StatisticCalculator(requestId, requestIdObj,
 				query4CosSimilarityRequest);
 		statisticCalculator.calculateStatistics();
@@ -310,7 +320,7 @@ public class OrganizationDetector implements Runnable {
 					try {
 						User user = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
 						Twitter4jUtil.saveTweetsOfUser(user, calculateOnlyTopTrendDate,
-								drenajCampaignRecord.getMinCampaignDate(), drenajCampaignRecord.getMaxCampaignDate());
+								drenajCampaignRecord.getMinCampaignDate(), drenajCampaignRecord.getMaxCampaignDate(),campaignId);
 					} catch (Exception e) {
 						Logger.getLogger(OrganizationDetector.class.getSimpleName())
 								.error("Twitter4jUtil-collectTweetsOfAllUsers", e);

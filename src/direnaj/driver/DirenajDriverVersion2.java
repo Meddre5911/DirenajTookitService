@@ -21,6 +21,7 @@ import com.mongodb.DBObject;
 
 import direnaj.adapter.DirenajInvalidJSONException;
 import direnaj.domain.User;
+import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
 import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.util.CollectionUtil;
 import twitter4j.HashtagEntity;
@@ -154,6 +155,9 @@ public class DirenajDriverVersion2 {
 						user.getUserId());
 				DBObject duplicateRecord = preProcessUsersCollections.findOne(duplicateUserControlQuery);
 				if (duplicateRecord == null) {
+//					Logger.getLogger(OrganizationDetector.class.getSimpleName())
+//							.debug("savePreProcessUsersIfNeeded. User ( " + user.getUserId()
+//									+ " ) will be inserted for requestId : " + requestId);
 					BasicDBObject preprocessUser = new BasicDBObject();
 					preprocessUser.put("requestId", requestId);
 					preprocessUser.put("userId", user.getUserId());
@@ -170,7 +174,7 @@ public class DirenajDriverVersion2 {
 					preprocessUser.put("postCreationDate", user.getCampaignTweetPostDate());
 					preprocessUser.put(MongoCollectionFieldNames.MONGO_USER_POST_TWEET_ID, user.getCampaignTweetId());
 					preprocessUsers.add(preprocessUser);
-				}
+				} 
 			}
 			preProcessUsersCollections.insert(preprocessUsers);
 			return new HashSet<User>();
