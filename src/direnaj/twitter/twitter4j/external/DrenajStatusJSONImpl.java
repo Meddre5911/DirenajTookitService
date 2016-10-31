@@ -66,6 +66,8 @@ public final class DrenajStatusJSONImpl implements Status, java.io.Serializable 
 	private String[] withheldInCountries = null;
 	private DrenajStatusJSONImpl quotedStatus;
 	private long quotedStatusId = -1L;
+	
+	private String[] campaign_id;
 
 	@Override
 	public int compareTo(Status that) {
@@ -418,8 +420,8 @@ public final class DrenajStatusJSONImpl implements Status, java.io.Serializable 
 	}
 
 	@Override
-	public String getCampaign_id() {
-		// TODO Auto-generated method stub
-		return null;
+	public String[] getCampaign_id() {
+		return campaign_id;
 	}
+
 }

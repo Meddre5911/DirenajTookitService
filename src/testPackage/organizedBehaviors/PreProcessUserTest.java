@@ -1,5 +1,7 @@
 package testPackage.organizedBehaviors;
 
+import org.apache.log4j.Logger;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -15,31 +17,64 @@ import direnaj.util.TextUtils;
 public class PreProcessUserTest {
 
 	public static void main(String[] args) throws Exception {
-		// delete object
-//		DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection().remove(new BasicDBObject());
-//		DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations().remove(new BasicDBObject());
-//		
-//		
-//		DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().remove(new BasicDBObject());
-//		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().remove(new BasicDBObject());
-//
-//		DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().remove(new BasicDBObject());
-//
-//		DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().remove(new BasicDBObject());
-//		DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityIDF().remove(new BasicDBObject());
-//
-//		DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().remove(new BasicDBObject());
-//		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo().remove(new BasicDBObject());
-//		DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityTF_IDF().remove(new BasicDBObject());
-//		DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity().remove(new BasicDBObject());
-//		DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations().remove(new BasicDBObject());
 
+		// delete object
+		// DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection().remove(new
+		// BasicDBObject());
+		// DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations().remove(new
+		// BasicDBObject());
+		//
+		//
+		// DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().remove(new
+		// BasicDBObject());
+		// DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().remove(new
+		// BasicDBObject());
+		//
+		// DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().remove(new
+		// BasicDBObject());
+		//
+		// DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().remove(new
+		// BasicDBObject());
+		// DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityIDF().remove(new
+		// BasicDBObject());
+		//
+		// DirenajMongoDriver.getInstance().getOrgBehaviourCosSimilarityTF().remove(new
+		// BasicDBObject());
+		// DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo().remove(new
+		// BasicDBObject());
+		// DirenajMongoDriver.getInstance().getOrgBehaviourProcessCosSimilarityTF_IDF().remove(new
+		// BasicDBObject());
+		// DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity().remove(new
+		// BasicDBObject());
+		// DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations().remove(new
+		// BasicDBObject());
+
+		BasicDBObject queryObject = new BasicDBObject("requestId", "4345534");
+		
+//		DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers()
+//				.remove(queryObject);
+//		insertPreProcessUser2Collection("4345534", createTestUser());
+//		insertPreProcessUser2Collection("4345534", createTestUser());
+		
+		BasicDBObject updateQuery = new BasicDBObject();
+		updateQuery.append("$addToSet", new BasicDBObject().append("multiDeneme", "c"));
+		
+		
+		WriteResult updateMulti = DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().updateMulti(queryObject,updateQuery );
+		updateMulti.getN();
+		
+
+	}
 	
-		
-	
-		
-		
-		
+	private void updateRequestInMongoByColumnName(String columnName, Object updateValue) {
+		Logger.getLogger(OrganizationDetector.class)
+				.debug("updateRequestInMongo4ResumeProcess - do Upsert for requestId : " + "647843");
+		DBCollection organizedBehaviorCollection = 	DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection();
+		BasicDBObject findQuery = new BasicDBObject();
+		findQuery.put("_id", "kjdl");
+		BasicDBObject updateQuery = new BasicDBObject();
+		updateQuery.append("$set", new BasicDBObject().append(columnName, updateValue));
+		organizedBehaviorCollection.update(findQuery, updateQuery, true, false);
 	}
 
 	private static BasicDBObject insertPreProcessUser2Collection(String requestId, User user) {
@@ -55,6 +90,10 @@ public class PreProcessUserTest {
 		preprocessUser.put("creationDate", user.getCreationDate());
 		preprocessUser.put("postCreationDate", user.getCampaignTweetPostDate());
 		preprocessUser.put(MongoCollectionFieldNames.MONGO_USER_POST_TWEET_ID, user.getCampaignTweetId());
+
+		String[] arr = { "a" };
+		preprocessUser.put("multiDeneme", arr);
+
 		DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().insert(preprocessUser);
 		return preprocessUser;
 	}
@@ -72,5 +111,5 @@ public class PreProcessUserTest {
 		user.setCampaignTweetId("691281908727156736");
 		return user;
 	}
-	
+
 }

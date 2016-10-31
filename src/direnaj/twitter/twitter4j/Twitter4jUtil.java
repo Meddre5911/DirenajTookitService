@@ -20,11 +20,14 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import com.mongodb.WriteResult;
 import com.mongodb.util.JSON;
 
 import direnaj.domain.User;
 import direnaj.driver.DirenajMongoDriver;
+import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
 import direnaj.functionalities.organizedBehaviour.tasks.UserTweetCollectorTask;
 import direnaj.twitter.twitter4j.external.DrenajCampaignRecord;
@@ -80,7 +83,6 @@ public class Twitter4jUtil {
 			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
 					.getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE)
 					.getUserTimeline(Long.valueOf(user.getUserId()), paging, campaignId);
-			saveTweets(userTimeline);
 			// Status To JSON String
 			int arraySize = userTimeline.size();
 			if (arraySize >= 1) {
@@ -88,12 +90,8 @@ public class Twitter4jUtil {
 				Date tweetCreationDateOfFirstTweet = userTimeline.get(0).getCreatedAt();
 				Date tweetCreationDateOfLastTweet = userTimeline.get(arraySize - 1).getCreatedAt();
 
-				Logger.getLogger(Twitter4jUtil.class)
-						.debug("User Campaign Tweet Post Date :"
-								+ DateTimeUtils.getRataDieFormat4Date(user.getCampaignTweetPostDate())
-								+ " - EarliestTweets - Rata Die Interval of Retrieved Tweets : "
-								+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet) + " - "
-								+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet));
+				upsertTweet4GivenTimeInterval(user, campaignId, userTimeline, tweetCreationDateOfFirstTweet,
+						tweetCreationDateOfLastTweet);
 
 				if (tweetCreationDateOfLastTweet.after(lowestDate)) {
 					isEarlierTweetsRemaining = true;
@@ -136,13 +134,9 @@ public class Twitter4jUtil {
 
 				if (highestDate.after(tweetCreationDateOfFirstTweet)
 						|| highestDate.after(tweetCreationDateOfLastTweet)) {
-					saveTweets(userTimeline);
-					Logger.getLogger(Twitter4jUtil.class)
-							.debug("Saved. User Campaign Tweet Post Date :"
-									+ DateTimeUtils.getRataDieFormat4Date(user.getCampaignTweetPostDate())
-									+ " - RecentTweets Rata Die Interval of Retrieved Tweets : "
-									+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet) + " - "
-									+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet));
+
+					upsertTweet4GivenTimeInterval(user, campaignId, userTimeline, tweetCreationDateOfFirstTweet,
+							tweetCreationDateOfLastTweet);
 				} else {
 					Logger.getLogger(Twitter4jUtil.class)
 							.debug("Collected Tweets Not in Range - RecentTweets Rata Die Interval of Retrieved Tweets : "
@@ -153,6 +147,34 @@ public class Twitter4jUtil {
 			if (!isRecentTweetsRemaining) {
 				break;
 			}
+		}
+	}
+
+	private static void upsertTweet4GivenTimeInterval(User user, String campaignId, ResponseList<Status> userTimeline,
+			Date tweetCreationDateOfFirstTweet, Date tweetCreationDateOfLastTweet) {
+		BasicDBObject tweetsExistanceQuery = new BasicDBObject("user.id", Long.valueOf(user.getUserId())).append(
+				"createdAt", new BasicDBObject("$gt", DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet))
+						.append("$lt", DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet)));
+		BasicDBObject updateQuery = new BasicDBObject();
+		updateQuery.append("$addToSet",
+				new BasicDBObject().append(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId));
+
+		WriteResult updateMulti = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+				.updateMulti(tweetsExistanceQuery, updateQuery);
+		if (updateMulti.getN() > 0) {
+			Logger.getLogger(Twitter4jUtil.class)
+					.debug("For retrieved time interval, Direnaj already has User's tweets. Rata Die Interval of Retrieved Tweets : "
+							+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet) + " - "
+							+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet));
+
+		} else {
+			saveTweets(userTimeline);
+			Logger.getLogger(Twitter4jUtil.class)
+					.debug("Saved. User Campaign Tweet Post Date :"
+							+ DateTimeUtils.getRataDieFormat4Date(user.getCampaignTweetPostDate())
+							+ " - RecentTweets Rata Die Interval of Retrieved Tweets : "
+							+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet) + " - "
+							+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet));
 		}
 	}
 
