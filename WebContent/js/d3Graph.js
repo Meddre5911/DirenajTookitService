@@ -978,18 +978,22 @@ function getMeanVariance(){
 		var hashtagRatioMeanVariance = '';
 		var urlRatioMeanVariance = '';
 		var mentionRatioMeanVariance = '';
+		var mediaRatioMeanVariance = '';
 		
 		var hashtagRatioMeanVariance_2 = '';
 		var urlRatioMeanVariance_2 = '';
 		var mentionRatioMeanVariance_2 = '';
+		var mediaRatioMeanVariance_2 = '';
 		
 		var hashtagRatioMeanVariance_10 = '';
 		var urlRatioMeanVariance_10 = '';
 		var mentionRatioMeanVariance_10 = '';
+		var mediaRatioMeanVariance_10 = '';
 		
 		var hashtagRatioMeanVariance_50 = '';
 		var urlRatioMeanVariance_50 = '';
 		var mentionRatioMeanVariance_50 = '';
+		var mediaRatioMeanVariance_50 = '';
 		
 		var friendFollowerRatioMeanVariance = '';
 		var friendFollowerRatioMeanVariance_2 = '';
@@ -1028,6 +1032,7 @@ function getMeanVariance(){
 		var hourlyTweetHashtagRatio = '';
 		var hourlyTweetUrlRatio = '';
 		var hourlyTweetMentionRatio = '';
+		var hourlyTweetMediaRatio = '';
 		var hourlyTweetRetweetRatio = '';
 		var hourlyTweetUserCountRatio = '';
 		
@@ -1060,6 +1065,9 @@ function getMeanVariance(){
 			if(d.calculationType == "mentionRatio" && d.calculationDomain == "USER"){
 				mentionRatioMeanVariance = getHTMLStr4MeanVariance(d);
 			}
+			if(d.calculationType == "mediaRatio" && d.calculationDomain == "USER"){
+				mediaRatioMeanVariance = getHTMLStr4MeanVariance(d);
+			}
 			
 			
 			if(d.calculationType == "hashtagRatio_2" && d.calculationDomain == "USER"){
@@ -1070,6 +1078,9 @@ function getMeanVariance(){
 			}
 			if(d.calculationType == "mentionRatio_2" && d.calculationDomain == "USER"){
 				mentionRatioMeanVariance_2 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "mediaRatio_2" && d.calculationDomain == "USER"){
+				mediaRatioMeanVariance_2 = getHTMLStr4MeanVarianceUserCount(d,userCount);
 			}
 			
 			
@@ -1082,6 +1093,9 @@ function getMeanVariance(){
 			if(d.calculationType == "mentionRatio_10" && d.calculationDomain == "USER"){
 				mentionRatioMeanVariance_10 = getHTMLStr4MeanVarianceUserCount(d,userCount);
 			}
+			if(d.calculationType == "mediaRatio_10" && d.calculationDomain == "USER"){
+				mediaRatioMeanVariance_10 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
 			
 			
 			if(d.calculationType == "hashtagRatio_50" && d.calculationDomain == "USER"){
@@ -1092,6 +1106,9 @@ function getMeanVariance(){
 			}
 			if(d.calculationType == "mentionRatio_50" && d.calculationDomain == "USER"){
 				mentionRatioMeanVariance_50 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+			}
+			if(d.calculationType == "mediaRatio_50" && d.calculationDomain == "USER"){
+				mediaRatioMeanVariance_50 = getHTMLStr4MeanVarianceUserCount(d,userCount);
 			}
 			
 			
@@ -1182,6 +1199,9 @@ function getMeanVariance(){
 			if(d.calculationType == "TweetCountUserCountRatio" && d.calculationDomain == "COS_SIM"){
 				hourlyTweetUserCountRatio = getHTMLStr4MeanVariance(d);
 			}
+			if(d.calculationType == "mediaRatio" && d.calculationDomain == "COS_SIM"){
+				hourlyTweetMediaRatio = getHTMLStr4MeanVariance(d);
+			}
 			
 			
 			
@@ -1202,7 +1222,8 @@ function getMeanVariance(){
 						+ '</tr><tr>' + urlRatioMeanVariance
 						+ '</tr><tr>'
 						+ mentionRatioMeanVariance
-						+ '</tr></table>');
+						+ '</tr><tr>'
+						+mediaRatioMeanVariance	+'</tr></table>');
 		  
 		  d3.select("#userRatiosGraphMeanVariance_2").html(sumaryHtml+
 				  '<table><tr>'
@@ -1210,7 +1231,8 @@ function getMeanVariance(){
 				  + '</tr><tr>' + urlRatioMeanVariance_2
 				  + '</tr><tr>'
 				  + mentionRatioMeanVariance_2
-				  + '</tr></table>');
+				  + '</tr><tr>'
+					+mediaRatioMeanVariance_2	+'</tr></table>');
 		  
 		  d3.select("#userRatiosGraphMeanVariance_10").html(sumaryHtml+
 				  '<table><tr>'
@@ -1218,7 +1240,8 @@ function getMeanVariance(){
 				  + '</tr><tr>' + urlRatioMeanVariance_10
 				  + '</tr><tr>'
 				  + mentionRatioMeanVariance_10
-				  + '</tr></table>');
+				  + '</tr><tr>'
+					+mediaRatioMeanVariance_10	+'</tr></table>');
 		  
 		  d3.select("#userRatiosGraphMeanVariance_50").html(sumaryHtml+
 				  '<table><tr>'
@@ -1226,7 +1249,8 @@ function getMeanVariance(){
 				  + '</tr><tr>' + urlRatioMeanVariance_50
 				  + '</tr><tr>'
 				  + mentionRatioMeanVariance_50
-				  + '</tr></table>');
+				  + '</tr><tr>'
+					+mediaRatioMeanVariance_50	+'</tr></table>');
 		  
 		  d3.select("#friendFollowerRatiosMeanVariance").html(sumaryHtml+
 				 "<table><tr>"
@@ -1304,6 +1328,8 @@ function getMeanVariance(){
 				  + hourlyTweetUrlRatio
 				  + "</tr><tr>"
 				  + hourlyTweetMentionRatio
+				  + "</tr><tr>"
+				  + hourlyTweetMediaRatio
 				  + "</tr></table>");
 		  
 		  d3.select("#hourlyRetweetRatiosMeanVariance").html(sumaryHtml + "<table><tr>"

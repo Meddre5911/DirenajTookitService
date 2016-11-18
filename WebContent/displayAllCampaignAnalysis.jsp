@@ -31,14 +31,20 @@ $(document).ready(function() {
           },
         "aoColumns": [
             { "mData": "campaign_id"},
-            { "mData": "queryHashtags"},
             { "mData": "totalTweetCount" },
             { "mData": "retweetedTweetCount"  },
+            { "mData": "campaignRetweetPercentage"  },
             { "mData": "replyTweetCount" },
+            { "mData": "campaignReplyPercentage" },
             { "mData": "mentionTweetCount" },
+            { "mData": "campaignMentionPercentage" },
             { "mData": "distinctUserCount" },
+            { "mData": "campaignTweetCountPerUser" },
             { "mData": "totalWordCount" },
             { "mData": "totalDistinctWordCount" },
+            { "mData": "campaignDistinctWordCountPercentage" },
+            { "mData": "hashtagVariance" },
+            { "mData": "campaignHastagStandardDeviation" },
             { "mData": "campaign_id", 
                 "mRender": function ( data, type, row ) {
   	            	return '<a href=campaignWordFrequency.jsp?campaignId='+data+' target="_blank">ClickForWordFrequency</a>';
@@ -65,16 +71,22 @@ $(document).ready(function() {
         <thead>
             <tr>
                 <th>Campaign_Id</th>
-                <th>Hashtag Query</th>
                 <th>Total_Tweet_Count</th>
-                <th>Retweeted_Tweet_Count-TotalPercentage</th>
-                <th>Reply_Tweet_Count-TotalPercentage</th>
-                <th>Mention_Tweet_Count-TotalPercentage</th>
-                <th>Distinct_User_Count-Tweet_Per_User</th>
-                <th>Total_Word_Count</th>
-                <th>Total_Distinct_Word_Count-Usage_of_Same_Word_Set</th>
+                <th>Retweeted_Tweet_Count</th>
+                <th>Retweeted_Tweet_Percentage</th>
+                <th>Reply_Tweet_Count</th>
+                <th>Reply_Tweet_Percentage</th>
+                <th>Mention_Tweet_Count</th>
+                <th>Mention_Tweet_Percentage</th>
+                <th>Distinct_User_Count</th>
+                <th>Tweet_Count_Per_User</th>
+                <th>Word_Count</th>
+                <th>Distinct_Word_Count</th>
+                <th>Word_Count_Percentage</th>
+				<th>Campaign_Hashtag_Variance</th> 
+				<th>Campaign_Hashtag_Standard_Dev</th>               
                 <th>Word_Frequencies</th>
-                <th>HashTag_Counts</th>
+                <th>HashTag_Percentages</th>
             </tr>
         </thead>       
     </table>

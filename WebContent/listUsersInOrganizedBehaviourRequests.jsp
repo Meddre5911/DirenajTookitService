@@ -38,17 +38,14 @@ $(document).ready(function() {
 	            	  return '<a href=https://twitter.com/'+data+' target="_blank">'+data+'</a>';
                }
             },
-            { "mData": "closenessCentrality" },
             { "mData": "hashtagPostCount" },
             { "mData": "favoriteCount" },
             { "mData": "statusCount" },
-            { "mData": "postThirdPartyDeviceRatio" },
-            { "mData": "postMobileDeviceRatio" },
-            { "mData": "postTwitterDeviceRatio" },
             { "mData": "friendFollowerRatio" },
             { "mData": "hashtagRatio" },
             { "mData": "mentionRatio" },
             { "mData": "urlRatio" },
+            { "mData": "mediaRatio" },
             { "mData": "isProtected" },
             { "mData": "isVerified" },
             { "mData": "creationDate" },
@@ -70,17 +67,14 @@ $(document).ready(function() {
                 <th>Request Id</th>
                 <th>User Id</th>
                 <th>User Screen Name</th>
-                <th>Closeness Centrality</th>
                 <th>Hashtag Post Count</th>
                 <th>Favorite Count</th>
                 <th>Status Count</th>
-                <th>Third Party Device Ratio</th>
-                <th>Mobile Device Ratio</th>
-                <th>Twitter Device Ratio</th>
                 <th>Friend Follower Ratio</th>
                 <th>Hashtag Ratio</th>
                 <th>Mention Ratio</th>
                 <th>Url Ratio</th>
+                <th>Media Ratio</th>
                 <th>Protected</th>
                 <th>Verified</th>
                 <th>Creation Time</th>

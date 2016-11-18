@@ -143,12 +143,9 @@ public class MongoPaginationServlet extends HttpServlet {
 				DBCollection campaignStatisticsCollection = DirenajMongoDriver.getInstance()
 						.getCampaignStatisticsCollection();
 
-				if (session.getAttribute("userInputDataCount") == null) {
-					recordCounts = (int) campaignStatisticsCollection.count();
-					session.setAttribute("userInputDataCount", recordCounts);
-				} else {
-					recordCounts = Integer.valueOf(session.getAttribute("userInputDataCount").toString());
-				}
+				recordCounts = (int) campaignStatisticsCollection.count();
+				session.setAttribute("userInputDataCount", recordCounts);
+				
 				// get cursor
 				DBCursor paginatedResult = campaignStatisticsCollection.find()
 						.sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_TWEET_COUNT, -1))
@@ -159,13 +156,15 @@ public class MongoPaginationServlet extends HttpServlet {
 						DBObject record = paginatedResult.next();
 						DBObject campaignQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID,
 								record.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID));
-						DBObject campaignRecord = DirenajMongoDriver.getInstance().getCampaignsCollection().findOne(campaignQuery);
-						String hashtagQueries  = (String) campaignRecord.get("query_terms");
+						DBObject campaignRecord = DirenajMongoDriver.getInstance().getCampaignsCollection()
+								.findOne(campaignQuery);
+						String hashtagQueries = (String) campaignRecord.get("query_terms");
 						String[] hashtags = hashtagQueries.split(",");
 						StringBuilder sBuilder = new StringBuilder();
-						for(int i=0;i<hashtags.length;i++){
+						for (int i = 0; i < hashtags.length; i++) {
 							String hashtag = hashtags[i].substring(1);
-							sBuilder.append("<a href=\"https://twitter.com/hashtag/"+hashtag+"?src=hash\" target=\"_blank\">#"+hashtag+"</a> ");
+							sBuilder.append("<a href=\"https://twitter.com/hashtag/" + hashtag
+									+ "?src=hash\" target=\"_blank\">#" + hashtag + "</a> ");
 						}
 						record.put("queryHashtags", sBuilder.toString());
 						jsonArray.put(new JSONObject(record.toString()));

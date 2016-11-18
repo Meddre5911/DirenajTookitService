@@ -21,7 +21,7 @@
 	<table>
 		<tr>
 			<td><b>Hashtag</b></td>
-			<td><b>Hashtag Count</b></td>
+			<td><b>Hashtag Percentage</b></td>
 		</tr>
 			<%
 				String campaignId = request.getParameter("campaignId");

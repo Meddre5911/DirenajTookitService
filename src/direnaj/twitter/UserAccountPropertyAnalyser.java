@@ -184,5 +184,6 @@ public class UserAccountPropertyAnalyser {
         accountProperties.setTwitterPostRatio(user.getTwitterDevicePostCount() / totalPostCount);
         accountProperties.setMobilePostRatio(user.getMobileDevicePostCount() / totalPostCount);
         accountProperties.setThirdPartyPostRatio(user.getThirdPartyDevicePostCount() / totalPostCount);
+        accountProperties.setMediaPostRatio(user.getCountOfMediaPosts() / totalPostCount);
     }
 }

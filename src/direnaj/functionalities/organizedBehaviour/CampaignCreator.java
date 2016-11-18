@@ -61,6 +61,7 @@ public class CampaignCreator implements Runnable {
 				campaignDefinition + " & Date Between : " + maxDateStr + " & " + minDateStr, requestedHashtags,
 				minDateStr, maxDateStr);
 	}
+	
 
 	public void createCampaign() {
 		try {
@@ -88,15 +89,20 @@ public class CampaignCreator implements Runnable {
 		// start analysis
 		BasicDBObject query = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
 		double totalTweetCount = DirenajMongoDriver.getInstance().getTweetsCollection().count(query);
+		// get retweet count
 		BasicDBObject query4RetweetCount = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 				.append("tweet.retweetedStatus", new BasicDBObject("$exists", true));
 		double retweetedTweetCount = DirenajMongoDriver.getInstance().getTweetsCollection().count(query4RetweetCount);
+
+		// get reply count
 		BasicDBObject query4ReplyCount = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 				.append("$or",
 						ListUtils.getListOfObjects(
 								new BasicDBObject().append("tweet.inReplyToStatusId", new BasicDBObject("$gt", 0)),
 								new BasicDBObject().append("tweet.inReplyToUserId", new BasicDBObject("$gt", 0))));
 		double replyTweetCount = DirenajMongoDriver.getInstance().getTweetsCollection().count(query4ReplyCount);
+
+		// get mention count
 		BasicDBObject query4MentionCount = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 				.append("$where", "this.tweet.userMentionEntities.length >0");
 		double mentionTweetCount = DirenajMongoDriver.getInstance().getTweetsCollection().count(query4MentionCount);
@@ -126,7 +132,7 @@ public class CampaignCreator implements Runnable {
 				distinctUserCount + "-" + NumberUtils.roundDouble(totalTweetCount / distinctUserCount));
 		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_WORD_COUNT, totalWordCount);
 		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT, totalDistinctWordCount
-				+ "-%" + (100d - NumberUtils.roundDouble((totalDistinctWordCount * 100d / totalWordCount))));
+				+ "-%" + (NumberUtils.roundDouble((totalDistinctWordCount * 100d / totalWordCount))));
 		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_WORD_FREQUENCIES, wordFrequencies);
 		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_COUNTS, hashTagCounts);
 		DirenajMongoDriver.getInstance().getCampaignStatisticsCollection().insert(campaignStatistic);

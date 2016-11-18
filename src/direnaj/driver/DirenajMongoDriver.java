@@ -89,6 +89,10 @@ public class DirenajMongoDriver {
 			Logger.getLogger(DirenajMongoDriver.class.getSimpleName())
 					.debug("OrgBehaviourRequestMeanVarianceCalculations is created");
 		}
+		if (!mongoDB.collectionExists("OrgBehaviourModelTrainingInputData")) {
+			mongoDB.createCollection("OrgBehaviourModelTrainingInputData", null);
+			Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourModelTrainingInputData is created");
+		}
 	}
 
 	public static DirenajMongoDriver getInstance() {
@@ -164,6 +168,10 @@ public class DirenajMongoDriver {
 	
 	public DBCollection getOrgBehaviourRequestMeanVarianceCalculations() {
 		return mongoDB.getCollection("OrgBehaviourRequestMeanVarianceCalculations");
+	}
+
+	public DBCollection getOrgBehaviourModelTrainingInputData() {
+		return mongoDB.getCollection("OrgBehaviourModelTrainingInputData");
 	}
 
 	public DBCollection getTestCollection() {

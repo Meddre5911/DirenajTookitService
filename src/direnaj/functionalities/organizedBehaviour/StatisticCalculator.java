@@ -1,5 +1,9 @@
 package direnaj.functionalities.organizedBehaviour;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
@@ -34,8 +38,157 @@ public class StatisticCalculator {
 		calculateHourlyEntityRatio();
 		Logger.getLogger(StatisticCalculator.class)
 				.debug("Hourly Entitiy ratios are calculated for requestId : " + requestId);
+
+		calculateCampaignStatistics();
 		calculateMeanVariance4All();
 		Logger.getLogger(StatisticCalculator.class).debug("Mean Variences are calculated for requestId : " + requestId);
+
+	}
+
+	private void calculateCampaignStatistics() {
+		BasicDBObject findQuery = new BasicDBObject();
+		findQuery.put("_id", requestId);
+		DBObject requestObj = DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection().findOne(findQuery);
+		String campaignId = (String) requestObj.get(MongoCollectionFieldNames.MONGO_REQUEST_CAMPAIGN_ID);
+		// check for toolkit campaign statistics
+		BasicDBObject campaignQuery = new BasicDBObject();
+		campaignQuery.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
+		DBObject campaignObj = DirenajMongoDriver.getInstance().getCampaignStatisticsCollection()
+				.findOne(campaignQuery);
+
+		if (!campaignObj.containsField(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_STANDARD_DEVIATION)) {
+			Logger.getLogger(StatisticCalculator.class)
+					.debug("All Campaign Features are getting calculated from scratch for requestId : " + requestId);
+			calculateAllCampaignFeaturesFromScratch();
+			Logger.getLogger(StatisticCalculator.class)
+					.debug("All Campaign Features are recalculted for requestId : " + requestId);
+		}
+
+	}
+
+	private void calculateAllCampaignFeaturesFromScratch() {
+
+		BasicDBObject query = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_TYPE, "Search Api");
+		DBCursor allCampaigns = DirenajMongoDriver.getInstance().getCampaignsCollection().find(query);
+		try {
+			DBCollection campaignStatisticsCollection = DirenajMongoDriver.getInstance()
+					.getCampaignStatisticsCollection();
+			while (allCampaigns.hasNext()) {
+				DBObject campaigObj = allCampaigns.next();
+				String campaignId = (String) campaigObj.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID);
+				try {
+					Logger.getLogger(StatisticCalculator.class).debug("Recalculated Campaign Id is " + campaignId);
+					DBObject campaignQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID,
+							campaignId);
+					DBObject campaignStatistic = campaignStatisticsCollection.findOne(campaignQueryObj);
+					double totalTweetCount = (double) campaignStatistic
+							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_TWEET_COUNT);
+					// get retweet info
+					String retweetInfo = (String) campaignStatistic
+							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_RETWEET_COUNT);
+					String[] split = retweetInfo.split("-");
+					double retweetCount = Double.valueOf(split[0]);
+					double retweetPercentage = Double.valueOf(split[1].substring(1));
+					// do updates
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_RETWEET_COUNT, retweetCount,
+							"$set");
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_RETWEET_COUNT_PERCENTAGE,
+							retweetPercentage, "$set");
+
+					// get reply info
+					String replyInfo = (String) campaignStatistic
+							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_REPLY_TWEET_COUNT);
+					String[] replyArr = replyInfo.split("-");
+					double replyCount = Double.valueOf(replyArr[0]);
+					double replyPercentage = Double.valueOf(replyArr[1].substring(1));
+					// do updates
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_REPLY_TWEET_COUNT, replyCount,
+							"$set");
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_REPLY_TWEET_COUNT_PERCENTAGE,
+							replyPercentage, "$set");
+					// get mention info
+					String mentionInfo = (String) campaignStatistic
+							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT);
+					String[] mentionArr = mentionInfo.split("-");
+					double mentionCount = Double.valueOf(mentionArr[0]);
+					double mentionPercentage = Double.valueOf(mentionArr[1].substring(1));
+					// do updates
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT,
+							mentionCount, "$set");
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT_PERCENTAGE,
+							mentionPercentage, "$set");
+					// get distinct user info
+					String distinctUserInfo = (String) campaignStatistic
+							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_TWEET_COUNT);
+					String[] distinctUserArr = distinctUserInfo.split("-");
+					double distinctUserCount = Double.valueOf(distinctUserArr[0]);
+					double tweetPerUser = Double.valueOf(distinctUserArr[1].substring(1));
+					// do updates
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_TWEET_COUNT,
+							distinctUserCount, "$set");
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_TWEET_COUNT_PER_USER,
+							tweetPerUser, "$set");
+
+					// get word count info
+					double totalWordCount = (double) campaignStatistic
+							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_WORD_COUNT);
+					double totalDistinctWordCount = Double.valueOf(((String) campaignStatistic
+							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT)).split("-")[0]);
+					double distinctWordCountPercentage = NumberUtils
+							.roundDouble((totalDistinctWordCount * 100d / totalWordCount));
+					// do updates
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT,
+							totalDistinctWordCount, "$set");
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj,
+							MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT_PERCENTAGE,
+							distinctWordCountPercentage, "$set");
+
+					// get hashtag counts
+					@SuppressWarnings("unchecked")
+					Map<String, Double> hashTagCounts = (Map<String, Double>) campaignStatistic
+							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_COUNTS);
+					double totalHashtagUsageCount = 0;
+					for (Entry<String, Double> entry : hashTagCounts.entrySet()) {
+						totalHashtagUsageCount += entry.getValue();
+					}
+					SummaryStatistics summaryStatistics = new SummaryStatistics();
+					for (Entry<String, Double> entry : hashTagCounts.entrySet()) {
+						double hashtagPercentage = NumberUtils
+								.roundDouble((entry.getValue() * 100d) / totalHashtagUsageCount);
+						summaryStatistics.addValue(hashtagPercentage);
+						entry.setValue(hashtagPercentage);
+					}
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_COUNTS, hashTagCounts,
+							"$set");
+					// save variance
+					double hashtagPercentageVariance = summaryStatistics.getVariance();
+					double hashtagStandardDeviation = summaryStatistics.getStandardDeviation();
+					
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_VARIANCE,
+							hashtagPercentageVariance, "$set");
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_STANDARD_DEVIATION,
+							hashtagStandardDeviation, "$set");
+				} catch (Exception e) {
+					Logger.getLogger(StatisticCalculator.class)
+							.error("Error is taken during recalculation of campaign id " + campaignId);
+				}
+			}
+		} finally {
+			allCampaigns.close();
+		}
 
 	}
 
@@ -77,6 +230,10 @@ public class StatisticCalculator {
 				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MONGO_URL_RATIO, "COS_SIM", null);
+
+		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
+				MongoCollectionFieldNames.MONGO_MEDIA_RATIO, "COS_SIM", null);
+
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MONGO_RETWEET_RATIO, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
@@ -166,6 +323,8 @@ public class StatisticCalculator {
 				MongoCollectionFieldNames.MONGO_URL_RATIO, "USER", null);
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
 				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "USER", null);
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_MEDIA_RATIO, "USER", null);
 
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave2AndMorePosts, requestId,
 				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "USER",
@@ -175,6 +334,9 @@ public class StatisticCalculator {
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave2AndMorePosts, requestId,
 				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "USER",
 				MongoCollectionFieldNames.MONGO_MENTION_RATIO + "_2");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave2AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_MEDIA_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_MEDIA_RATIO + "_2");
 
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
 				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "USER",
@@ -184,6 +346,9 @@ public class StatisticCalculator {
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
 				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "USER",
 				MongoCollectionFieldNames.MONGO_MENTION_RATIO + "_10");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave10AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_MEDIA_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_MEDIA_RATIO + "_10");
 
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave50AndMorePosts, requestId,
 				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "USER",
@@ -193,6 +358,10 @@ public class StatisticCalculator {
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave50AndMorePosts, requestId,
 				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "USER",
 				MongoCollectionFieldNames.MONGO_MENTION_RATIO + "_50");
+		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave50AndMorePosts, requestId,
+				MongoCollectionFieldNames.MONGO_MEDIA_RATIO, "USER",
+				MongoCollectionFieldNames.MONGO_MEDIA_RATIO + "_50");
+
 	}
 
 	private void calculateHourlyEntityRatio() {
@@ -225,9 +394,12 @@ public class StatisticCalculator {
 			double urlRatio = 0d;
 			double mentionRatio = 0d;
 			double retweetRatio = 0d;
+			double mediaRatio = 0d;
 
 			while (similarTweets.hasNext()) {
 				DBObject similarTweet = similarTweets.next();
+				// FIXME 20161116 Burada teker teker cekilmesin tweetler. Duzgun
+				// birsey yapalim buraya
 				String tweetId = (String) similarTweet.get(MongoCollectionFieldNames.MONGO_TWEET_ID);
 				DBObject tweetQuery = new BasicDBObject();
 				tweetQuery.put("id", Long.valueOf(tweetId));
@@ -238,6 +410,13 @@ public class StatisticCalculator {
 				hashtagRatio += (double) (twitter4jStatus.getHashtagEntities().length - 1);
 				urlRatio += (double) (twitter4jStatus.getURLEntities().length);
 				mentionRatio += (double) (twitter4jStatus.getUserMentionEntities().length);
+				if ((twitter4jStatus.getExtendedMediaEntities() != null
+						&& twitter4jStatus.getExtendedMediaEntities().length > 0)
+						|| (twitter4jStatus.getMediaEntities() != null
+								&& twitter4jStatus.getMediaEntities().length > 0)) {
+					mediaRatio++;
+				}
+
 				if (twitter4jStatus.getRetweetCount() > 0) {
 					retweetRatio += 1d;
 				}
@@ -246,6 +425,8 @@ public class StatisticCalculator {
 			hashtagRatio = NumberUtils.roundDouble(4, hashtagRatio / totalTweetCount);
 			urlRatio = NumberUtils.roundDouble(4, urlRatio / totalTweetCount);
 			mentionRatio = NumberUtils.roundDouble(4, mentionRatio / totalTweetCount);
+			mediaRatio = NumberUtils.roundDouble(4, mediaRatio / totalTweetCount);
+
 			if (totalTweetCount == 1d) {
 				retweetRatio = 0;
 			} else {
@@ -268,6 +449,9 @@ public class StatisticCalculator {
 			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
 					DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
 					MongoCollectionFieldNames.MONGO_RETWEET_RATIO, retweetRatio, "$set");
+			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+					DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+					MongoCollectionFieldNames.MONGO_MEDIA_RATIO, mediaRatio, "$set");
 			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
 					DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
 					MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT_DISTINCT_USER_RATIO, tweetCountUserCountRatio,

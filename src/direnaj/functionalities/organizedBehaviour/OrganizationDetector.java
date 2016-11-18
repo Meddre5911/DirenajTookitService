@@ -223,7 +223,8 @@ public class OrganizationDetector implements Runnable {
 		try {
 			DirenajMongoDriverUtil.cleanData4ResumeProcess(requestId, requestIdObj, resumeBreakPoint);
 			isCleaningDone4ResumeProcess = true;
-			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.INIT, resumeBreakPoint,workUntilBreakPoint)) {
+			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.INIT, resumeBreakPoint,
+					workUntilBreakPoint)) {
 				Map<String, Double> hashtagCounts = direnajDriver.getHashtagCounts(campaignId);
 				// get hashtag users
 				LinkedHashMap<String, Double> topHashtagCounts = CollectionUtil.discardOtherElementsOfMap(hashtagCounts,
@@ -253,26 +254,26 @@ public class OrganizationDetector implements Runnable {
 						.debug("Analysis For Hashtag : " + tracedHashtag);
 				tracedSingleHashtag = tracedHashtag;
 				if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.TWEET_COLLECTION_COMPLETED,
-						resumeBreakPoint,workUntilBreakPoint)) {
+						resumeBreakPoint, workUntilBreakPoint)) {
 					direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
 					collectTweetsOfAllUsers(requestId);
 				}
 				if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.USER_ANALYZE_COMPLETED,
-						resumeBreakPoint,workUntilBreakPoint)) {
+						resumeBreakPoint, workUntilBreakPoint)) {
 					saveData4UserAnalysis();
 				}
 			}
 			calculateTweetSimilarities();
 			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.STATISCTIC_CALCULATED,
-					resumeBreakPoint,workUntilBreakPoint)) {
+					resumeBreakPoint, workUntilBreakPoint)) {
 				calculateStatistics();
 			}
-			if(workUntilBreakPoint != null){
+			if (workUntilBreakPoint != null) {
 				updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, Boolean.TRUE);
-			}else{
+			} else {
 				changeRequestStatusInMongo(true);
 			}
-			
+
 			// removePreProcessUsers();
 			Logger.getLogger(OrganizationDetector.class.getSimpleName())
 					.debug("Hashtag Analysis is Finished for requestId : " + requestId);
@@ -320,7 +321,8 @@ public class OrganizationDetector implements Runnable {
 					try {
 						User user = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
 						Twitter4jUtil.saveTweetsOfUser(user, calculateOnlyTopTrendDate,
-								drenajCampaignRecord.getMinCampaignDate(), drenajCampaignRecord.getMaxCampaignDate(),campaignId);
+								drenajCampaignRecord.getMinCampaignDate(), drenajCampaignRecord.getMaxCampaignDate(),
+								campaignId);
 					} catch (Exception e) {
 						Logger.getLogger(OrganizationDetector.class.getSimpleName())
 								.error("Twitter4jUtil-collectTweetsOfAllUsers", e);
@@ -386,6 +388,12 @@ public class OrganizationDetector implements Runnable {
 
 				Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer, string);
 
+				if ((twitter4jStatus.getExtendedMediaEntities() != null
+						&& twitter4jStatus.getExtendedMediaEntities().length > 0)
+						|| (twitter4jStatus.getMediaEntities() != null
+								&& twitter4jStatus.getMediaEntities().length > 0)) {
+					domainUser.incrementCountOfMediaPosts();
+				}
 				domainUser.addValue2CountOfUsedUrls((double) twitter4jStatus.getURLEntities().length);
 				domainUser.addValue2CountOfHashtags((double) twitter4jStatus.getHashtagEntities().length);
 				domainUser.addValue2CountOfMentionedUsers((double) twitter4jStatus.getUserMentionEntities().length);
@@ -551,7 +559,7 @@ public class OrganizationDetector implements Runnable {
 		document.put("_id", requestId);
 		document.put("requestType", detectionRequestType.name());
 		document.put("requestDefinition", requestDefinition);
-		document.put("campaignId", campaignId);
+		document.put(MongoCollectionFieldNames.MONGO_REQUEST_CAMPAIGN_ID, campaignId);
 		document.put("topHashtagCount", topHashtagCount);
 		document.put("tracedHashtag", tracedHashtagList);
 		document.put("processCompleted", Boolean.FALSE);
@@ -587,6 +595,7 @@ public class OrganizationDetector implements Runnable {
 			userInputData.put(MongoCollectionFieldNames.MONGO_URL_RATIO, accountProperties.getUrlRatio());
 			userInputData.put(MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, accountProperties.getHashtagRatio());
 			userInputData.put(MongoCollectionFieldNames.MONGO_MENTION_RATIO, accountProperties.getMentionRatio());
+			userInputData.put(MongoCollectionFieldNames.MONGO_MEDIA_RATIO, accountProperties.getMediaPostRatio());
 			userInputData.put(MongoCollectionFieldNames.MONGO_USER_POST_TWITTER_DEVICE_RATIO,
 					accountProperties.getTwitterPostRatio());
 			userInputData.put(MongoCollectionFieldNames.MONGO_USER_POST_MOBILE_DEVICE_RATIO,

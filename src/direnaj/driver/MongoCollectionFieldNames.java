@@ -59,6 +59,7 @@ public interface MongoCollectionFieldNames {
 
 	// legacy direnaj
 	public static final String MONGO_CAMPAIGN_ID = "campaign_id";
+	public static final String MONGO_REQUEST_CAMPAIGN_ID = "campaignId";
 
 	// campaign statistics
 	public static final String MONGO_CAMPAIGN_TOTAL_TWEET_COUNT = "totalTweetCount";
@@ -70,6 +71,14 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT = "totalDistinctWordCount";
 	public static final String MONGO_CAMPAIGN_WORD_FREQUENCIES = "wordFrequencies";
 	public static final String MONGO_CAMPAIGN_HASHTAG_COUNTS = "hashTagCounts";
+	public static final String MONGO_CAMPAIGN_HASHTAG_VARIANCE = "hashtagVariance";
+	public static final String MONGO_CAMPAIGN_TYPE = "campaign_type";
+	public static final String MONGO_CAMPAIGN_RETWEET_COUNT_PERCENTAGE = "campaignRetweetPercentage";
+	public static final String MONGO_CAMPAIGN_REPLY_TWEET_COUNT_PERCENTAGE = "campaignReplyPercentage";
+	public static final String MONGO_CAMPAIGN_MENTION_TWEET_COUNT_PERCENTAGE =  "campaignMentionPercentage";
+	public static final String MONGO_CAMPAIGN_TWEET_COUNT_PER_USER = "campaignTweetCountPerUser";
+	public static final String MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT_PERCENTAGE = "campaignDistinctWordCountPercentage";
+	public static final String MONGO_CAMPAIGN_HASHTAG_STANDARD_DEVIATION = "campaignHastagStandardDeviation";
 
 	// preprocess input data
 	public static final String MONGO_USER_CREATION_DATE = "creationDate";
@@ -81,6 +90,9 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_HASHTAG_RATIO = "hashtagRatio";
 	public static final String MONGO_MENTION_RATIO = "mentionRatio";
 	public static final String MONGO_RETWEET_RATIO = "retweetRatio";
+	public static final String MONGO_MEDIA_RATIO = "mediaRatio";
+	
+	
 	public static final String MONGO_TOTAL_TWEET_COUNT_DISTINCT_USER_RATIO = "TweetCountUserCountRatio";
 	public static final String MONGO_USER_POST_TWITTER_DEVICE_RATIO = "postTwitterDeviceRatio";
 	public static final String MONGO_USER_POST_MOBILE_DEVICE_RATIO = "postMobileDeviceRatio";
@@ -95,5 +107,7 @@ public interface MongoCollectionFieldNames {
 	// Cosine Similarity Request variables
 	public static final String MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME = "lowerTimeIntervalInRataDie";
 	public static final String MONGO_COS_SIM_REQ_ORG_REQUEST_ID = "originalRequestId";
+	
+	
 
 }

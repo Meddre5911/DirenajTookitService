@@ -23,6 +23,8 @@ public class UserAccountProperties {
     private double mobilePostRatio;
     private double thirdPartyPostRatio;
     
+    private double mediaPostRatio;
+    
     private boolean isEarlierThanMarch2007;
     private boolean isVerified;
     private boolean isProtected;
@@ -123,7 +125,15 @@ public class UserAccountProperties {
         this.thirdPartyPostRatio = thirdPartyPostRatio;
     }
 
-    public BigDecimal calculateHumanProbability(BotAccountCalculationWeight botAccountCalculationWeight) {
+    public double getMediaPostRatio() {
+		return mediaPostRatio;
+	}
+
+	public void setMediaPostRatio(double mediaPostRatio) {
+		this.mediaPostRatio = mediaPostRatio;
+	}
+
+	public BigDecimal calculateHumanProbability(BotAccountCalculationWeight botAccountCalculationWeight) {
         // initial zero probabilities
         BigDecimal verifiedUserProbability = BigDecimal.ZERO;
         BigDecimal protectedUserProbability = BigDecimal.ZERO;

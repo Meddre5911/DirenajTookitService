@@ -18,6 +18,9 @@ public class User implements Comparable<User> {
 	private double postCount;
 	private double hashtagPostCount;
 	private double wholeStatusesCount;
+
+	private double countOfMediaPosts;
+
 	private boolean isProtected;
 	private boolean isVerified;
 	private Date creationDate;
@@ -234,7 +237,7 @@ public class User implements Comparable<User> {
 	public void incrementPostCount() {
 		postCount++;
 	}
-	
+
 	public void incrementHashtagPostCount() {
 		setHashtagPostCount(getHashtagPostCount() + 1);
 	}
@@ -332,6 +335,18 @@ public class User implements Comparable<User> {
 
 	public void setWholeStatusesCount(double wholeStatusesCount) {
 		this.wholeStatusesCount = wholeStatusesCount;
+	}
+
+	public double getCountOfMediaPosts() {
+		return countOfMediaPosts;
+	}
+
+	public void setCountOfMediaPosts(double countOfMediaPosts) {
+		this.countOfMediaPosts = countOfMediaPosts;
+	}
+
+	public void incrementCountOfMediaPosts() {
+		this.countOfMediaPosts++;
 	}
 
 }

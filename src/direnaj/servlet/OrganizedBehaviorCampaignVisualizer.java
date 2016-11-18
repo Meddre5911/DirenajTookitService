@@ -163,6 +163,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			rangePercentages.put(MongoCollectionFieldNames.MONGO_URL_RATIO, 0d);
 			rangePercentages.put(MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, 0d);
 			rangePercentages.put(MongoCollectionFieldNames.MONGO_MENTION_RATIO, 0d);
+			rangePercentages.put(MongoCollectionFieldNames.MONGO_MEDIA_RATIO, 0d);
 			// add to ratio values
 			ratioValues.put(limit, rangePercentages);
 		}
@@ -195,12 +196,22 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			if (mentionRatio > 1d) {
 				mentionRatio = NumberUtils.roundDouble(0, mentionRatio);
 			}
+			// media ratio
+			double mediaRatio = NumberUtils.roundDouble(1,
+					(double) next.get(MongoCollectionFieldNames.MONGO_MEDIA_RATIO));
+			if (mediaRatio > 1d) {
+				mediaRatio = NumberUtils.roundDouble(0, mediaRatio);
+			}
+			
+			
 			// get range
 			CollectionUtil.findGenericRange(limits, ratioValues, MongoCollectionFieldNames.MONGO_URL_RATIO, urlRatio);
 			CollectionUtil.findGenericRange(limits, ratioValues, MongoCollectionFieldNames.MONGO_HASHTAG_RATIO,
 					hashtagRatio);
 			CollectionUtil.findGenericRange(limits, ratioValues, MongoCollectionFieldNames.MONGO_MENTION_RATIO,
 					mentionRatio);
+			CollectionUtil.findGenericRange(limits, ratioValues, MongoCollectionFieldNames.MONGO_MEDIA_RATIO,
+					mediaRatio);
 		}
 
 		CollectionUtil.calculatePercentageForNestedMap(ratioValues, userCount);
@@ -213,6 +224,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					ratioValues.get(limit).get(MongoCollectionFieldNames.MONGO_HASHTAG_RATIO));
 			jsonObject.put(MongoCollectionFieldNames.MONGO_MENTION_RATIO,
 					ratioValues.get(limit).get(MongoCollectionFieldNames.MONGO_MENTION_RATIO));
+			jsonObject.put(MongoCollectionFieldNames.MONGO_MEDIA_RATIO,
+					ratioValues.get(limit).get(MongoCollectionFieldNames.MONGO_MEDIA_RATIO));
 			jsonArray.put(jsonObject);
 		}
 	}
@@ -306,6 +319,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.MONGO_MENTION_RATIO, "COS_SIM");
 		DBObject hourlyTweetUrlRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
 				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.MONGO_URL_RATIO, "COS_SIM");
+		DBObject hourlyMediaRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
+				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.MONGO_MEDIA_RATIO, "COS_SIM");
 		DBObject hourlyRetweetRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
 				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.MONGO_RETWEET_RATIO, "COS_SIM");
 		DBObject hourlyTweetUserCountRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
@@ -327,6 +342,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		jsonArray.put(hourlyTweetHashtagRatioMeanVariance.toMap());
 		jsonArray.put(hourlyTweetMentionRatioMeanVariance.toMap());
 		jsonArray.put(hourlyTweetUrlRatioMeanVariance.toMap());
+		jsonArray.put(hourlyMediaRatioMeanVariance.toMap());
 		jsonArray.put(hourlyRetweetRatioMeanVariance.toMap());
 		jsonArray.put(hourlyTweetUserCountRatioMeanVariance.toMap());
 		jsonArray.put(hourlyMostSimilarTweetsRatioMeanVariance.toMap());
@@ -377,10 +393,13 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					MongoCollectionFieldNames.MONGO_URL_RATIO + userPostCount, "USER");
 			DBObject mentionRatioMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
 					MongoCollectionFieldNames.MONGO_MENTION_RATIO + userPostCount, "USER");
+			DBObject mediaRatioMeanVariance = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
+					MongoCollectionFieldNames.MONGO_MEDIA_RATIO + userPostCount, "USER");
 
 			jsonArray.put(hashtagRatioMeanVariance.toMap());
 			jsonArray.put(urlRatioMeanVariance.toMap());
 			jsonArray.put(mentionRatioMeanVariance.toMap());
+			jsonArray.put(mediaRatioMeanVariance.toMap());
 		} catch (Exception e) {
 
 		}
@@ -548,6 +567,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		JSONArray urlRatioJsonArray = new JSONArray();
 		JSONArray hashtagRatioJsonArray = new JSONArray();
 		JSONArray mentionRatioJsonArray = new JSONArray();
+		JSONArray mediaRatioJsonArray = new JSONArray();
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
 				.find(query4CosSimilarityRequest)
 				.sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME, 1));
@@ -559,6 +579,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			double urlRatio = (double) next.get(MongoCollectionFieldNames.MONGO_URL_RATIO);
 			double hashtagRatio = (double) next.get(MongoCollectionFieldNames.MONGO_HASHTAG_RATIO);
 			double mentionRatio = (double) next.get(MongoCollectionFieldNames.MONGO_MENTION_RATIO);
+			double mediaRatio = (double) next.get(MongoCollectionFieldNames.MONGO_MEDIA_RATIO);
 
 			String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
 					DateTimeUtils.getUTCDateTime(DateTimeUtils.getTwitterDate(twitterDateStr)));
@@ -566,6 +587,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			urlRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", urlRatio));
 			hashtagRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", hashtagRatio));
 			mentionRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", mentionRatio));
+			mediaRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", mediaRatio));
 		}
 		// init to array
 		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_URL_RATIO).put("values",
@@ -574,6 +596,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				hashtagRatioJsonArray));
 		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_MENTION_RATIO).put("values",
 				mentionRatioJsonArray));
+		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_MEDIA_RATIO).put("values",
+				mediaRatioJsonArray));
 
 	}
 

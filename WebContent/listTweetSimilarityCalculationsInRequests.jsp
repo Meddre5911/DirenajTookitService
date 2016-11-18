@@ -60,7 +60,8 @@ $(document).ready(function() {
             { "mData": "NON_SIMILAR" },
             { "mData": "hashtagRatio" },
             { "mData": "urlRatio" },
-            { "mData": "mentionRatio" }
+            { "mData": "mentionRatio" },
+            { "mData": "mediaRatio" }
         ]
     } );
 
@@ -92,6 +93,7 @@ $(document).ready(function() {
                 <th>Hashtag Ratio</th>
                 <th>Url Ratio</th>
                 <th>Mention Ratio</th>
+                <th>Media Ratio</th>
             </tr>
         </thead>       
     </table>
