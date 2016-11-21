@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<%@page import="direnaj.driver.MongoCollectionFieldNames"%>
 <%@page import="java.util.List"%>
 <%@page import="com.mongodb.DBObject"%>
 <%@page import="com.mongodb.BasicDBObject"%>
@@ -140,11 +141,23 @@ function prepareGraphs(){
 		String requestDefinition = (String) requestObj.get("requestDefinition");
 		String tracedHashtag = ((List<String>) requestObj.get("tracedHashtag")).get(0);
 		String linkUrl = "https://twitter.com/hashtag/"+tracedHashtag+"?src=hash";
+		
+		BasicDBObject campaignQuery = new BasicDBObject();
+		campaignQuery.put("campaign_id", campaignId);
+		DBObject campaignStatistics = DirenajMongoDriver.getInstance().getCampaignStatisticsCollection().findOne(campaignQuery);
+		Double hashtagVarience = (Double)campaignStatistics.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_VARIANCE); 
+		Double hashtagStdDev = (Double )campaignStatistics.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_STANDARD_DEVIATION); 
+		
+		
 	%>
 <div id="summaryInfo" class="divTableCell">
 	<b>Request Campaign Id :</b> <%=campaignId%> 
 	&nbsp;&nbsp;<b>Description :</b> <%=requestDefinition%> 
 	&nbsp;&nbsp;<b>Traced Hashtag :</b><a href=<%=linkUrl %> target="_blank"> #<%=tracedHashtag%></a>
+</div>
+</div>
+<div id="requestStatistics" class="divTableCell">
+	<b>Campaign Hashtag Variance & Std. Deviation :  </b> <%=hashtagVarience%> & <%=hashtagStdDev%> 
 </div>
 </div>
 

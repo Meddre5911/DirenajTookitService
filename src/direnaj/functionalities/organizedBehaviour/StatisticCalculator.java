@@ -83,98 +83,69 @@ public class StatisticCalculator {
 					DBObject campaignStatistic = campaignStatisticsCollection.findOne(campaignQueryObj);
 					double totalTweetCount = (double) campaignStatistic
 							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_TWEET_COUNT);
-					// get retweet info
-					String retweetInfo = (String) campaignStatistic
-							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_RETWEET_COUNT);
-					String[] split = retweetInfo.split("-");
-					double retweetCount = Double.valueOf(split[0]);
-					double retweetPercentage = Double.valueOf(split[1].substring(1));
-					// do updates
-					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
-							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_RETWEET_COUNT, retweetCount,
-							"$set");
-					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
-							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_RETWEET_COUNT_PERCENTAGE,
-							retweetPercentage, "$set");
 
-					// get reply info
-					String replyInfo = (String) campaignStatistic
-							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_REPLY_TWEET_COUNT);
-					String[] replyArr = replyInfo.split("-");
-					double replyCount = Double.valueOf(replyArr[0]);
-					double replyPercentage = Double.valueOf(replyArr[1].substring(1));
-					// do updates
-					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
-							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_REPLY_TWEET_COUNT, replyCount,
-							"$set");
-					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
-							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_REPLY_TWEET_COUNT_PERCENTAGE,
-							replyPercentage, "$set");
-					// get mention info
-					String mentionInfo = (String) campaignStatistic
-							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT);
-					String[] mentionArr = mentionInfo.split("-");
-					double mentionCount = Double.valueOf(mentionArr[0]);
-					double mentionPercentage = Double.valueOf(mentionArr[1].substring(1));
-					// do updates
-					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
-							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT,
-							mentionCount, "$set");
-					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
-							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT_PERCENTAGE,
-							mentionPercentage, "$set");
-					// get distinct user info
-					String distinctUserInfo = (String) campaignStatistic
-							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_TWEET_COUNT);
-					String[] distinctUserArr = distinctUserInfo.split("-");
-					double distinctUserCount = Double.valueOf(distinctUserArr[0]);
-					double tweetPerUser = Double.valueOf(distinctUserArr[1].substring(1));
-					// do updates
-					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
-							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_TWEET_COUNT,
-							distinctUserCount, "$set");
-					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
-							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_TWEET_COUNT_PER_USER,
-							tweetPerUser, "$set");
+					reAssignCampaignStatistic(campaignStatisticsCollection, campaignQueryObj, campaignStatistic,
+							MongoCollectionFieldNames.MONGO_CAMPAIGN_RETWEET_COUNT,
+							MongoCollectionFieldNames.MONGO_CAMPAIGN_RETWEET_COUNT_PERCENTAGE, 1);
 
-					// get word count info
-					double totalWordCount = (double) campaignStatistic
-							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_WORD_COUNT);
-					double totalDistinctWordCount = Double.valueOf(((String) campaignStatistic
-							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT)).split("-")[0]);
-					double distinctWordCountPercentage = NumberUtils
-							.roundDouble((totalDistinctWordCount * 100d / totalWordCount));
-					// do updates
-					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
-							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT,
-							totalDistinctWordCount, "$set");
-					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
-							campaignQueryObj,
-							MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT_PERCENTAGE,
-							distinctWordCountPercentage, "$set");
+					reAssignCampaignStatistic(campaignStatisticsCollection, campaignQueryObj, campaignStatistic,
+							MongoCollectionFieldNames.MONGO_CAMPAIGN_REPLY_TWEET_COUNT,
+							MongoCollectionFieldNames.MONGO_CAMPAIGN_REPLY_TWEET_COUNT_PERCENTAGE, 1);
 
+					reAssignCampaignStatistic(campaignStatisticsCollection, campaignQueryObj, campaignStatistic,
+							MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT,
+							MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT_PERCENTAGE, 1);
+
+					reAssignCampaignStatistic(campaignStatisticsCollection, campaignQueryObj, campaignStatistic,
+							MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_TWEET_COUNT,
+							MongoCollectionFieldNames.MONGO_CAMPAIGN_TWEET_COUNT_PER_USER, 0);
+
+					SummaryStatistics summaryStatistics = new SummaryStatistics();
 					// get hashtag counts
 					@SuppressWarnings("unchecked")
 					Map<String, Double> hashTagCounts = (Map<String, Double>) campaignStatistic
 							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_COUNTS);
-					double totalHashtagUsageCount = 0;
-					for (Entry<String, Double> entry : hashTagCounts.entrySet()) {
-						totalHashtagUsageCount += entry.getValue();
+					if (!campaignStatistic.containsField(
+							MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT_PERCENTAGE)) {
+						// get word count info
+						double totalWordCount = (double) campaignStatistic
+								.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_WORD_COUNT);
+						double totalDistinctWordCount = Double.valueOf(((String) campaignStatistic
+								.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT))
+										.split("-")[0]);
+						double distinctWordCountPercentage = NumberUtils
+								.roundDouble((totalDistinctWordCount * 100d / totalWordCount));
+						// do updates
+						DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+								campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT,
+								totalDistinctWordCount, "$set");
+						DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+								campaignQueryObj,
+								MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT_PERCENTAGE,
+								distinctWordCountPercentage, "$set");
+						double totalHashtagUsageCount = 0;
+						for (Entry<String, Double> entry : hashTagCounts.entrySet()) {
+							totalHashtagUsageCount += entry.getValue();
+						}
+						for (Entry<String, Double> entry : hashTagCounts.entrySet()) {
+							double hashtagPercentage = NumberUtils.roundDouble(4,
+									(entry.getValue() * 100d) / totalHashtagUsageCount);
+							summaryStatistics.addValue(hashtagPercentage);
+							entry.setValue(hashtagPercentage);
+						}
+						DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
+								campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_COUNTS,
+								hashTagCounts, "$set");
+					} else {
+						for (Entry<String, Double> entry : hashTagCounts.entrySet()) {
+							summaryStatistics.addValue(entry.getValue());
+						}
 					}
-					SummaryStatistics summaryStatistics = new SummaryStatistics();
-					for (Entry<String, Double> entry : hashTagCounts.entrySet()) {
-						double hashtagPercentage = NumberUtils
-								.roundDouble((entry.getValue() * 100d) / totalHashtagUsageCount);
-						summaryStatistics.addValue(hashtagPercentage);
-						entry.setValue(hashtagPercentage);
-					}
-					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
-							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_COUNTS, hashTagCounts,
-							"$set");
 					// save variance
-					double hashtagPercentageVariance = summaryStatistics.getVariance();
-					double hashtagStandardDeviation = summaryStatistics.getStandardDeviation();
-					
+					double hashtagPercentageVariance = NumberUtils.roundDouble(4, summaryStatistics.getVariance());
+					double hashtagStandardDeviation = NumberUtils.roundDouble(4,
+							summaryStatistics.getStandardDeviation());
+
 					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection,
 							campaignQueryObj, MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_VARIANCE,
 							hashtagPercentageVariance, "$set");
@@ -183,13 +154,33 @@ public class StatisticCalculator {
 							hashtagStandardDeviation, "$set");
 				} catch (Exception e) {
 					Logger.getLogger(StatisticCalculator.class)
-							.error("Error is taken during recalculation of campaign id " + campaignId);
+							.error("Error is taken during recalculation of campaign id " + campaignId, e);
 				}
 			}
 		} finally {
 			allCampaigns.close();
 		}
 
+	}
+
+	private void reAssignCampaignStatistic(DBCollection campaignStatisticsCollection, DBObject campaignQueryObj,
+			DBObject campaignStatistic, String existedColumn, String newColumn, int substringIndex) {
+		try {
+			// get retweet info
+			String oldInfo = (String) campaignStatistic.get(existedColumn);
+			if (!TextUtils.isEmpty(oldInfo) && oldInfo.contains("-")) {
+				String[] split = oldInfo.split("-");
+				double oldInfoFirstPart = Double.valueOf(split[0]);
+				double oldInfoSecondPart = Double.valueOf(split[1].substring(substringIndex));
+				// do updates
+				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection, campaignQueryObj,
+						existedColumn, oldInfoFirstPart, "$set");
+				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection, campaignQueryObj,
+						newColumn, oldInfoSecondPart, "$set");
+			}
+		} catch (Exception e) {
+
+		}
 	}
 
 	private void calculateMeanVariance4All() {

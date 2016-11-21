@@ -275,16 +275,26 @@ public class DateTimeUtils {
 
 	public static void main(String[] args) throws Exception {
 
-		String rataDie = "736626.3775";
-		System.out.println(DateTimeUtils.getTwitterDateFromRataDieFormat(rataDie));
-		System.out.println(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie));
-		System.out.println(DateTimeUtils.getUTCDateTimeStringInGenericFormat(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie)));
+//		String rataDie = "736626.3775";
+//		System.out.println(DateTimeUtils.getTwitterDateFromRataDieFormat(rataDie));
+//		System.out.println(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie));
+//		System.out.println(DateTimeUtils.getUTCDateTimeStringInGenericFormat(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie)));
+//		
+		// "lowerTimeInterval" : "Tue Nov 15 01:00:00 GMT 2016",
+		// "upperTimeInterval" : "Tue Nov 15 02:00:00 GMT 2016",
+
 		
+//        "lowerTimeInterval" : "Mon Nov 14 22:00:00 GMT 2016",
+//        "upperTimeInterval" : "Mon Nov 14 23:00:00 GMT 2016",
+
 		
-//		Date twitterDate2 = DateTimeUtils.getTwitterDate("Sat Sep 03 21:00:00 GMT 2016");
-//		String twitterDate = DateTimeUtils.getStringOfDate("yyyyMMdd HH:mm",
-//				DateTimeUtils.getUTCDateTime(twitterDate2));
-//		System.out.println(twitterDate);
+		Date lowerDate = DateTimeUtils.getTwitterDate("Mon Nov 14 22:00:00 GMT 2016");
+		Date upperDate = DateTimeUtils.getTwitterDate("Mon Nov 14 23:00:00 GMT 2016");
+		
+		Date utcDateTime = DateTimeUtils.getUTCDateTime(lowerDate);
+		
+		System.out.println("Lower : " + DateTimeUtils.getRataDieFormat4Date(lowerDate));
+		System.out.println("Upper : " + DateTimeUtils.getRataDieFormat4Date(upperDate));
 
 	}
 }

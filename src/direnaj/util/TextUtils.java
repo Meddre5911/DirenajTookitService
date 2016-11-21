@@ -12,6 +12,16 @@ public class TextUtils {
 		}
 		return true;
 	}
+	
+	public static boolean isString(Object obj){
+		try{
+			@SuppressWarnings("unused")
+			String str = (String) obj;
+			return true;
+		}catch(Exception e){
+			return false;
+		}
+	}
 
 	public static String getNotNullValue(Object value) {
 		if (value == null) {

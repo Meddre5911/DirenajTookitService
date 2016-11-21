@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
@@ -61,7 +62,6 @@ public class CampaignCreator implements Runnable {
 				campaignDefinition + " & Date Between : " + maxDateStr + " & " + minDateStr, requestedHashtags,
 				minDateStr, maxDateStr);
 	}
-	
 
 	public void createCampaign() {
 		try {
@@ -122,19 +122,47 @@ public class CampaignCreator implements Runnable {
 
 		BasicDBObject campaignStatistic = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
 		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_TWEET_COUNT, totalTweetCount);
-		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_RETWEET_COUNT,
-				retweetedTweetCount + "-%" + NumberUtils.roundDouble((retweetedTweetCount * 100d) / totalTweetCount));
-		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_REPLY_TWEET_COUNT,
-				replyTweetCount + "-%" + NumberUtils.roundDouble((replyTweetCount * 100d) / totalTweetCount));
-		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT,
-				mentionTweetCount + "-%" + NumberUtils.roundDouble((mentionTweetCount * 100d) / totalTweetCount));
-		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_TWEET_COUNT,
-				distinctUserCount + "-" + NumberUtils.roundDouble(totalTweetCount / distinctUserCount));
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_RETWEET_COUNT, retweetedTweetCount);
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_RETWEET_COUNT_PERCENTAGE,
+				NumberUtils.roundDouble((retweetedTweetCount * 100d) / totalTweetCount));
+
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_REPLY_TWEET_COUNT, replyTweetCount);
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_REPLY_TWEET_COUNT_PERCENTAGE,
+				NumberUtils.roundDouble((replyTweetCount * 100d) / totalTweetCount));
+
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT, mentionTweetCount);
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT_PERCENTAGE,
+				NumberUtils.roundDouble((mentionTweetCount * 100d) / totalTweetCount));
+
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_TWEET_COUNT, distinctUserCount);
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_TWEET_COUNT_PER_USER,
+				NumberUtils.roundDouble(totalTweetCount / distinctUserCount));
+
 		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_WORD_COUNT, totalWordCount);
-		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT, totalDistinctWordCount
-				+ "-%" + (NumberUtils.roundDouble((totalDistinctWordCount * 100d / totalWordCount))));
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT,
+				totalDistinctWordCount);
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT_PERCENTAGE,
+				NumberUtils.roundDouble(totalDistinctWordCount * 100d / totalWordCount));
 		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_WORD_FREQUENCIES, wordFrequencies);
+		// calculate hashtag percentage
+		double totalHashtagUsageCount = 0;
+		for (Entry<String, Double> entry : hashTagCounts.entrySet()) {
+			totalHashtagUsageCount += entry.getValue();
+		}
+		SummaryStatistics summaryStatistics = new SummaryStatistics();
+		for (Entry<String, Double> entry : hashTagCounts.entrySet()) {
+			double hashtagPercentage = NumberUtils.roundDouble(4, (entry.getValue() * 100d) / totalHashtagUsageCount);
+			summaryStatistics.addValue(hashtagPercentage);
+			entry.setValue(hashtagPercentage);
+		}
+		// get hsahtag percentage varience & standard deviation
+		double hashtagPercentageVariance = NumberUtils.roundDouble(4, summaryStatistics.getVariance());
+		double hashtagStandardDeviation = NumberUtils.roundDouble(4, summaryStatistics.getStandardDeviation());
+		// init hashtag statistics
 		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_COUNTS, hashTagCounts);
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_VARIANCE, hashtagPercentageVariance);
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_STANDARD_DEVIATION,
+				hashtagStandardDeviation);
 		DirenajMongoDriver.getInstance().getCampaignStatisticsCollection().insert(campaignStatistic);
 	}
 
