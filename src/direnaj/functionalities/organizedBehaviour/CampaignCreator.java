@@ -134,7 +134,7 @@ public class CampaignCreator implements Runnable {
 		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_MENTION_TWEET_COUNT_PERCENTAGE,
 				NumberUtils.roundDouble((mentionTweetCount * 100d) / totalTweetCount));
 
-		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_TWEET_COUNT, distinctUserCount);
+		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_COUNT, distinctUserCount);
 		campaignStatistic.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_TWEET_COUNT_PER_USER,
 				NumberUtils.roundDouble(totalTweetCount / distinctUserCount));
 

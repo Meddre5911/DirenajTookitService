@@ -35,6 +35,7 @@ $(document).ready(function() {
         "aoColumns": [
             { "mData": "campaign_id"},
             { "mData": "totalTweetCount" },
+            { "mData": "distinctRetweetUserCountPercentage"  },
             { "mData": "retweetedTweetCount"  },
             { "mData": "campaignRetweetPercentage"  },
             { "mData": "replyTweetCount" },
@@ -75,6 +76,7 @@ $(document).ready(function() {
             <tr>
                 <th>Campaign_Id</th>
                 <th>Total_Tweet_Count</th>
+                <th>Distinct_Retweet_User_Percentage</th>
                 <th>Retweeted_Tweet_Count</th>
                 <th>Retweeted_Tweet_Percentage</th>
                 <th>Reply_Tweet_Count</th>

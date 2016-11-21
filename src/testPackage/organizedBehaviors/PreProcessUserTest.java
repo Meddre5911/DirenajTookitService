@@ -56,12 +56,25 @@ public class PreProcessUserTest {
 //		insertPreProcessUser2Collection("4345534", createTestUser());
 //		insertPreProcessUser2Collection("4345534", createTestUser());
 		
-		BasicDBObject updateQuery = new BasicDBObject();
-		updateQuery.append("$addToSet", new BasicDBObject().append("multiDeneme", "c"));
+//		BasicDBObject updateQuery = new BasicDBObject();
+//		updateQuery.append("$addToSet", new BasicDBObject().append("multiDeneme", "c"));
+//		
+//		
+//		WriteResult updateMulti = DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().updateMulti(queryObject,updateQuery );
+//		updateMulti.getN();
 		
 		
-		WriteResult updateMulti = DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers().updateMulti(queryObject,updateQuery );
-		updateMulti.getN();
+		
+		DBObject distinctRetweetUserQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, "NBAwards")
+				.append("$where", "this.hashtagEntities.length > 0")
+				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
+						new BasicDBObject("$regex", "NBAwards").append("$options", "i"))
+				.append("retweetedStatus.id", new BasicDBObject("$exists", true));
+
+		int distinctRetweetUserCount = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+				.distinct("user.id", distinctRetweetUserQuery).size();
+		
+		System.out.println(distinctRetweetUserCount);
 		
 
 	}

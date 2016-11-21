@@ -66,7 +66,7 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_CAMPAIGN_RETWEET_COUNT = "retweetedTweetCount";
 	public static final String MONGO_CAMPAIGN_REPLY_TWEET_COUNT = "replyTweetCount";
 	public static final String MONGO_CAMPAIGN_MENTION_TWEET_COUNT = "mentionTweetCount";
-	public static final String MONGO_CAMPAIGN_DISTINCT_USER_TWEET_COUNT = "distinctUserCount";
+	public static final String MONGO_CAMPAIGN_DISTINCT_USER_COUNT = "distinctUserCount";
 	public static final String MONGO_CAMPAIGN_TOTAL_WORD_COUNT = "totalWordCount";
 	public static final String MONGO_CAMPAIGN_TOTAL_DISTINCT_WORD_COUNT = "totalDistinctWordCount";
 	public static final String MONGO_CAMPAIGN_WORD_FREQUENCIES = "wordFrequencies";
@@ -107,6 +107,30 @@ public interface MongoCollectionFieldNames {
 	// Cosine Similarity Request variables
 	public static final String MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME = "lowerTimeIntervalInRataDie";
 	public static final String MONGO_COS_SIM_REQ_ORG_REQUEST_ID = "originalRequestId";
+
+	// tweet
+	public static final String MONGO_TWEET_HASHTAG_ENTITIES_TEXT = "hashtagEntities.text";
+	// retweet
+	public static final String MONGO_DISTINCT_RETWEET_USER_COUNT = "distinctRetweetUserCount";
+	public static final String MONGO_DISTINCT_RETWEET_POST_COUNT = "distinctRetweetPostCount";
+	public static final String MONGO_DISTINCT_RETWEET_USER_COUNT_PERCENTAGE = "distinctRetweetUserCountPercentage";
+	public static final String MONGO_DISTINCT_RETWEET_USER_DIVIDED_BY_RATIO = "distinctRetweetUserDividedByRatio";
+	public static final String MONGO_DISTINCT_RETWEET_RATIO = "distinctRetweetRatio";
+	public static final String MONGO_DISTINCT_RETWEET_USER_RATIO = "distinctRetweetUserRatio";
+	// non retweet
+	public static final String MONGO_DISTINCT_NON_RETWEET_USER_COUNT = "distinctNonRetweetUserCount";
+	public static final String MONGO_DISTINCT_NON_RETWEET_POST_COUNT = "distinctNonRetweetPostCount";
+	public static final String MONGO_DISTINCT_NON_RETWEET_USER_COUNT_PERCENTAGE = "distinctNonRetweetUserCountPercentage";
+	public static final String MONGO_DISTINCT_NON_RETWEET_USER_DIVIDED_BY_RATIO = "distinctNonRetweetUserDividedByRatio";
+	public static final String MONGO_DISTINCT_NON_RETWEET_RATIO = "distinctNonRetweetRatio";
+	public static final String MONGO_DISTINCT_NON_RETWEET_USER_RATIO = "distinctNonRetweetUserRatio";
+
+	public static final String MONGO_LOWER_TIME_INTERVAL = "lowerTimeInterval";
+	public static final String MONGO_UPPER_TIME_INTERVAL = "upperTimeInterval";
+	public static final String MONGO_TOTAL_MENTION_USER_COUNT = "totalMentionUserCount";
+	public static final String MONGO_DISTINCT_MENTION_COUNT = "distinctMentionCount";
+	
+	
 	
 	
 
