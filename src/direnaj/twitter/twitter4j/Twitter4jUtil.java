@@ -83,6 +83,9 @@ public class Twitter4jUtil {
 			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
 					.getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE)
 					.getUserTimeline(Long.valueOf(user.getUserId()), paging, campaignId);
+			if(userTimeline == null){
+				break;
+			}
 			// Status To JSON String
 			int arraySize = userTimeline.size();
 			if (arraySize >= 1) {
@@ -124,6 +127,9 @@ public class Twitter4jUtil {
 			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
 					.getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE)
 					.getUserTimeline(Long.valueOf(user.getUserId()), paging, campaignId);
+			if(userTimeline == null){
+				break;
+			}
 			// Status To JSON String
 			int arraySize = userTimeline.size();
 			if (arraySize >= 1) {
@@ -322,8 +328,6 @@ public class Twitter4jUtil {
 					query.setMaxId(maxId);
 				}
 				QueryResult queryResult = availableTwitterObject.search(query);
-
-				// FIXME 20160805 next Query şeklinde kullanalım
 				queryResult.nextQuery();
 				List<Status> tweets = queryResult.getTweets();
 				if (tweets != null && tweets.size() > 0) {

@@ -1,10 +1,13 @@
 package direnaj.functionalities.organizedBehaviour;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
+import org.joda.time.DateTime;
 
 import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
@@ -46,9 +49,71 @@ public class StatisticCalculator {
 		Logger.getLogger(StatisticCalculator.class)
 				.debug("Hourly Entitiy ratios are calculated for requestId : " + requestId);
 
+		calculateGeneralStatistics();
 		calculateCampaignStatistics();
 		calculateMeanVariance4All();
 		Logger.getLogger(StatisticCalculator.class).debug("Mean Variences are calculated for requestId : " + requestId);
+
+	}
+
+	private void calculateGeneralStatistics() throws Exception {
+		DBObject projectionKeys = new BasicDBObject();
+		projectionKeys.put(MongoCollectionFieldNames.MONGO_USER_ID, 1);
+		projectionKeys.put("_id", 0);
+		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
+		DBCursor requestUserIds = orgBehaviourProcessInputData.find(requestIdObj, projectionKeys);
+		try {
+			while (requestUserIds.hasNext()) {
+				String userId = (String) requestUserIds.next().get(MongoCollectionFieldNames.MONGO_USER_ID);
+				BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
+						.append("$where", "this.hashtagEntities.length > 0")
+						.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
+								new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
+						.append("user.id", Long.valueOf(userId));
+
+				DBObject keys = new BasicDBObject("createdAt", 1);
+				keys.put("_id", 0);
+
+				Set<DateTime> userDateLimits = new HashSet<>();
+
+				DBCursor userTweetDates = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().find(tweetQuery,
+						keys);
+				while (userTweetDates.hasNext()) {
+					double creationTimeInRataDie = (double) userTweetDates.next()
+							.get(MongoCollectionFieldNames.MONGO_TWEET_CREATED_AT);
+					DateTime date = new DateTime(
+							DateTimeUtils.getTwitterDateFromRataDieFormat(String.valueOf(creationTimeInRataDie)));
+					userDateLimits.add(date.withTimeAtStartOfDay());
+				}
+				double dayCountOfHashtagUsage = 0d;
+				double tweetCount = 0d;
+				for (DateTime userLimitTime : userDateLimits) {
+					dayCountOfHashtagUsage++;
+					DateTime endOfDay = userLimitTime.withTime(23, 59, 59, 999);
+
+					BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(userId))
+							.append("createdAt",
+									new BasicDBObject("$gt",
+											DateTimeUtils.getRataDieFormat4Date(userLimitTime.toDate())).append("$lt",
+													DateTimeUtils.getRataDieFormat4Date(endOfDay.toDate())))
+							.append(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
+
+					tweetCount += DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+							.distinct("id", tweetsRetrievalQuery).size();
+
+				}
+				double dailyAvarageTweetCount4HashtagDays = NumberUtils.roundDouble(2,
+						tweetCount / dayCountOfHashtagUsage);
+				// o date'leri baz alarak tweet istatistiğini hesapla
+				BasicDBObject updateQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId)
+						.append(MongoCollectionFieldNames.MONGO_USER_ID, userId);
+				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(orgBehaviourProcessInputData, updateQuery,
+						MongoCollectionFieldNames.MONGO_USER_TWEET_AVERAGE_HASHTAG_DAYS,
+						dailyAvarageTweetCount4HashtagDays, "$set");
+			}
+		} finally {
+			requestUserIds.close();
+		}
 
 	}
 
@@ -435,29 +500,28 @@ public class StatisticCalculator {
 				calculateHourlyNonRetweetRatios(updateQuery4RequestedCalculation, totalTweetCount, distinctUserCount,
 						lowerTimeInRataDie, upperTimeInRataDie);
 
-				BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
-						.append("createdAt",
-								new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
-						.append("$where", "this.hashtagEntities.length > 0")
-						.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
-								new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
-						.append("userMentionEntities.id", new BasicDBObject("$exists", true));
-
-				double distinctMentionCount = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
-						.distinct("userMentionEntities.id", tweetQuery).size();
-				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
-						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
-						updateQuery4RequestedCalculation, MongoCollectionFieldNames.MONGO_DISTINCT_MENTION_COUNT,
-						distinctMentionCount, "$set");
 			}
 		} finally {
 			paginatedResult.close();
 		}
 	}
 
+	private double getDistinctMentionCount4Request(double lowerTimeInRataDie, double upperTimeInRataDie) {
+		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
+				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
+				.append("$where", "this.hashtagEntities.length > 0")
+				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
+						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
+				.append("userMentionEntities.id", new BasicDBObject("$exists", true));
+
+		double distinctMentionCount = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+				.distinct("userMentionEntities.id", tweetQuery).size();
+		return distinctMentionCount;
+	}
+
 	private void calculateHourlyRetweetRatios(DBObject updateQuery4RequestedCalculation, double totalTweetCount,
 			double distinctUserCount, double lowerTimeInRataDie, double upperTimeInRataDie) {
-		// FIXME 20161121 Indexleri unutma
+		// FIXME 20161122 - Gorsellestirmeyi unutma
 		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
 				.append("$where", "this.hashtagEntities.length > 0")
@@ -500,7 +564,7 @@ public class StatisticCalculator {
 
 	private void calculateHourlyNonRetweetRatios(DBObject updateQuery4RequestedCalculation, double totalTweetCount,
 			double distinctUserCount, double lowerTimeInRataDie, double upperTimeInRataDie) {
-		// FIXME 20161121 Indexleri unutma
+		// FIXME 20161122 - Gorsellestirmeyi unutma
 		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
 				.append("$where", "this.hashtagEntities.length > 0")
@@ -582,7 +646,10 @@ public class StatisticCalculator {
 			}
 		}
 
+		// FIXME 20161122 - Gorsellestirmeyi unutma
 		double totalMentionCount = mentionRatio;
+		double distinctMentionCount4Request = getDistinctMentionCount4Request(lowerTimeInRataDie, upperTimeInRataDie);
+
 		// normalize the ratio
 		hashtagRatio = NumberUtils.roundDouble(4, hashtagRatio / totalTweetCount);
 		urlRatio = NumberUtils.roundDouble(4, urlRatio / totalTweetCount);
@@ -617,6 +684,9 @@ public class StatisticCalculator {
 		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
 				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
 				MongoCollectionFieldNames.MONGO_TOTAL_MENTION_USER_COUNT, totalMentionCount, "$set");
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+				MongoCollectionFieldNames.MONGO_DISTINCT_MENTION_COUNT, distinctMentionCount4Request, "$set");
 	}
 
 	private void calculateMeanVariance(DBCollection collection, DBObject query, String requestId,

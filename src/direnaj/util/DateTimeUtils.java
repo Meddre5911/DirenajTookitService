@@ -292,10 +292,29 @@ public class DateTimeUtils {
 		Date lowerDate = DateTimeUtils.getTwitterDate("Mon Nov 14 22:00:00 GMT 2016");
 		Date upperDate = DateTimeUtils.getTwitterDate("Mon Nov 14 23:00:00 GMT 2016");
 		
-		Date utcDateTime = DateTimeUtils.getUTCDateTime(lowerDate);
 		
-		System.out.println("Lower : " + DateTimeUtils.getRataDieFormat4Date(lowerDate));
-		System.out.println("Upper : " + DateTimeUtils.getRataDieFormat4Date(upperDate));
+		double rataDieFormat4Date = DateTimeUtils.getRataDieFormat4Date(lowerDate);
+		System.out.println("Lower : " + lowerDate + " - " + rataDieFormat4Date);
+		System.out.println("Upper : " + upperDate + " - " + DateTimeUtils.getRataDieFormat4Date(upperDate));
+		
+		
+		System.out.println(DateTimeUtils.getTwitterDateFromRataDieFormat(String.valueOf(rataDieFormat4Date)));
+		System.out.println(DateTimeUtils.getUTCDateFromRataDieFormat(String.valueOf(rataDieFormat4Date)));
+		
+		
+//		DateTime date = new DateTime(lowerDate);
+//		DateTime startOfDay = date.withTimeAtStartOfDay();
+//		DateTime endOfDay = date.withTime(23, 59, 59, 999);
+//		
+//		
+//		System.out.println(startOfDay.toDate());
+//		System.out.println(endOfDay.toDate());
+//		
+//		
+//		System.out.println("Start : " + DateTimeUtils.getRataDieFormat4Date(startOfDay.toDate()));
+//		System.out.println("End : " + DateTimeUtils.getRataDieFormat4Date(endOfDay.toDate()));
+//		
+		
 
 	}
 }

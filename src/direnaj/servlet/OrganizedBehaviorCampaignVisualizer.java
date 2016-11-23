@@ -89,7 +89,6 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				getMeanVariance4All(jsonArray, query, query4CosSimilarityRequest, requestId);
 			}
 
-			// FIXME 20160813 Sil
 			jsonStr = jsonArray.toString();
 			// System.out.println("Request Type : " + requestType);
 			// System.out.println("Returned String : " + jsonStr);
@@ -380,7 +379,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			jsonArray.put(friendFollowerRatioMeanVariance.toMap());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			jsonArray.put(new BasicDBObject().toMap());
 		}
 	}
 
@@ -895,7 +894,6 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 	 */
 	private void visualizeUserCreationTimes(JSONArray jsonArray, BasicDBObject query) throws JSONException, Exception {
 		// get cursor
-		// FIXME 20160818 - Tarihe Göre sırala
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query)
 				.sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE, 1));
 		// get objects from cursor

@@ -47,27 +47,50 @@ $(document).ready(function() {
                  		}
                  }
             },
+//             { "mData": "MOST_SIMILAR" },
+//             { "mData": "VERY_SIMILAR" },
+//             { "mData": "SIMILAR" },
+//             { "mData": "SLIGHTLY_SIMILAR" },
+//             { "mData": "NON_SIMILAR" },
+
             { "mData": "isHashtagRequest" },
             { "mData": "lowerTimeInterval" },
             { "mData": "upperTimeInterval" },
             { "mData": "DistinctUserCount" },
             { "mData": "TotalTweetCount" },
             { "mData": "TweetCountUserCountRatio" },
-            { "mData": "MOST_SIMILAR" },
-            { "mData": "VERY_SIMILAR" },
-            { "mData": "SIMILAR" },
-            { "mData": "SLIGHTLY_SIMILAR" },
-            { "mData": "NON_SIMILAR" },
+            
+            
             { "mData": "hashtagRatio" },
             { "mData": "urlRatio" },
             { "mData": "mentionRatio" },
-            { "mData": "mediaRatio" }
+            { "mData": "mediaRatio" },
+
+            { "mData": "distinctRetweetUserCount" },
+            { "mData": "distinctRetweetPostCount" },
+            { "mData": "distinctRetweetUserDividedByRatio" },
+            { "mData": "distinctRetweetRatio" },
+            { "mData": "distinctRetweetUserRatio" },
+            
+            { "mData": "distinctNonRetweetUserCount" },
+            { "mData": "distinctNonRetweetPostCount" },
+            { "mData": "distinctNonRetweetUserDividedByRatio" },
+            { "mData": "distinctNonRetweetRatio" },
+            { "mData": "distinctNonRetweetUserRatio" },
+            
+            { "mData": "totalMentionUserCount" },
+            { "mData": "distinctMentionCount" }
+            
+            
         ]
     } );
 
 } );
 
 </script>
+
+
+	
 
 <form action="">
 <input type="hidden" name="retrievedRequestId" id="retrievedRequestId" value="<%=request.getParameter("requestId")%>">
@@ -77,6 +100,12 @@ $(document).ready(function() {
     <table id="example" class="display" cellspacing="0" width="100%">
         <thead>
             <tr>
+<!--                 <th>MostSimilarTweetPercentage</th> -->
+<!--                 <th>VerySimilarTweetPercentage</th> -->
+<!--                 <th>SimilarTweetPercentage</th> -->
+<!--                 <th>SlightlySimilarTweetPercentage</th> -->
+<!--                 <th>NonSimilarTweetPercentage</th> -->
+
                 <th>Original Request Id</th>
                 <th>Request Id</th>
                 <th>HashTag Request</th>
@@ -85,15 +114,27 @@ $(document).ready(function() {
                 <th>Distinct User Count</th>
                 <th>Total Tweet Count</th>
                 <th>Tweet Distinct User Ratio</th>
-                <th>MostSimilarTweetPercentage</th>
-                <th>VerySimilarTweetPercentage</th>
-                <th>SimilarTweetPercentage</th>
-                <th>SlightlySimilarTweetPercentage</th>
-                <th>NonSimilarTweetPercentage</th>
+                
                 <th>Hashtag Ratio</th>
                 <th>Url Ratio</th>
                 <th>Mention Ratio</th>
                 <th>Media Ratio</th>
+                
+        		<th>Distinct_Retweet_UserCount</th>
+             	<th>Distinct_Retweet_PostCount</th>
+             	<th>Distinct_RetweetCount/User_Count_Ratio</th>
+             	<th>Distinct_RetweetCount/TotalTweetCount</th>
+             	<th>Distinct_RetweetUser/TotalDistinctUserCount</th>
+
+            	 <th>Distinct_NonRetweet_UserCount</th>
+        	     <th>Distinct_NonRetweet_PostCount</th>
+    	         <th>Distinct_NonRetweetCount/User_Count_Ratio</th>
+	             <th>Distinct_NonRetweetCount/TotalTweetCount</th>
+            	 <th>Distinct_NonRetweetUser/TotalDistinctUserCount</th>
+
+
+    		     <th>Total_Mention_Counts</th>
+	             <th>Distinct_Mentioned_User_Count</th>
             </tr>
         </thead>       
     </table>

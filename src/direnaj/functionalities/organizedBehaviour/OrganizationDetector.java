@@ -248,7 +248,6 @@ public class OrganizationDetector implements Runnable {
 			if (!isCleaningDone4ResumeProcess) {
 				DirenajMongoDriverUtil.cleanData4ResumeProcess(requestId, requestIdObj, resumeBreakPoint);
 			}
-			// FIXME burayi tek bir hashtag icin olacak sekilde degistirecez
 			for (String tracedHashtag : tracedHashtagList) {
 				Logger.getLogger(OrganizationDetector.class.getSimpleName())
 						.debug("Analysis For Hashtag : " + tracedHashtag);
@@ -288,12 +287,11 @@ public class OrganizationDetector implements Runnable {
 				MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
 		query4CosSimilarityRequest.put(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT, new BasicDBObject("$gt", 5));
 		StatisticCalculator statisticCalculator = new StatisticCalculator(requestId, requestIdObj,
-				query4CosSimilarityRequest,tracedSingleHashtag,campaignId);
+				query4CosSimilarityRequest, tracedSingleHashtag, campaignId);
 		statisticCalculator.calculateStatistics();
 	}
 
 	/**
-	 * FIXME test amacli encapsule edildi
 	 * 
 	 * @throws Exception
 	 */
@@ -609,6 +607,10 @@ public class OrganizationDetector implements Runnable {
 					DateTimeUtils.getUTCDateTimeStringInGenericFormat(user.getCreationDate()));
 			userInputData.put(MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE,
 					DateTimeUtils.getRataDieFormat4Date(user.getCreationDate()));
+			// FIXME 20161122 Gorsellestirmeyi unutma
+			userInputData.put(MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT,
+					accountProperties.getAvarageDailyPostCount());
+
 			allUserInputData.add(userInputData);
 		}
 		if (allUserInputData != null && allUserInputData.size() > 0) {
@@ -621,7 +623,7 @@ public class OrganizationDetector implements Runnable {
 		List<User> domainUsers = new ArrayList<User>();
 		// get total user count for detection
 		DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
-		Long preprocessUserCounts = direnajMongoDriver.executeCountQuery(orgBehaviorPreProcessUsers, requestIdObj);
+		int  preprocessUserCounts = (int) direnajMongoDriver.executeCountQuery(orgBehaviorPreProcessUsers, requestIdObj);
 		DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 		try {
 			int i = 0;
@@ -641,7 +643,7 @@ public class OrganizationDetector implements Runnable {
 			preProcessUsers.close();
 		}
 		if (!disableGraphAnalysis) {
-			// FIXME closeness centrality ile yapılacak
+			// XXX closeness centrality ile yapılacak
 			// get all userIds
 			// calculateClosenessCentrality(userIds);
 		}

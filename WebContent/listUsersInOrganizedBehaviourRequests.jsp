@@ -46,9 +46,11 @@ $(document).ready(function() {
             { "mData": "mentionRatio" },
             { "mData": "urlRatio" },
             { "mData": "mediaRatio" },
+            { "mData": "avarageDailyPostCount" },
+            { "mData": "tweetAvarageInHashtagDays" },
             { "mData": "isProtected" },
             { "mData": "isVerified" },
-            { "mData": "creationDate" },
+            { "mData": "creationDate" }
         ]
     } );
 
@@ -75,6 +77,8 @@ $(document).ready(function() {
                 <th>Mention Ratio</th>
                 <th>Url Ratio</th>
                 <th>Media Ratio</th>
+                <th>Avarage Daily Post Count</th>
+                <th>Avarage Daily Post Count In Hashtag Days</th>
                 <th>Protected</th>
                 <th>Verified</th>
                 <th>Creation Time</th>

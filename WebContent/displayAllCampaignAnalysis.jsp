@@ -40,6 +40,7 @@ $(document).ready(function() {
             { "mData": "mentionTweetCount" },
             { "mData": "campaignMentionPercentage" },
             { "mData": "distinctUserCount" },
+            { "mData": "distinctRetweetUserCount"  },            
             { "mData": "campaignTweetCountPerUser" },
             { "mData": "totalWordCount" },
             { "mData": "totalDistinctWordCount" },
@@ -81,6 +82,7 @@ $(document).ready(function() {
                 <th>Mention_Tweet_Count</th>
                 <th>Mention_Tweet_Percentage</th>
                 <th>Distinct_User_Count</th>
+				<th>Distinct_Retweet_User_Count</th>                
                 <th>Tweet_Count_Per_User</th>
                 <th>Word_Count</th>
                 <th>Distinct_Word_Count</th>

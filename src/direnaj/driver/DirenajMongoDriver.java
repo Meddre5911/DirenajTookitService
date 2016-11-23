@@ -178,7 +178,7 @@ public class DirenajMongoDriver {
 		return mongoDB.getCollection("testCollection");
 	}
 
-	public Long executeCountQuery(DBCollection collection, DBObject query) {
+	public long executeCountQuery(DBCollection collection, DBObject query) {
 		return collection.count(query);
 	}
 

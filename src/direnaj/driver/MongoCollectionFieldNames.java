@@ -103,6 +103,7 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_USER_FAVORITE_COUNT = "favoriteCount";
 	public static final String MONGO_USER_STATUS_COUNT = "statusCount";
 	public static final String MONGO_USER_HASHTAG_POST_COUNT = "hashtagPostCount";
+	public static final String MONGO_USER_DAILY_AVARAGE_POST_COUNT = "avarageDailyPostCount";
 
 	// Cosine Similarity Request variables
 	public static final String MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME = "lowerTimeIntervalInRataDie";
@@ -129,6 +130,9 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_UPPER_TIME_INTERVAL = "upperTimeInterval";
 	public static final String MONGO_TOTAL_MENTION_USER_COUNT = "totalMentionUserCount";
 	public static final String MONGO_DISTINCT_MENTION_COUNT = "distinctMentionCount";
+	public static final String MONGO_TWEET_CREATED_AT = "createdAt";
+
+	public static final String MONGO_USER_TWEET_AVERAGE_HASHTAG_DAYS = "tweetAvarageInHashtagDays";
 	
 	
 	

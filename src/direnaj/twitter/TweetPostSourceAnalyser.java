@@ -35,7 +35,7 @@ public class TweetPostSourceAnalyser {
     }
 
     /**
-     * FIXME burasi dogru calisiyor mu ? Kontrol edilecek.
+     * XXX burasi dogru calisiyor mu ? Kontrol edilecek.
      * 
      * @param tweetPostSource
      * @return

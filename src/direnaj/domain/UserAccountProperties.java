@@ -19,6 +19,8 @@ public class UserAccountProperties {
     // the number of duplicate tweets over the number of tweets posted by the account
     private double duplicateTweetRatio;
     
+    private double avarageDailyPostCount;
+    
     private double twitterPostRatio;
     private double mobilePostRatio;
     private double thirdPartyPostRatio;
@@ -160,5 +162,13 @@ public class UserAccountProperties {
                 .add(mentionProbability);
         return totalProbability;
     }
+
+	public double getAvarageDailyPostCount() {
+		return avarageDailyPostCount;
+	}
+
+	public void setAvarageDailyPostCount(double avarageDailyPostCount) {
+		this.avarageDailyPostCount = avarageDailyPostCount;
+	}
 
 }

@@ -21,7 +21,6 @@ import com.mongodb.DBObject;
 
 import direnaj.adapter.DirenajInvalidJSONException;
 import direnaj.domain.User;
-import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
 import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.util.CollectionUtil;
 import twitter4j.HashtagEntity;
@@ -45,7 +44,7 @@ public class DirenajDriverVersion2 {
 	}
 
 	/**
-	 * FIXME - Bu direk Mongo'ya count atilarak yapilsa, daha dogru olur sanki
+	 * XXX - Bu direk Mongo'ya count atilarak yapilsa, daha dogru olur sanki
 	 * 
 	 * @param campaignID
 	 * @return
@@ -79,7 +78,6 @@ public class DirenajDriverVersion2 {
 	}
 
 	/**
-	 * FIXME 20160609 Tweet - Retrieved By difference
 	 * 
 	 * @param campaignID
 	 * @param tracedHashtag
@@ -149,8 +147,6 @@ public class DirenajDriverVersion2 {
 			DBCollection preProcessUsersCollections = DirenajMongoDriver.getInstance().getOrgBehaviorPreProcessUsers();
 			List<DBObject> preprocessUsers = new Vector<>();
 			for (User user : users) {
-				// FIXME her user icin DB'ye gitmek sikinti yaratabilir. Bir
-				// incele
 				BasicDBObject duplicateUserControlQuery = new BasicDBObject("requestId", requestId).append("userId",
 						user.getUserId());
 				DBObject duplicateRecord = preProcessUsersCollections.findOne(duplicateUserControlQuery);
@@ -168,9 +164,6 @@ public class DirenajDriverVersion2 {
 					preprocessUser.put("isProtected", user.isProtected());
 					preprocessUser.put("isVerified", user.isVerified());
 					preprocessUser.put("creationDate", user.getCreationDate());
-					// FIXME 20150604 bu property'nin aynı hashtag için birden
-					// fazla kez atılmış tweet için kullanılabilmesi lazım,
-					// ona gore degisikligi yap
 					preprocessUser.put("postCreationDate", user.getCampaignTweetPostDate());
 					preprocessUser.put(MongoCollectionFieldNames.MONGO_USER_POST_TWEET_ID, user.getCampaignTweetId());
 					preprocessUsers.add(preprocessUser);

@@ -200,7 +200,7 @@ public class CosineSimilarity {
 
 	@SuppressWarnings("unchecked")
 	private void calculateSimilarities(CosineSimilarityRequestData requestData) {
-		// FIXME 20160804 - cursor memory leak fix is reverted
+		// XXX 20160804 - cursor memory leak fix is reverted
 		// AggregationOptions aggregationOptions =
 		// AggregationOptions.builder().batchSize(50)
 		// .outputMode(AggregationOptions.OutputMode.CURSOR).build();
@@ -353,7 +353,7 @@ public class CosineSimilarity {
 		// "requestId, tweetId, [word, tf*Idf, (tf*Idf)^2] dizi halinde
 		List<DBObject> allTweetTFIdfValues = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 
-		// FIXME 20160804 - cursor memory leak fix is reverted
+		// XXX 20160804 - cursor memory leak fix is reverted
 		// AggregationOptions aggregationOptions = AggregationOptions.builder()
 		// .batchSize(DirenajMongoDriver.getInstance().getBulkInsertSize())
 		// .outputMode(AggregationOptions.OutputMode.CURSOR).build();
@@ -376,7 +376,7 @@ public class CosineSimilarity {
 
 		Logger.getLogger(CosineSimilarity.class).debug("calculateTFIDFValues. allTweetIds size : " + totalTweetCount);
 
-		// FIXME 20160522 Collection dan baska bir yontem bul
+		// XXX 20160522 Collection dan baska bir yontem bul
 		List<String> allTweetIds = (List<String>) DirenajMongoDriver.getInstance().getOrgBehaviourTweetsShortInfo()
 				.findOne(requestData.getRequestIdObject()).get(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS);
 		Logger.getLogger(CosineSimilarity.class)
