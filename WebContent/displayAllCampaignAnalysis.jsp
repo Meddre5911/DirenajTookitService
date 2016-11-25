@@ -86,7 +86,7 @@ $(document).ready(function() {
                 <th>Tweet_Count_Per_User</th>
                 <th>Word_Count</th>
                 <th>Distinct_Word_Count</th>
-                <th>Word_Count_Percentage</th>
+                <th>Distinct_Word_Percentage</th>
 				<th>Campaign_Hashtag_Variance</th> 
 				<th>Campaign_Hashtag_Standard_Dev</th>               
                 <th>Word_Frequencies</th>

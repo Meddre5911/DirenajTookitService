@@ -59,12 +59,17 @@ public class StatisticCalculator {
 	private void calculateGeneralStatistics() throws Exception {
 		DBObject projectionKeys = new BasicDBObject();
 		projectionKeys.put(MongoCollectionFieldNames.MONGO_USER_ID, 1);
+		projectionKeys.put(MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT, 1);
 		projectionKeys.put("_id", 0);
 		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
 		DBCursor requestUserIds = orgBehaviourProcessInputData.find(requestIdObj, projectionKeys);
 		try {
 			while (requestUserIds.hasNext()) {
-				String userId = (String) requestUserIds.next().get(MongoCollectionFieldNames.MONGO_USER_ID);
+				DBObject requestUser = requestUserIds.next();
+				String userId = (String) requestUser.get(MongoCollectionFieldNames.MONGO_USER_ID);
+				double userDailyPostCount = (double) requestUser
+						.get(MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT);
+
 				BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 						.append("$where", "this.hashtagEntities.length > 0")
 						.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
@@ -104,12 +109,17 @@ public class StatisticCalculator {
 				}
 				double dailyAvarageTweetCount4HashtagDays = NumberUtils.roundDouble(2,
 						tweetCount / dayCountOfHashtagUsage);
+				double hashtagDailyCountAvarageDailyCountRatio = dailyAvarageTweetCount4HashtagDays
+						/ userDailyPostCount;
 				// o date'leri baz alarak tweet istatistiğini hesapla
 				BasicDBObject updateQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId)
 						.append(MongoCollectionFieldNames.MONGO_USER_ID, userId);
 				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(orgBehaviourProcessInputData, updateQuery,
 						MongoCollectionFieldNames.MONGO_USER_TWEET_AVERAGE_HASHTAG_DAYS,
 						dailyAvarageTweetCount4HashtagDays, "$set");
+				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(orgBehaviourProcessInputData, updateQuery,
+						MongoCollectionFieldNames.MONGO_USER_HASHTAG_DAY_AVARAGE_DAY_POST_COUNT_RATIO,
+						hashtagDailyCountAvarageDailyCountRatio, "$set");
 			}
 		} finally {
 			requestUserIds.close();
@@ -321,14 +331,26 @@ public class StatisticCalculator {
 				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MONGO_URL_RATIO, "COS_SIM", null);
-
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MONGO_MEDIA_RATIO, "COS_SIM", null);
 
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MONGO_RETWEET_RATIO, "COS_SIM", null);
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
+				MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_RATIO, "COS_SIM", null);
+		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
+				MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_RATIO, "COS_SIM", null);
+
+		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT_DISTINCT_USER_RATIO, "COS_SIM", null);
+
+		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
+				MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_DIVIDED_BY_RATIO, "COS_SIM", null);
+		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
+				MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEET_USER_DIVIDED_BY_RATIO, "COS_SIM", null);
+		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
+				MongoCollectionFieldNames.MONGO_TOTAL_RETWEET_COUNT_DISTINCT_RETWEET_COUNT_RATIO, "COS_SIM", null);
+
 		// tweet similarity
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MOST_SIMILAR, "COS_SIM", null);
@@ -519,6 +541,20 @@ public class StatisticCalculator {
 		return distinctMentionCount;
 	}
 
+	private double getDistinctRetweetedMentionCount4Request(double lowerTimeInRataDie, double upperTimeInRataDie) {
+		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
+				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
+				.append("$where", "this.hashtagEntities.length > 0")
+				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
+						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
+				.append("userMentionEntities.id", new BasicDBObject("$exists", true))
+				.append("retweetedStatus.id", new BasicDBObject("$exists", true));
+
+		double distinctMentionCount = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+				.distinct("userMentionEntities.id", tweetQuery).size();
+		return distinctMentionCount;
+	}
+
 	private void calculateHourlyRetweetRatios(DBObject updateQuery4RequestedCalculation, double totalTweetCount,
 			double distinctUserCount, double lowerTimeInRataDie, double upperTimeInRataDie) {
 		// FIXME 20161122 - Gorsellestirmeyi unutma
@@ -529,14 +565,20 @@ public class StatisticCalculator {
 						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
 				.append("retweetedStatus.id", new BasicDBObject("$exists", true));
 
+		double totalRetweetCount = (double) DirenajMongoDriver.getInstance()
+				.getOrgBehaviourRequestedSimilarityCalculations().findOne(updateQuery4RequestedCalculation)
+				.get(MongoCollectionFieldNames.MONGO_TOTAL_RETWEET_COUNT);
 		double distinctRetweetCount = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
 				.distinct("retweetedStatus.id", tweetQuery).size();
 		double distinctRetweetUserCount = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
 				.distinct("user.id", tweetQuery).size();
+
 		double distinctRetweetUserDividedByRatio = NumberUtils.roundDouble(3,
 				distinctRetweetCount / distinctRetweetUserCount);
 		double distinctRetweetRatio = NumberUtils.roundDouble(4, distinctRetweetCount / totalTweetCount);
 		double distinctRetweetUserRatio = NumberUtils.roundDouble(4, distinctRetweetUserCount / distinctUserCount);
+		double totalRetweetCountDistinctRetweetCountRatio = NumberUtils.roundDouble(4,
+				totalRetweetCount / distinctRetweetCount);
 
 		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
 				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
@@ -560,6 +602,11 @@ public class StatisticCalculator {
 				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
 				updateQuery4RequestedCalculation, MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_RATIO,
 				distinctRetweetUserRatio, "$set");
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
+				updateQuery4RequestedCalculation,
+				MongoCollectionFieldNames.MONGO_TOTAL_RETWEET_COUNT_DISTINCT_RETWEET_COUNT_RATIO,
+				totalRetweetCountDistinctRetweetCountRatio, "$set");
 	}
 
 	private void calculateHourlyNonRetweetRatios(DBObject updateQuery4RequestedCalculation, double totalTweetCount,
@@ -627,6 +674,7 @@ public class StatisticCalculator {
 		double mentionRatio = 0d;
 		double retweetRatio = 0d;
 		double mediaRatio = 0d;
+		double retweetedMentionCount = 0d;
 
 		while (userTweetCursor.hasNext()) {
 			DBObject status = userTweetCursor.next();
@@ -643,13 +691,30 @@ public class StatisticCalculator {
 
 			if (twitter4jStatus.getRetweetCount() > 0) {
 				retweetRatio += 1d;
+				retweetedMentionCount += (double) (twitter4jStatus.getUserMentionEntities().length);
 			}
 		}
 
 		// FIXME 20161122 - Gorsellestirmeyi unutma
+		// get mention count
 		double totalMentionCount = mentionRatio;
 		double distinctMentionCount4Request = getDistinctMentionCount4Request(lowerTimeInRataDie, upperTimeInRataDie);
+		double distinctRetweetedMentionCount4Request = getDistinctRetweetedMentionCount4Request(lowerTimeInRataDie,
+				upperTimeInRataDie);
+		double nonRetweetedMentionCount = totalMentionCount - retweetedMentionCount;
+		double distinctNonRetweetedDistinctMentionCount = distinctMentionCount4Request
+				- distinctRetweetedMentionCount4Request;
 
+		double totalRetweetMentionCountDistinctRetweetMentionCountRatio = NumberUtils.roundDouble(4,
+				retweetedMentionCount / distinctRetweetedMentionCount4Request);
+
+		double totalNonRetweetedMentionCountDistinctNonRetweetedMentionCountRatio = NumberUtils.roundDouble(4,
+				nonRetweetedMentionCount / distinctNonRetweetedDistinctMentionCount);
+
+		double totalMentionDistinctMentionRatio = NumberUtils.roundDouble(4,
+				totalMentionCount / distinctMentionCount4Request);
+		// retweet count
+		double totalRetweetCount = retweetRatio;
 		// normalize the ratio
 		hashtagRatio = NumberUtils.roundDouble(4, hashtagRatio / totalTweetCount);
 		urlRatio = NumberUtils.roundDouble(4, urlRatio / totalTweetCount);
@@ -676,6 +741,10 @@ public class StatisticCalculator {
 				MongoCollectionFieldNames.MONGO_RETWEET_RATIO, retweetRatio, "$set");
 		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
 				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+				MongoCollectionFieldNames.MONGO_TOTAL_RETWEET_COUNT, totalRetweetCount, "$set");
+
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
 				MongoCollectionFieldNames.MONGO_MEDIA_RATIO, mediaRatio, "$set");
 		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
 				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
@@ -687,6 +756,34 @@ public class StatisticCalculator {
 		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
 				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
 				MongoCollectionFieldNames.MONGO_DISTINCT_MENTION_COUNT, distinctMentionCount4Request, "$set");
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+				MongoCollectionFieldNames.MONGO_TOTAL_DISTINCT_MENTION_RATIO, totalMentionDistinctMentionRatio, "$set");
+
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+				MongoCollectionFieldNames.MONGO_RETWEETED_MENTION_USER_COUNT, retweetedMentionCount, "$set");
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+				MongoCollectionFieldNames.MONGO_DISTINCT_RETWEETED_MENTION_USER_COUNT,
+				distinctRetweetedMentionCount4Request, "$set");
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+				MongoCollectionFieldNames.MONGO_RETWEETED_MENTION_DISTINCT_MENTION_RATIO,
+				totalRetweetMentionCountDistinctRetweetMentionCountRatio, "$set");
+
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+				MongoCollectionFieldNames.MONGO_NON_RETWEETED_MENTION_USER_COUNT, nonRetweetedMentionCount, "$set");
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+				MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEETED_MENTION_USER_COUNT,
+				distinctNonRetweetedDistinctMentionCount, "$set");
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
+				MongoCollectionFieldNames.MONGO_NON_RETWEETED_MENTION_DISTINCT_MENTION_RATIO,
+				totalNonRetweetedMentionCountDistinctNonRetweetedMentionCountRatio, "$set");
+
 	}
 
 	private void calculateMeanVariance(DBCollection collection, DBObject query, String requestId,

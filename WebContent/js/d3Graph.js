@@ -1035,6 +1035,13 @@ function getMeanVariance(){
 		var hourlyTweetMediaRatio = '';
 		var hourlyTweetRetweetRatio = '';
 		var hourlyTweetUserCountRatio = '';
+
+		var distinctRetweetUserDividedByRatio = '';
+		var distinctNonRetweetUserDividedByRatio = '';
+		
+		var distinctRetweetRatio = '';
+		var distinctRetweetUserRatio = '';
+		var totalRetweetCountDistinctRetweetCountRatio = '';
 		
 		  data.forEach(function(d) {
 				if(d.calculationType == "hashtagRatio" && d.calculationDomain == "USER"){
@@ -1196,11 +1203,32 @@ function getMeanVariance(){
 			if(d.calculationType == "retweetRatio" && d.calculationDomain == "COS_SIM"){
 				hourlyTweetRetweetRatio = getHTMLStr4MeanVariance(d);
 			}
+			if(d.calculationType == "distinctRetweetRatio" && d.calculationDomain == "COS_SIM"){
+				distinctRetweetRatio = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "distinctRetweetUserRatio" && d.calculationDomain == "COS_SIM"){
+				distinctRetweetUserRatio = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "totalRetweetCountDistinctRetweetCountRatio" && d.calculationDomain == "COS_SIM"){
+				totalRetweetCountDistinctRetweetCountRatio = getHTMLStr4MeanVariance(d);
+			}
+			
+			
+			
+			
+			
 			if(d.calculationType == "TweetCountUserCountRatio" && d.calculationDomain == "COS_SIM"){
 				hourlyTweetUserCountRatio = getHTMLStr4MeanVariance(d);
 			}
 			if(d.calculationType == "mediaRatio" && d.calculationDomain == "COS_SIM"){
 				hourlyTweetMediaRatio = getHTMLStr4MeanVariance(d);
+			}
+
+			if(d.calculationType == "distinctRetweetUserDividedByRatio" && d.calculationDomain == "COS_SIM"){
+				distinctRetweetUserDividedByRatio = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "distinctNonRetweetUserDividedByRatio" && d.calculationDomain == "COS_SIM"){
+				distinctNonRetweetUserDividedByRatio = getHTMLStr4MeanVariance(d);
 			}
 			
 			
@@ -1308,6 +1336,16 @@ function getMeanVariance(){
 				  + hourlyTweetUserCountRatio
 				  + "</tr></table>");
 		  
+		  d3.select("#hourlyDistinctRetweetUserCountRatioMeanVariance").html(sumaryHtml+
+				  "<table><tr>"
+				  + distinctRetweetUserDividedByRatio
+				  + "</tr></table>");
+		  
+		  d3.select("#hourlyDistinctNonRetweetUserCountRatioMeanVariance").html(sumaryHtml+
+				  "<table><tr>"
+				  + distinctNonRetweetUserDividedByRatio
+				  + "</tr></table>");
+		  
 		  
 
 		  d3.select("#hourlyTweetSimilaritiesMeanVariance").html(sumaryHtml + "<table><tr>"
@@ -1334,6 +1372,12 @@ function getMeanVariance(){
 		  
 		  d3.select("#hourlyRetweetRatiosMeanVariance").html(sumaryHtml + "<table><tr>"
 				  + hourlyTweetRetweetRatio
+				  + "</tr><tr>"
+				  + distinctRetweetRatio
+				  + "</tr><tr>"
+				  + distinctRetweetUserRatio
+				  + "</tr><tr>"
+				  + totalRetweetCountDistinctRetweetCountRatio
 				  + "</tr></table>");
 
 		  d3.select("#userCreationDateMeanVariance").html(sumaryHtml + "<table><tr>"

@@ -59,6 +59,8 @@ $(document).ready(function() {
             { "mData": "DistinctUserCount" },
             { "mData": "TotalTweetCount" },
             { "mData": "TweetCountUserCountRatio" },
+            { "mData": "totalRetweetCount" },
+            { "mData": "totalRetweetCountDistinctRetweetCountRatio" },
             
             
             { "mData": "hashtagRatio" },
@@ -79,8 +81,15 @@ $(document).ready(function() {
             { "mData": "distinctNonRetweetUserRatio" },
             
             { "mData": "totalMentionUserCount" },
-            { "mData": "distinctMentionCount" }
+            { "mData": "distinctMentionCount" },
+            { "mData": "totalDistinctMentionRatio" },
             
+            { "mData": "retweetedMentionCount" },
+            { "mData": "distinctRetweetedMentionUserCount" },
+            { "mData": "retweetedTotalDistinctMentionRatio" },
+            { "mData": "nonRetweetedMentionCount" },
+            { "mData": "nonRetweetedDistinctMentionCount" },
+            { "mData": "nonRetweetedTotalDistinctMentionRatio" }
             
         ]
     } );
@@ -114,6 +123,8 @@ $(document).ready(function() {
                 <th>Distinct User Count</th>
                 <th>Total Tweet Count</th>
                 <th>Tweet Distinct User Ratio</th>
+                <th>Total Retweet Count</th>
+                <th>Total_Retweet_Count/Distinct_Retweet_Count_Ratio</th>
                 
                 <th>Hashtag Ratio</th>
                 <th>Url Ratio</th>
@@ -135,6 +146,15 @@ $(document).ready(function() {
 
     		     <th>Total_Mention_Counts</th>
 	             <th>Distinct_Mentioned_User_Count</th>
+	             <th>Total_Distinct_Mention_Count_Ratio</th>
+
+	             <th>Retweeted_Mention_Count</th>
+	             <th>Retweeted_Distinct_Mention_Count</th>
+	             <th>RetweetedMention/Distinct_Mention_Ratio</th>
+	             <th>NonRetweeted_Mention_Count</th>
+	             <th>NonRetweeted_Distinct_Mention_Count</th>
+	             <th>NonRetweeted_Mention/DistinctMention_Ratio</th>
+	             
             </tr>
         </thead>       
     </table>

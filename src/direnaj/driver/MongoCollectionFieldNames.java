@@ -133,6 +133,18 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_TWEET_CREATED_AT = "createdAt";
 
 	public static final String MONGO_USER_TWEET_AVERAGE_HASHTAG_DAYS = "tweetAvarageInHashtagDays";
+	public static final String MONGO_TOTAL_RETWEET_COUNT = "totalRetweetCount";
+	public static final String MONGO_TOTAL_DISTINCT_MENTION_RATIO = "totalDistinctMentionRatio";
+	public static final String MONGO_TOTAL_RETWEET_COUNT_DISTINCT_RETWEET_COUNT_RATIO = "totalRetweetCountDistinctRetweetCountRatio";
+	public static final String MONGO_USER_HASHTAG_DAY_AVARAGE_DAY_POST_COUNT_RATIO = "userHashtagDayAverageDayPostCountRatio";
+	// mention features
+	public static final String MONGO_RETWEETED_MENTION_USER_COUNT = "retweetedMentionCount";
+	public static final String MONGO_DISTINCT_RETWEETED_MENTION_USER_COUNT = "distinctRetweetedMentionUserCount";
+	public static final String MONGO_RETWEETED_MENTION_DISTINCT_MENTION_RATIO = "retweetedTotalDistinctMentionRatio";
+	public static final String MONGO_NON_RETWEETED_MENTION_USER_COUNT = "nonRetweetedMentionCount";
+	public static final String MONGO_DISTINCT_NON_RETWEETED_MENTION_USER_COUNT = "nonRetweetedDistinctMentionCount";
+	public static final String MONGO_NON_RETWEETED_MENTION_DISTINCT_MENTION_RATIO = "nonRetweetedTotalDistinctMentionRatio";
+	
 	
 	
 	

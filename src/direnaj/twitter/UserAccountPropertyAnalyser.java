@@ -170,33 +170,31 @@ public class UserAccountPropertyAnalyser {
 		return userProbabilities;
 	}
 
-	public void calculateUserAccountProperties(User user) {	
-        double totalPostCount = user.getPostCount();
-        if(totalPostCount == 0d){
-        	totalPostCount = 1d;
-        }
-        // initialize User Account Properties
-        UserAccountProperties accountProperties = user.getAccountProperties();
-        accountProperties.setProtected(user.isProtected());
-        accountProperties.setVerified(user.isVerified());
-        if (controlDate != null && user.getCreationDate().compareTo(controlDate) < 0) {
-            accountProperties.setEarlierThanMarch2007(true);
-        }
-        // calculate ratios
-        accountProperties.setFriendFollowerRatio(user.calculateFriendFollowerRatio());
-        accountProperties.setUrlRatio(user.getUsedUrlCount() / totalPostCount);
-        accountProperties.setHashtagRatio(user.getCountOfHashtags() / totalPostCount);
-        accountProperties.setMentionRatio(user.getCountOfMentionedUsers() / totalPostCount);
-        accountProperties.setTwitterPostRatio(user.getTwitterDevicePostCount() / totalPostCount);
-        accountProperties.setMobilePostRatio(user.getMobileDevicePostCount() / totalPostCount);
-        accountProperties.setThirdPartyPostRatio(user.getThirdPartyDevicePostCount() / totalPostCount);
-        accountProperties.setMediaPostRatio(user.getCountOfMediaPosts() / totalPostCount);
-        // get days
-        DateTime userCreationDate = new DateTime(user.getCreationDate());
-        DateTime now = new DateTime(DateTimeUtils.getLocalDate());
-        double twitterDay = Days.daysBetween(userCreationDate, now).getDays();
-        double wholeStatusesCount = user.getWholeStatusesCount();
-        double dailyAvaregePostCount = NumberUtils.roundDouble(4,wholeStatusesCount / twitterDay);
-        accountProperties.setAvarageDailyPostCount(dailyAvaregePostCount);
-    }
+	public void calculateUserAccountProperties(User user) {
+		double totalPostCount = user.getPostCount();
+		if (totalPostCount == 0d) {
+			totalPostCount = 1d;
+		}
+		// initialize User Account Properties
+		UserAccountProperties accountProperties = user.getAccountProperties();
+		accountProperties.setProtected(user.isProtected());
+		accountProperties.setVerified(user.isVerified());
+		if (controlDate != null && user.getCreationDate().compareTo(controlDate) < 0) {
+			accountProperties.setEarlierThanMarch2007(true);
+		}
+		// calculate ratios
+		accountProperties.setFriendFollowerRatio(NumberUtils.roundDouble(user.calculateFriendFollowerRatio()));
+		accountProperties.setUrlRatio(NumberUtils.roundDouble(user.getUsedUrlCount() / totalPostCount));
+		accountProperties.setHashtagRatio(NumberUtils.roundDouble(user.getCountOfHashtags() / totalPostCount));
+		accountProperties.setMentionRatio(NumberUtils.roundDouble(user.getCountOfMentionedUsers() / totalPostCount));
+		accountProperties.setMediaPostRatio(NumberUtils.roundDouble(user.getCountOfMediaPosts() / totalPostCount));
+
+		// get days
+		DateTime userCreationDate = new DateTime(user.getCreationDate());
+		DateTime now = new DateTime(DateTimeUtils.getLocalDate());
+		double twitterDay = Days.daysBetween(userCreationDate, now).getDays();
+		double wholeStatusesCount = user.getWholeStatusesCount();
+		double dailyAvaregePostCount = NumberUtils.roundDouble(4, wholeStatusesCount / twitterDay);
+		accountProperties.setAvarageDailyPostCount(dailyAvaregePostCount);
+	}
 }

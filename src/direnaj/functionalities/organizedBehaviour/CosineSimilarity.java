@@ -95,8 +95,26 @@ public class CosineSimilarity {
 				.getNotNullValue(DateTimeUtils.getUTCDateTimeStringInGenericFormat(requestData.getLowerTime())));
 		document.put(MongoCollectionFieldNames.MONGO_UPPER_TIME_INTERVAL, TextUtils
 				.getNotNullValue(DateTimeUtils.getUTCDateTimeStringInGenericFormat(requestData.getUpperTime())));
+		
+		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_POST_COUNT, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEET_USER_COUNT, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEET_POST_COUNT, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_RATIO, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_RATIO, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEET_RATIO, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEET_USER_RATIO, 0d);
+		
+		document.put(MongoCollectionFieldNames.MONGO_TOTAL_MENTION_USER_COUNT, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_MENTION_COUNT, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_RETWEETED_MENTION_USER_COUNT, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEETED_MENTION_USER_COUNT, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_NON_RETWEETED_MENTION_USER_COUNT, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEETED_MENTION_USER_COUNT, 0d);
+		
 		document.put(MongoCollectionFieldNames.MONGO_TWEET_FOUND, false);
 		document.put(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT, "");
+		
 		if (requestData.getLowerTime() != null) {
 			document.put(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME,
 					DateTimeUtils.getRataDieFormat4Date(requestData.getLowerTime()));

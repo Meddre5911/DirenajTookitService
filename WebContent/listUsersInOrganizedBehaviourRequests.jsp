@@ -48,6 +48,7 @@ $(document).ready(function() {
             { "mData": "mediaRatio" },
             { "mData": "avarageDailyPostCount" },
             { "mData": "tweetAvarageInHashtagDays" },
+            { "mData": "userHashtagDayAverageDayPostCountRatio" },
             { "mData": "isProtected" },
             { "mData": "isVerified" },
             { "mData": "creationDate" }
@@ -79,6 +80,7 @@ $(document).ready(function() {
                 <th>Media Ratio</th>
                 <th>Avarage Daily Post Count</th>
                 <th>Avarage Daily Post Count In Hashtag Days</th>
+                <th>Hashtag_Daily_Post_Count_Avarage_Day_Post_Count_Ratio</th>
                 <th>Protected</th>
                 <th>Verified</th>
                 <th>Creation Time</th>
