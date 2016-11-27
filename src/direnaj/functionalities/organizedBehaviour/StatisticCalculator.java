@@ -109,8 +109,8 @@ public class StatisticCalculator {
 				}
 				double dailyAvarageTweetCount4HashtagDays = NumberUtils.roundDouble(2,
 						tweetCount / dayCountOfHashtagUsage);
-				double hashtagDailyCountAvarageDailyCountRatio = dailyAvarageTweetCount4HashtagDays
-						/ userDailyPostCount;
+				double hashtagDailyCountAvarageDailyCountRatio = NumberUtils.roundDouble(3,
+						dailyAvarageTweetCount4HashtagDays / userDailyPostCount);
 				// o date'leri baz alarak tweet istatistiğini hesapla
 				BasicDBObject updateQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId)
 						.append(MongoCollectionFieldNames.MONGO_USER_ID, userId);
@@ -293,8 +293,29 @@ public class StatisticCalculator {
 		}
 	}
 
+	
+	public void calculateBasicUserMeanVariances(DBCollection orgBehaviourProcessInputData){
+		
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER", null);
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE, "USER", null);
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER", null);
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, "USER", null);
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT, "USER", null);
+		
+	}
+	
+	
 	private void calculateMeanVariance4All() {
-
+		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
+		calculateBasicUserMeanVariances(orgBehaviourProcessInputData);
+		
+		
+		
 		DBObject query4UsersHave2AndMorePosts = new BasicDBObject("requestId", requestId);
 		query4UsersHave2AndMorePosts.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
 				new BasicDBObject("$gte", 2));
@@ -305,7 +326,6 @@ public class StatisticCalculator {
 		query4UsersHave50AndMorePosts.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
 				new BasicDBObject("$gte", 50));
 
-		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
 
 		calculateUserRatios(query4UsersHave2AndMorePosts, query4UsersHave10AndMorePosts, query4UsersHave50AndMorePosts,
 				orgBehaviourProcessInputData);
@@ -351,6 +371,13 @@ public class StatisticCalculator {
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MONGO_TOTAL_RETWEET_COUNT_DISTINCT_RETWEET_COUNT_RATIO, "COS_SIM", null);
 
+		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
+				MongoCollectionFieldNames.MONGO_TOTAL_DISTINCT_MENTION_RATIO, "COS_SIM", null);
+		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
+				MongoCollectionFieldNames.MONGO_RETWEETED_MENTION_DISTINCT_MENTION_RATIO, "COS_SIM", null);
+		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
+				MongoCollectionFieldNames.MONGO_NON_RETWEETED_MENTION_DISTINCT_MENTION_RATIO, "COS_SIM", null);
+
 		// tweet similarity
 		calculateMeanVariance(orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MOST_SIMILAR, "COS_SIM", null);
@@ -368,11 +395,6 @@ public class StatisticCalculator {
 	private void calculateRouthTweetCountsMeanVariance(DBObject query4UsersHave2AndMorePosts,
 			DBObject query4UsersHave10AndMorePosts, DBObject query4UsersHave50AndMorePosts,
 			DBCollection orgBehaviourProcessInputData) {
-		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER", null);
-		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, "USER", null);
-
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave2AndMorePosts, requestId,
 				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, "USER",
 				MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT + "_2");
@@ -398,8 +420,6 @@ public class StatisticCalculator {
 	private void calculateFriendFollowerRatios(DBObject query4UsersHave2AndMorePosts,
 			DBObject query4UsersHave10AndMorePosts, DBObject query4UsersHave50AndMorePosts,
 			DBCollection orgBehaviourProcessInputData) {
-		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER", null);
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave2AndMorePosts, requestId,
 				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER",
 				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO + "_2");
@@ -414,8 +434,6 @@ public class StatisticCalculator {
 	private void calculateUserCreationDates(DBObject query4UsersHave2AndMorePosts,
 			DBObject query4UsersHave10AndMorePosts, DBObject query4UsersHave50AndMorePosts,
 			DBCollection orgBehaviourProcessInputData) {
-		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
-				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE, "USER", null);
 		// for users with multiple posts
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave2AndMorePosts, requestId,
 				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE, "USER",
@@ -438,6 +456,11 @@ public class StatisticCalculator {
 				MongoCollectionFieldNames.MONGO_MENTION_RATIO, "USER", null);
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
 				MongoCollectionFieldNames.MONGO_MEDIA_RATIO, "USER", null);
+
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_USER_TWEET_AVERAGE_HASHTAG_DAYS, "USER", null);
+		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
+				MongoCollectionFieldNames.MONGO_USER_HASHTAG_DAY_AVARAGE_DAY_POST_COUNT_RATIO, "USER", null);
 
 		calculateMeanVariance(orgBehaviourProcessInputData, query4UsersHave2AndMorePosts, requestId,
 				MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "USER",
@@ -786,6 +809,7 @@ public class StatisticCalculator {
 
 	}
 
+	
 	private void calculateMeanVariance(DBCollection collection, DBObject query, String requestId,
 			String calculationField, String calculationDomain, String reduceCalculationType) {
 

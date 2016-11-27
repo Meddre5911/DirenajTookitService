@@ -70,6 +70,29 @@ public class MongoPaginationServlet extends HttpServlet {
 					Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
 				}
 
+			} else if ("campaignComparisonList".equals(pageType)) {
+				// mongo call
+				DBCollection campaignComparisonCollection = DirenajMongoDriver.getInstance()
+						.getOrgBehaviourCampaignComparisons();
+				if (session.getAttribute("collectionRecordCount") == null) {
+					recordCounts = (int) campaignComparisonCollection.count();
+					session.setAttribute("collectionRecordCount", recordCounts);
+				} else {
+					recordCounts = Integer.valueOf(session.getAttribute("collectionRecordCount").toString());
+				}
+				// get cursor
+				DBCursor paginatedResult = campaignComparisonCollection.find()
+						.sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, -1))
+						.skip(pageNumber * pageDisplayLength).limit(pageDisplayLength);
+				// get objects from cursor
+				try {
+					while (paginatedResult.hasNext()) {
+						jsonArray.put(new JSONObject(paginatedResult.next().toString()));
+					}
+				} catch (JSONException e) {
+					Logger.getLogger(MongoPaginationServlet.class).error("Error in MongoPaginationServlet.", e);
+				}
+
 			} else if ("requestToolkitCampaigns".equals(pageType)) {
 				// mongo call
 				DBCollection campaignCollection = DirenajMongoDriver.getInstance().getCampaignsCollection();
@@ -145,7 +168,7 @@ public class MongoPaginationServlet extends HttpServlet {
 
 				recordCounts = (int) campaignStatisticsCollection.count();
 				session.setAttribute("userInputDataCount", recordCounts);
-				
+
 				// get cursor
 				DBCursor paginatedResult = campaignStatisticsCollection.find()
 						.sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_TWEET_COUNT, -1))

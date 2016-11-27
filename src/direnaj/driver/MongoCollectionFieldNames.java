@@ -144,6 +144,10 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_NON_RETWEETED_MENTION_USER_COUNT = "nonRetweetedMentionCount";
 	public static final String MONGO_DISTINCT_NON_RETWEETED_MENTION_USER_COUNT = "nonRetweetedDistinctMentionCount";
 	public static final String MONGO_NON_RETWEETED_MENTION_DISTINCT_MENTION_RATIO = "nonRetweetedTotalDistinctMentionRatio";
+	public static final String MONGO_COMPARISON_ACTUAL_HASHTAG = "actualHashtag";
+	public static final String MONGO_COMPARISON_REQUEST_DEFINITION = "requestDefinition";
+	public static final String MONGO_COMPARISON_COMPARED_ENTITIES = "comparedEntities";
+	public static final String MONGO_COMPARISON_RESULTS = "comparisonResults";
 	
 	
 	

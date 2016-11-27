@@ -45,6 +45,7 @@ import twitter4j.ResponseList;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
+import twitter4j.UserJSONImpl;
 
 public class Twitter4jUtil {
 
@@ -204,6 +205,15 @@ public class Twitter4jUtil {
 		try {
 			Status twitter4jStatus = (Status) gson.fromJson(statusInJson, DrenajStatusJSONImpl.class);
 			return twitter4jStatus;
+		} catch (Exception e) {
+			Logger.getLogger(Twitter4jUtil.class).error("Error during deserializing of tweet : \n" + statusInJson);
+			throw e;
+		}
+	}
+	public static twitter4j.User deserializeTwitter4jUserFromGson(Gson gson, String statusInJson) {
+		try {
+			twitter4j.User twitter4jUser = (twitter4j.User) gson.fromJson(statusInJson, UserJSONImpl.class);
+			return twitter4jUser;
 		} catch (Exception e) {
 			Logger.getLogger(Twitter4jUtil.class).error("Error during deserializing of tweet : \n" + statusInJson);
 			throw e;

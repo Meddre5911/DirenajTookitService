@@ -68,7 +68,11 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				visualizeUserPostDeviceRatios(jsonArray, query);
 			} else if ("visualizeUserRoughTweetCountsInBarChart".equals(requestType)) {
 				visualizeUserRoughTweetCountsInBarChart(jsonArray, query, userPostCountWithHashtag);
-			} else if ("visualizeHourlyUserAndTweetCount".equals(requestType)) {
+			} else if ("visualizeUserDailyTweetRatiosInBarChart".equals(requestType)) {
+				visualizeUserDailyTweetRatiosInBarChart(jsonArray, query);
+			}
+
+			else if ("visualizeHourlyUserAndTweetCount".equals(requestType)) {
 				query4CosSimilarityRequest.remove(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
 				visualizeHourlyUserAndTweetCount(jsonArray, query4CosSimilarityRequest,
 						MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT,
@@ -83,35 +87,29 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				visualizeHourlyUserAndTweetCount(jsonArray, query4CosSimilarityRequest,
 						MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEET_POST_COUNT,
 						MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEET_USER_COUNT);
-			}  
-			
-			
+			}
+
 			else if ("visualizeHourlyTotalAndDistinctMentionCount".equals(requestType)) {
 				query4CosSimilarityRequest.remove(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
 				visualizeHourlyUserAndTweetCount(jsonArray, query4CosSimilarityRequest,
 						MongoCollectionFieldNames.MONGO_TOTAL_MENTION_USER_COUNT,
 						MongoCollectionFieldNames.MONGO_DISTINCT_MENTION_COUNT);
-			}  
-			
+			}
+
 			else if ("visualizeHourlyRetweetedTotalAndDistinctMentionCount".equals(requestType)) {
 				query4CosSimilarityRequest.remove(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
 				visualizeHourlyUserAndTweetCount(jsonArray, query4CosSimilarityRequest,
 						MongoCollectionFieldNames.MONGO_RETWEETED_MENTION_USER_COUNT,
 						MongoCollectionFieldNames.MONGO_DISTINCT_RETWEETED_MENTION_USER_COUNT);
-			}  
-			
+			}
+
 			else if ("visualizeHourlyNonRetweetedTotalAndDistinctMentionCount".equals(requestType)) {
 				query4CosSimilarityRequest.remove(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
 				visualizeHourlyUserAndTweetCount(jsonArray, query4CosSimilarityRequest,
 						MongoCollectionFieldNames.MONGO_NON_RETWEETED_MENTION_USER_COUNT,
 						MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEETED_MENTION_USER_COUNT);
-			}  
-			
-			
-			
-			
-			
-			
+			}
+
 			else if ("visualizeHourlyTweetSimilarities".equals(requestType)) {
 				visualizeHourlyTweetSimilarities(jsonArray, query4CosSimilarityRequest);
 			} else if ("visualizeUserCreationTimesInBarChart".equals(requestType)) {
@@ -119,7 +117,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			} else if ("visualizeUserFriendFollowerRatioInBarChart".equals(requestType)) {
 				visualizeUserFriendFollowerRatioInBarChart(jsonArray, query, requestId, userPostCountWithHashtag);
 			} else if ("visualizeUserRoughHashtagTweetCountsInBarChart".equals(requestType)) {
-				visualizeUserRoughHashtagTweetCountsInBarChart(jsonArray, query, requestId);
+				visualizeUserRoughHashtagTweetCountsInBarChart(jsonArray, query);
 			} else if ("visualizeUserTweetEntityRatiosInBarChart".equals(requestType)) {
 				visualizeUserTweetEntityRatiosInBarChart(jsonArray, query, userPostCountWithHashtag);
 			} else if ("visualizeHourlyEntityRatios".equals(requestType)) {
@@ -131,8 +129,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			}
 
 			jsonStr = jsonArray.toString();
-			 System.out.println("Request Type : " + requestType);
-			 System.out.println("Returned String : " + jsonStr);
+			System.out.println("Request Type : " + requestType);
+			System.out.println("Returned String : " + jsonStr);
 		} catch (JSONException e) {
 			Logger.getLogger(MongoPaginationServlet.class)
 					.error("Error in OrganizedBehaviorCampaignVisualizer Servlet.", e);
@@ -146,8 +144,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		printout.println(jsonStr);
 	}
 
-	private void visualizeUserRoughHashtagTweetCountsInBarChart(JSONArray jsonArray, BasicDBObject query,
-			String requestId) throws JSONException {
+	private void visualizeUserRoughHashtagTweetCountsInBarChart(JSONArray jsonArray, BasicDBObject query)
+			throws JSONException {
 		List<String> limits = new ArrayList<>();
 		limits.add("1");
 		limits.add("2");
@@ -173,6 +171,46 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			double userHashtagPostCount = NumberUtils.roundDouble(4,
 					(double) next.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT));
 			CollectionUtil.findGenericRange(limits, rangePercentages, userHashtagPostCount);
+		}
+		CollectionUtil.calculatePercentage(rangePercentages, userCount);
+		for (String limit : limits) {
+			JSONObject jsonObject = new JSONObject();
+			jsonObject.put("ratio", limit);
+			jsonObject.put("percentage", rangePercentages.get(limit));
+			jsonArray.put(jsonObject);
+		}
+	}
+
+	private void visualizeUserDailyTweetRatiosInBarChart(JSONArray jsonArray, BasicDBObject query)
+			throws JSONException {
+		List<String> limits = new ArrayList<>();
+		limits.add("0-0.9");
+		limits.add("1");
+		limits.add("2");
+		limits.add("3-5");
+		limits.add("6-10");
+		limits.add("11-...");
+		Map<String, Double> rangePercentages = new HashMap<>();
+		for (String limit : limits) {
+			rangePercentages.put(limit, 0d);
+		}
+
+		// get cursor
+		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
+		// get objects from cursor
+		int userCount = 0;
+		while (paginatedResult.hasNext()) {
+			userCount++;
+			DBObject next = paginatedResult.next();
+			double userDailyPostCountRatio = (double) next
+					.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_DAY_AVARAGE_DAY_POST_COUNT_RATIO);
+			if (userDailyPostCountRatio < 1d) {
+				userDailyPostCountRatio = NumberUtils.roundDouble(1, userDailyPostCountRatio);
+			} else {
+				userDailyPostCountRatio = NumberUtils.roundDouble(0, userDailyPostCountRatio);
+			}
+
+			CollectionUtil.findGenericRange(limits, rangePercentages, userDailyPostCountRatio);
 		}
 		CollectionUtil.calculatePercentage(rangePercentages, userCount);
 		for (String limit : limits) {
@@ -284,9 +322,11 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			ratioPercentages.put(Double.valueOf(limit), 0d);
 		}
 
-		// get cursor
-		query.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
-				new BasicDBObject("$gte", userPostCountWithHashtag));
+		if (userPostCountWithHashtag > 0) {
+			// get cursor
+			query.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
+					new BasicDBObject("$gte", userPostCountWithHashtag));
+		}
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
 
 		// get objects from cursor
@@ -348,6 +388,17 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT, "USER");
 		jsonArray.put(userHashtagPostCountMeanVariance.toMap());
 
+		DBObject userDailyAvaragePostCount = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT, "USER");
+		DBObject userDailyAvaragePostCount4HashtagDays = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_TWEET_AVERAGE_HASHTAG_DAYS, "USER");
+		DBObject userDailyAvaragePostCountRatios = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_HASHTAG_DAY_AVARAGE_DAY_POST_COUNT_RATIO, "USER");
+
+		jsonArray.put(userDailyAvaragePostCount.toMap());
+		jsonArray.put(userDailyAvaragePostCount4HashtagDays.toMap());
+		jsonArray.put(userDailyAvaragePostCountRatios.toMap());
+
 		// get cos similarity ratios
 		DBCollection orgBehaviourRequestedSimilarityCalculations = DirenajMongoDriver.getInstance()
 				.getOrgBehaviourRequestedSimilarityCalculations();
@@ -365,26 +416,33 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		DBObject hourlyTweetUserCountRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
 				query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT_DISTINCT_USER_RATIO, "COS_SIM");
-		
+
 		DBObject hourlyRetweetUserCountRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
 				query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_DIVIDED_BY_RATIO, "COS_SIM");
-		DBObject hourlyNonRetweetUserCountRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
-				query4CosSimilarityRequest, requestId,
+		DBObject hourlyNonRetweetUserCountRatioMeanVariance = getMeanVariance(
+				orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEET_USER_DIVIDED_BY_RATIO, "COS_SIM");
-		DBObject totalRetweetCountDistinctRetweetCountRatio = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
-				query4CosSimilarityRequest, requestId,
+		DBObject totalRetweetCountDistinctRetweetCountRatio = getMeanVariance(
+				orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
 				MongoCollectionFieldNames.MONGO_TOTAL_RETWEET_COUNT_DISTINCT_RETWEET_COUNT_RATIO, "COS_SIM");
 		DBObject distinctRetweetRatio = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
-				query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_RATIO, "COS_SIM");
+				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_RATIO,
+				"COS_SIM");
 		DBObject distinctRetweetUserRatio = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
+				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_RATIO,
+				"COS_SIM");
+
+		DBObject totalDistinctMentionRatio = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
+				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.MONGO_TOTAL_DISTINCT_MENTION_RATIO,
+				"COS_SIM");
+		DBObject retweetedTotalDistinctMentionRatio = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
 				query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_RATIO, "COS_SIM");
-		
-		
-		
-		
+				MongoCollectionFieldNames.MONGO_RETWEETED_MENTION_DISTINCT_MENTION_RATIO, "COS_SIM");
+		DBObject nonRetweetedTotalDistinctMentionRatio = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
+				query4CosSimilarityRequest, requestId,
+				MongoCollectionFieldNames.MONGO_NON_RETWEETED_MENTION_DISTINCT_MENTION_RATIO, "COS_SIM");
+
 		// tweet similarity
 		DBObject hourlyMostSimilarTweetsRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
 				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.MOST_SIMILAR, "COS_SIM");
@@ -414,6 +472,10 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		jsonArray.put(totalRetweetCountDistinctRetweetCountRatio.toMap());
 		jsonArray.put(distinctRetweetRatio.toMap());
 		jsonArray.put(distinctRetweetUserRatio.toMap());
+
+		jsonArray.put(totalDistinctMentionRatio.toMap());
+		jsonArray.put(retweetedTotalDistinctMentionRatio.toMap());
+		jsonArray.put(nonRetweetedTotalDistinctMentionRatio.toMap());
 
 		Logger.getLogger(MongoPaginationServlet.class)
 				.debug("getMeanVariance4All is finished for requestId : " + requestId);
@@ -505,13 +567,20 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 	 */
 	private DBObject getMeanVariance(DBCollection collection, DBObject query, String requestId, String calculationType,
 			String calculationDomain) {
-		Logger.getLogger(MongoPaginationServlet.class).debug("getMeanVariance is executed for requestId : " + requestId
-				+ ". Calculation Type : " + calculationType + ". CalculationDomain: " + calculationDomain);
+		DBObject meanVarianceResult = new BasicDBObject();
+		try {
+			Logger.getLogger(MongoPaginationServlet.class)
+					.debug("getMeanVariance is executed for requestId : " + requestId + ". Calculation Type : "
+							+ calculationType + ". CalculationDomain: " + calculationDomain);
 
-		DBObject calculationQuery = new BasicDBObject("requestId", requestId).append("calculationType", calculationType)
-				.append("calculationDomain", calculationDomain);
-		DBObject meanVarianceResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestMeanVarianceCalculations()
-				.findOne(calculationQuery);
+			DBObject calculationQuery = new BasicDBObject("requestId", requestId)
+					.append("calculationType", calculationType).append("calculationDomain", calculationDomain);
+			meanVarianceResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestMeanVarianceCalculations()
+					.findOne(calculationQuery);
+		} catch (Exception e) {
+			// FIXME 20161127 Loglama
+			e.printStackTrace();
+		}
 		return meanVarianceResult;
 	}
 
@@ -623,13 +692,13 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		jsonArray.put(new JSONObject().put("valueType", firstValueType).put("values", valuesOfFirstValueType));
 		jsonArray.put(new JSONObject().put("valueType", secondValueType).put("values", valuesOfSecondValueType));
 	}
-	
+
 	private void visualizeHourlyTweetRatios(JSONArray jsonArray, BasicDBObject query4CosSimilarityRequest)
 			throws Exception, JSONException {
 		JSONArray retweetRatioJsonArray = new JSONArray();
 		JSONArray distinctRetweetRatioJsonArray = new JSONArray();
 		JSONArray distinctRetweetUserRatioJsonArray = new JSONArray();
-		
+
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
 				.find(query4CosSimilarityRequest)
 				.sort(new BasicDBObject(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME, 1));
@@ -649,16 +718,18 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 					DateTimeUtils.getUTCDateTime(DateTimeUtils.getTwitterDate(twitterDateStr)));
 
 			retweetRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", retweetRatio));
-			distinctRetweetRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", distinctRetweetRatio));
-			distinctRetweetUserRatioJsonArray.put(new JSONObject().put("time", twitterDate).put("value", distinctRetweetUsertRatio));
+			distinctRetweetRatioJsonArray
+					.put(new JSONObject().put("time", twitterDate).put("value", distinctRetweetRatio));
+			distinctRetweetUserRatioJsonArray
+					.put(new JSONObject().put("time", twitterDate).put("value", distinctRetweetUsertRatio));
 		}
 		// init to array
 		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_RETWEET_RATIO).put("values",
 				retweetRatioJsonArray));
-		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_RATIO).put("values",
-				distinctRetweetRatioJsonArray));
-		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_RATIO).put("values",
-				distinctRetweetUserRatioJsonArray));
+		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_RATIO)
+				.put("values", distinctRetweetRatioJsonArray));
+		jsonArray.put(new JSONObject().put("valueType", MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_RATIO)
+				.put("values", distinctRetweetUserRatioJsonArray));
 
 	}
 
@@ -701,7 +772,6 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 
 	}
 
-
 	private void visualizeUserRoughTweetCountsInBarChart(JSONArray jsonArray, BasicDBObject query,
 			int userPostCountWithHashtag) throws JSONException {
 
@@ -743,8 +813,10 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 
 		// get cursor
 		// get cursor
-		query.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
-				new BasicDBObject("$gte", userPostCountWithHashtag));
+		if (userPostCountWithHashtag > 0) {
+			query.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
+					new BasicDBObject("$gte", userPostCountWithHashtag));
+		}
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
 		// get objects from cursor
 		int userCount = 0;

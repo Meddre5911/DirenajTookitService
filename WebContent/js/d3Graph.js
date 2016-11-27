@@ -1042,6 +1042,14 @@ function getMeanVariance(){
 		var distinctRetweetRatio = '';
 		var distinctRetweetUserRatio = '';
 		var totalRetweetCountDistinctRetweetCountRatio = '';
+
+		var totalDistinctMentionRatio = '';
+		var retweetedTotalDistinctMentionRatio = '';
+		var nonRetweetedTotalDistinctMentionRatio = '';
+		
+		var avarageDailyPostCount = '';
+		var tweetAvarageInHashtagDays = '';
+		var userHashtagDayAverageDayPostCountRatio = '';
 		
 		  data.forEach(function(d) {
 				if(d.calculationType == "hashtagRatio" && d.calculationDomain == "USER"){
@@ -1174,6 +1182,16 @@ function getMeanVariance(){
 				userHashtagPostCountMeanVariance = getHTMLStr4MeanVariance(d);
 			}
 			
+			if(d.calculationType == "avarageDailyPostCount" && d.calculationDomain == "USER"){
+				avarageDailyPostCount = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "tweetAvarageInHashtagDays" && d.calculationDomain == "USER"){
+				tweetAvarageInHashtagDays = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "userHashtagDayAverageDayPostCountRatio" && d.calculationDomain == "USER"){
+				userHashtagDayAverageDayPostCountRatio = getHTMLStr4MeanVariance(d);
+			}
+			
 			
 			if(d.calculationType == "MOST_SIMILAR" && d.calculationDomain == "COS_SIM"){
 				mostSimilarTweetsMeanVariance = getHTMLStr4MeanVariance(d);
@@ -1230,6 +1248,16 @@ function getMeanVariance(){
 			if(d.calculationType == "distinctNonRetweetUserDividedByRatio" && d.calculationDomain == "COS_SIM"){
 				distinctNonRetweetUserDividedByRatio = getHTMLStr4MeanVariance(d);
 			}
+
+			if(d.calculationType == "totalDistinctMentionRatio" && d.calculationDomain == "COS_SIM"){
+				totalDistinctMentionRatio = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "retweetedTotalDistinctMentionRatio" && d.calculationDomain == "COS_SIM"){
+				retweetedTotalDistinctMentionRatio = getHTMLStr4MeanVariance(d);
+			}
+			if(d.calculationType == "nonRetweetedTotalDistinctMentionRatio" && d.calculationDomain == "COS_SIM"){
+				nonRetweetedTotalDistinctMentionRatio = getHTMLStr4MeanVariance(d);
+			}
 			
 			
 			
@@ -1252,6 +1280,14 @@ function getMeanVariance(){
 						+ mentionRatioMeanVariance
 						+ '</tr><tr>'
 						+mediaRatioMeanVariance	+'</tr></table>');
+
+		  d3.select("#userDailyTweetRatiosMeanVariance").html(sumaryHtml+
+				  '<table><tr>'
+				  + avarageDailyPostCount
+				  + '</tr><tr>' + tweetAvarageInHashtagDays
+				  + '</tr><tr>'
+				  + userHashtagDayAverageDayPostCountRatio
+				  + '</tr></table>');
 		  
 		  d3.select("#userRatiosGraphMeanVariance_2").html(sumaryHtml+
 				  '<table><tr>'
@@ -1344,6 +1380,20 @@ function getMeanVariance(){
 		  d3.select("#hourlyDistinctNonRetweetUserCountRatioMeanVariance").html(sumaryHtml+
 				  "<table><tr>"
 				  + distinctNonRetweetUserDividedByRatio
+				  + "</tr></table>");
+
+		  
+		  d3.select("#hourlyTotalAndDistinctMentionCountMeanVariance").html(sumaryHtml+
+				  "<table><tr>"
+				  + totalDistinctMentionRatio
+				  + "</tr></table>");
+		  d3.select("#hourlyRetweetedTotalAndDistinctMentionCountMeanVariance").html(sumaryHtml+
+				  "<table><tr>"
+				  + retweetedTotalDistinctMentionRatio
+				  + "</tr></table>");
+		  d3.select("#hourlyNonRetweetedTotalAndDistinctMentionCountMeanVariance").html(sumaryHtml+
+				  "<table><tr>"
+				  + nonRetweetedTotalDistinctMentionRatio
 				  + "</tr></table>");
 		  
 		  

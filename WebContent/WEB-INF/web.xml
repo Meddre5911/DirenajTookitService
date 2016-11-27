@@ -40,6 +40,10 @@
 		<servlet-class>direnaj.servlet.CampaignCreationServlet</servlet-class>
 	</servlet>
 	<servlet>
+		<servlet-name>CampaignComparisonServlet</servlet-name>
+		<servlet-class>direnaj.servlet.CampaignComparisonServlet</servlet-class>
+	</servlet>
+	<servlet>
 		<servlet-name>OrganizedBehaviorCampaignVisualizer</servlet-name>
 		<servlet-class>direnaj.servlet.OrganizedBehaviorCampaignVisualizer</servlet-class>
 	</servlet>
@@ -79,6 +83,10 @@
 	<servlet-mapping>
 		<servlet-name>CampaignCreationServlet</servlet-name>
 		<url-pattern>/campaignCreation</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>CampaignComparisonServlet</servlet-name>
+		<url-pattern>/campaignHashtagComparison</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>DirenajService</servlet-name>

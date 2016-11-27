@@ -93,6 +93,10 @@ public class DirenajMongoDriver {
 			mongoDB.createCollection("OrgBehaviourModelTrainingInputData", null);
 			Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourModelTrainingInputData is created");
 		}
+		if (!mongoDB.collectionExists("OrgBehaviourCampaignComparisons")) {
+			mongoDB.createCollection("OrgBehaviourCampaignComparisons", null);
+			Logger.getLogger(DirenajMongoDriver.class.getSimpleName()).debug("OrgBehaviourCampaignComparisons is created");
+		}
 	}
 
 	public static DirenajMongoDriver getInstance() {
@@ -172,6 +176,10 @@ public class DirenajMongoDriver {
 
 	public DBCollection getOrgBehaviourModelTrainingInputData() {
 		return mongoDB.getCollection("OrgBehaviourModelTrainingInputData");
+	}
+	
+	public DBCollection getOrgBehaviourCampaignComparisons() {
+		return mongoDB.getCollection("OrgBehaviourCampaignComparisons");
 	}
 
 	public DBCollection getTestCollection() {

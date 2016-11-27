@@ -116,6 +116,7 @@ function prepareGraphs(){
 	prepareGroupedBarChart('visualizeUserRoughTweetCountsInBarChart&userHashtagPostCount=50','userRoughTweetCountsGraph_50','Tweet Count','(%) Total User Percentage For Given Tweet Count');
 	
 	prepareUserRatiosGraphInBarChart('visualizeUserRoughHashtagTweetCountsInBarChart','userHashtagCountsGraph','Post Counts With Given Hashtag','(%) Percentage of User Based on Their Post Counts With Given Hashtag');
+	prepareUserRatiosGraphInBarChart('visualizeUserDailyTweetRatiosInBarChart','visualizeUserDailyTweetRatiosInBarChart','Hashtag Post Day Tweet Count / Avarage Daily Post Count Ratio','(%) Percentage of User Based on Their Daily Ratio');
 	
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyUserAndTweetCount','hourlyUserAndTweetCountGraph','Tweet Post Time','Tweet / User Count');
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyRetweetedUserAndPostCount','hourlyRetweetedUserAndPostCountGraph','Retweet Post Time','Distinct Retweet / User Count');
@@ -345,6 +346,15 @@ function prepareGraphs(){
 </div>
 
 <div class="divTableRow">
+<div id="visualizeUserDailyTweetRatiosInBarChart" class="divTableCell"><b><big>Users Ratio for Hashtag Day Post Count/Avarage Daily Post count :</big></b> <br></div>
+</div>
+<div class="divTableRow">
+<div id="userDailyTweetRatiosMeanVariance" class="divTableCell">
+</div>
+</div>
+
+
+<div class="divTableRow">
 <div id="statusHourlyEntityRatios" class="divTableCell"><b><big>Hourly Status Entity Ratios :</big></b> <br></div>
 </div>
 
@@ -389,13 +399,22 @@ function prepareGraphs(){
 <div class="divTableRow">
 <div id="visualizeHourlyTotalAndDistinctMentionCount" class="divTableCell"><b><big>Hour Basis  Total & Distinct Mention Counts of Campaign :</big></b> <br></div>
 </div>
+<div class="divTableRow">
+<div id="hourlyTotalAndDistinctMentionCountMeanVariance" class="divTableCell"></div>
+</div>
 
 <div class="divTableRow">
 <div id="visualizeHourlyRetweetedTotalAndDistinctMentionCount" class="divTableCell"><b><big>Hour Basis Retweeted Total & Distinct Mention Counts of Campaign :</big></b> <br></div>
 </div>
+<div class="divTableRow">
+<div id="hourlyRetweetedTotalAndDistinctMentionCountMeanVariance" class="divTableCell"></div>
+</div>
 
 <div class="divTableRow">
 <div id="visualizeHourlyNonRetweetedTotalAndDistinctMentionCount" class="divTableCell"><b><big>Hour Basis Non Retweeted Total & Distinct Mention Counts of Campaign :</big></b> <br></div>
+</div>
+<div class="divTableRow">
+<div id="hourlyNonRetweetedTotalAndDistinctMentionCountMeanVariance" class="divTableCell"></div>
 </div>
 
 
