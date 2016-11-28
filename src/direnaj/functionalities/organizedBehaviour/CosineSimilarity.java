@@ -38,13 +38,15 @@ public class CosineSimilarity {
 	private String originalRequestId;
 	private List<CosineSimilarityRequestData> requestDataList;
 	private Gson statusDeserializer;
+	private boolean bypassSimilarityCalculation;
 
 	public CosineSimilarity(String requestId, boolean calculateGeneralSimilarity, boolean calculateHashTagSimilarity,
-			Date earliestTweetDate, Date latestTweetDate, String campaignId, boolean isExternalDateGiven)
-					throws Exception {
+			Date earliestTweetDate, Date latestTweetDate, String campaignId, boolean isExternalDateGiven,
+			boolean bypassSimilarityCalculation) throws Exception {
 		requestDataList = new ArrayList<>();
 		originalRequestId = requestId;
 		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
+		this.bypassSimilarityCalculation = bypassSimilarityCalculation;
 		// first assume as resume process
 		check4ExistingCosSimilarityCalculationRequests();
 
@@ -171,6 +173,11 @@ public class CosineSimilarity {
 						.debug("Request Data is getting inserted. \n" + requestData.toString());
 				insertRequest2Mongo(requestData);
 			}
+		}
+		if (bypassSimilarityCalculation) {
+			Logger.getLogger(CosineSimilarity.class)
+					.debug("Tweet Similarity Calculation is Bypassed for requestId : " + originalRequestId);
+			return;
 		}
 		// then start calculations
 		for (CosineSimilarityRequestData requestData : requestDataList) {

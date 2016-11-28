@@ -56,6 +56,7 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_GENARAL_SIMILARITY_CALCULATION = "calculateGeneralSimilarity";
 	public static final String MONGO_HASHTAG_SIMILARITY_CALCULATION = "calculateHashTagSimilarity";
 	public static final String MONGO_BYPASS_TWEET_COLLECTION = "bypassTweetCollection";
+	public static final String MONGO_BYPASS_SIMILARITY_CALCULATION = "bypassSimilarityCalculation";
 
 	// legacy direnaj
 	public static final String MONGO_CAMPAIGN_ID = "campaign_id";
@@ -148,6 +149,7 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_COMPARISON_REQUEST_DEFINITION = "requestDefinition";
 	public static final String MONGO_COMPARISON_COMPARED_ENTITIES = "comparedEntities";
 	public static final String MONGO_COMPARISON_RESULTS = "comparisonResults";
+	public static final String MONGO_IS_EXTERNAL_DATE_GIVEN = "isExternalDateGiven";
 	
 	
 	

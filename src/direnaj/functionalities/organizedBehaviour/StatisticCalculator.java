@@ -33,14 +33,16 @@ public class StatisticCalculator {
 	private DBObject query4CosSimilarityRequest;
 	private String tracedHashtag;
 	private String campaignId;
+	private boolean bypassSimilarityCalculation;
 
 	public StatisticCalculator(String requestId, DBObject requestIdObj, BasicDBObject query4CosSimilarityRequest,
-			String tracedHashtag, String campaignId) {
+			String tracedHashtag, String campaignId, boolean bypassSimilarityCalculation) {
 		this.requestId = requestId;
 		this.requestIdObj = requestIdObj;
 		this.query4CosSimilarityRequest = query4CosSimilarityRequest;
 		this.tracedHashtag = tracedHashtag;
 		this.campaignId = campaignId;
+		this.bypassSimilarityCalculation = bypassSimilarityCalculation;
 	}
 
 	public void calculateStatistics() throws Exception {
@@ -503,6 +505,7 @@ public class StatisticCalculator {
 		// first do calculation
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
 				.find(query4CosSimilarityRequest);
+		double wholeRequestProcessTweetCount = 0d;
 		try {
 			while (paginatedResult.hasNext()) {
 				DBObject requestedSimilarityCalculation = paginatedResult.next();
@@ -512,20 +515,7 @@ public class StatisticCalculator {
 				DBObject updateQuery4RequestedCalculation = new BasicDBObject();
 				updateQuery4RequestedCalculation.put("requestId", requestId);
 				updateQuery4RequestedCalculation.put("originalRequestId", originalRequestId);
-
-				double totalTweetCount = (double) requestedSimilarityCalculation
-						.get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
-				if (totalTweetCount == 0d) {
-					totalTweetCount = 1d;
-				}
-				double distinctUserCount = Double.valueOf(
-						(int) requestedSimilarityCalculation.get(MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT));
-				double tweetCountUserCountRatio = totalTweetCount / distinctUserCount;
-				if (distinctUserCount == 0d) {
-					distinctUserCount = 1d;
-					tweetCountUserCountRatio = 0d;
-				}
-
+				// get time
 				String lowerTimeInterval = (String) requestedSimilarityCalculation
 						.get(MongoCollectionFieldNames.MONGO_LOWER_TIME_INTERVAL);
 				String upperTimeInterval = (String) requestedSimilarityCalculation
@@ -535,6 +525,46 @@ public class StatisticCalculator {
 						.getRataDieFormat4Date(DateTimeUtils.getTwitterDate(lowerTimeInterval));
 				double upperTimeInRataDie = DateTimeUtils
 						.getRataDieFormat4Date(DateTimeUtils.getTwitterDate(upperTimeInterval));
+				// get total tweet count
+				double totalTweetCount = 0d;
+				double distinctUserCount = 0d;
+				if (bypassSimilarityCalculation) {
+					totalTweetCount = getTotalTweetCount4Request(lowerTimeInRataDie, upperTimeInRataDie);
+					distinctUserCount = getDistinctUserCount4Request(lowerTimeInRataDie, upperTimeInRataDie);
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+							DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
+							updateQuery4RequestedCalculation, MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT,
+							totalTweetCount, "$set");
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+							DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
+							updateQuery4RequestedCalculation, MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT,
+							distinctUserCount, "$set");
+					if (totalTweetCount > 0) {
+						DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+								DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
+								updateQuery4RequestedCalculation, MongoCollectionFieldNames.MONGO_TWEET_FOUND, true,
+								"$set");
+					}
+				} else {
+					totalTweetCount = (double) requestedSimilarityCalculation
+							.get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
+					distinctUserCount = Double.valueOf((int) requestedSimilarityCalculation
+							.get(MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT));
+				}
+				wholeRequestProcessTweetCount += totalTweetCount;
+				if (totalTweetCount <= 5d) {
+					continue;
+				}
+				if (totalTweetCount == 0d) {
+					totalTweetCount = 1d;
+				}
+
+				double tweetCountUserCountRatio = totalTweetCount / distinctUserCount;
+				if (distinctUserCount == 0d) {
+					distinctUserCount = 1d;
+					tweetCountUserCountRatio = 0d;
+				}
+
 				Logger.getLogger(StatisticCalculator.class)
 						.debug("Tweet Dependent Ratios will be calculated for for requestId : " + requestId);
 				calculateTweetDependentRatios(statusDeserializer, totalTweetCount, tweetCountUserCountRatio,
@@ -547,17 +577,38 @@ public class StatisticCalculator {
 						.debug("Hourly Non Retweet Ratios will be calculated for for requestId : " + requestId);
 				calculateHourlyNonRetweetRatios(updateQuery4RequestedCalculation, totalTweetCount, distinctUserCount,
 						lowerTimeInRataDie, upperTimeInRataDie);
-
 			}
 		} finally {
 			paginatedResult.close();
 		}
+		BasicDBObject findQuery = new BasicDBObject();
+		findQuery.put("_id", requestId);
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection(), findQuery,
+				MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT, wholeRequestProcessTweetCount, "$set");
+	}
+
+	private double getDistinctUserCount4Request(double lowerTimeInRataDie, double upperTimeInRataDie) {
+		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
+				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
+				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
+						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"));
+		double distinctUserCount = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+				.distinct("user.id", tweetQuery).size();
+		return distinctUserCount;
+	}
+
+	private double getTotalTweetCount4Request(double lowerTimeInRataDie, double upperTimeInRataDie) {
+		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
+				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
+				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
+						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"));
+		return DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().count(tweetQuery);
 	}
 
 	private double getDistinctMentionCount4Request(double lowerTimeInRataDie, double upperTimeInRataDie) {
 		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
-				.append("$where", "this.hashtagEntities.length > 0")
 				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
 						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
 				.append("userMentionEntities.id", new BasicDBObject("$exists", true));
@@ -570,7 +621,6 @@ public class StatisticCalculator {
 	private double getDistinctRetweetedMentionCount4Request(double lowerTimeInRataDie, double upperTimeInRataDie) {
 		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
-				.append("$where", "this.hashtagEntities.length > 0")
 				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
 						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
 				.append("userMentionEntities.id", new BasicDBObject("$exists", true))

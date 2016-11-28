@@ -65,13 +65,15 @@ public class OrganizationDetector implements Runnable {
 	private boolean calculateHashTagSimilarity;
 	private boolean calculateGeneralSimilarity;
 	private boolean bypassTweetCollection;
+	private boolean bypassSimilarityCalculation;
 	private boolean isExternalDateGiven;
 	private ResumeBreakPoint workUntilBreakPoint;
 
 	public OrganizationDetector(String campaignId, int topHashtagCount, String requestDefinition, String tracedHashtag,
 			OrganizedBehaviourDetectionRequestType detectionRequestType, boolean disableGraphAnalysis,
 			boolean calculateHashTagSimilarity, boolean calculateGeneralSimilarity, boolean bypassTweetCollection,
-			String workUntilBreakPoint, boolean isExternalDateGiven, Date earliestDate, Date latestDate) {
+			String workUntilBreakPoint, boolean isExternalDateGiven, Date earliestDate, Date latestDate,
+			boolean bypassSimilarityCalculation) {
 		direnajDriver = new DirenajDriverVersion2();
 		direnajMongoDriver = DirenajMongoDriver.getInstance();
 		requestId = TextUtils.generateUniqueId4Request();
@@ -94,6 +96,7 @@ public class OrganizationDetector implements Runnable {
 		this.isExternalDateGiven = isExternalDateGiven;
 		this.earliestTweetDate = earliestDate;
 		this.latestTweetDate = latestDate;
+		this.bypassSimilarityCalculation = bypassSimilarityCalculation;
 		insertRequest2Mongo();
 
 		if (!TextUtils.isEmpty(workUntilBreakPoint)) {
@@ -123,6 +126,14 @@ public class OrganizationDetector implements Runnable {
 				.get(MongoCollectionFieldNames.MONGO_GENARAL_SIMILARITY_CALCULATION);
 		this.calculateHashTagSimilarity = (boolean) requestObj
 				.get(MongoCollectionFieldNames.MONGO_HASHTAG_SIMILARITY_CALCULATION);
+		this.bypassSimilarityCalculation = (boolean) requestObj
+				.get(MongoCollectionFieldNames.MONGO_BYPASS_SIMILARITY_CALCULATION);
+		this.isExternalDateGiven = (boolean) requestObj.get(MongoCollectionFieldNames.MONGO_IS_EXTERNAL_DATE_GIVEN);
+
+		this.earliestTweetDate = DateTimeUtils
+				.cast2Date(requestObj.get(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME));
+		this.latestTweetDate = DateTimeUtils
+				.cast2Date(requestObj.get(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME));
 
 		Object retrievedResumeBreakPoint = requestObj.get(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT);
 		if (retrievedResumeBreakPoint != null) {
@@ -291,9 +302,8 @@ public class OrganizationDetector implements Runnable {
 	private void calculateStatistics() throws Exception {
 		BasicDBObject query4CosSimilarityRequest = new BasicDBObject(
 				MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
-		query4CosSimilarityRequest.put(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT, new BasicDBObject("$gt", 5));
 		StatisticCalculator statisticCalculator = new StatisticCalculator(requestId, requestIdObj,
-				query4CosSimilarityRequest, tracedSingleHashtag, campaignId);
+				query4CosSimilarityRequest, tracedSingleHashtag, campaignId,bypassSimilarityCalculation);
 		statisticCalculator.calculateStatistics();
 	}
 
@@ -306,7 +316,7 @@ public class OrganizationDetector implements Runnable {
 				+ calculateGeneralSimilarity + " - Calculate Hashtag Similarity : " + calculateHashTagSimilarity);
 		// calculate similarity
 		new CosineSimilarity(requestId, calculateGeneralSimilarity, calculateHashTagSimilarity, earliestTweetDate,
-				latestTweetDate, campaignId,isExternalDateGiven).calculateTweetSimilarities();
+				latestTweetDate, campaignId, isExternalDateGiven,bypassSimilarityCalculation).calculateTweetSimilarities();
 	}
 
 	public void collectTweetsOfAllUsers(String requestId) {
@@ -579,6 +589,10 @@ public class OrganizationDetector implements Runnable {
 		document.put(MongoCollectionFieldNames.MONGO_GENARAL_SIMILARITY_CALCULATION, calculateGeneralSimilarity);
 		document.put(MongoCollectionFieldNames.MONGO_HASHTAG_SIMILARITY_CALCULATION, calculateHashTagSimilarity);
 		document.put(MongoCollectionFieldNames.MONGO_BYPASS_TWEET_COLLECTION, bypassTweetCollection);
+		document.put(MongoCollectionFieldNames.MONGO_BYPASS_SIMILARITY_CALCULATION, bypassSimilarityCalculation);
+		document.put(MongoCollectionFieldNames.MONGO_IS_EXTERNAL_DATE_GIVEN, isExternalDateGiven);
+		document.put(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME, earliestTweetDate);
+		document.put(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME, latestTweetDate);
 		organizedBehaviorCollection.insert(document);
 	}
 

@@ -31,6 +31,14 @@ public class DateTimeUtils {
 		}
 		return null;
 	}
+	
+	public static Date cast2Date(Object dateObj){
+		try{
+			return (Date) dateObj;
+		}catch(Exception e){
+			return null;
+		}
+	}
 
 	public static Date getDate(String dateFormatInStr, String dateInStr) throws Exception {
 		SimpleDateFormat formatter = new SimpleDateFormat(dateFormatInStr);

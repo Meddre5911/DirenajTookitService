@@ -74,6 +74,7 @@ public class OrganizedBehaviours extends HttpServlet {
 					boolean calculateGeneralSimilarity = !TextUtils
 							.isEmpty(request.getParameter("calculateGeneralSimilarity"));
 					boolean bypassTweetCollection = !TextUtils.isEmpty(request.getParameter("bypassTweetCollection"));
+					boolean bypassSimilarityCalculation = !TextUtils.isEmpty(request.getParameter("bypassSimilarityCalculation"));
 
 					String latestDateStr = request.getParameter("latestDate");
 					String earliestDateStr = request.getParameter("earliestDate");
@@ -96,7 +97,7 @@ public class OrganizedBehaviours extends HttpServlet {
 							organizedHashtagDefinition, tracedHashtag,
 							OrganizedBehaviourDetectionRequestType.valueOf(operationType), disableGraphAnalysis,
 							calculateHashTagSimilarity, calculateGeneralSimilarity, bypassTweetCollection,
-							workUntilBreakPoint,isExternalDateGiven, earliestDate, latestDate);
+							workUntilBreakPoint,isExternalDateGiven, earliestDate, latestDate,bypassSimilarityCalculation);
 
 					new Thread(organizationDetector).start();
 					forwardRequest(request, response, "/listOrganizedBehaviourRequests.jsp");

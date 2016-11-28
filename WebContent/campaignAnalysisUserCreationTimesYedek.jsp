@@ -124,7 +124,7 @@ function prepareGraphs(){
 	
 	
 	prepareSingleLineUserRatiosGraphForAllSimilarites('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
-// 	prepareGroupedBarChartWithTime('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
+	prepareGroupedBarChartWithTime('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
 
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyRetweetRatios','hourlyRetweetRatios','Time','(%) Percentage of Retweets');
 	
@@ -153,7 +153,6 @@ function prepareGraphs(){
 		String requestDefinition = (String) requestObj.get("requestDefinition");
 		String tracedHashtag = ((List<String>) requestObj.get("tracedHashtag")).get(0);
 		String linkUrl = "https://twitter.com/hashtag/"+tracedHashtag+"?src=hash";
-		Double totalProcessedTweetCount = (Double) requestObj.get("TotalTweetCount");
 		
 		BasicDBObject campaignQuery = new BasicDBObject();
 		campaignQuery.put("campaign_id", campaignId);
@@ -161,23 +160,188 @@ function prepareGraphs(){
 		Double hashtagVarience = (Double)campaignStatistics.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_VARIANCE); 
 		Double hashtagStdDev = (Double )campaignStatistics.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_STANDARD_DEVIATION); 
 		
+		
 	%>
 <div id="summaryInfo" class="divTableCell">
 	<b>Request Campaign Id :</b> <%=campaignId%> 
 	&nbsp;&nbsp;<b>Description :</b> <%=requestDefinition%> 
 	&nbsp;&nbsp;<b>Traced Hashtag :</b><a href=<%=linkUrl %> target="_blank"> #<%=tracedHashtag%></a>
-	&nbsp;&nbsp;<b>Processed Tweet Count :</b><%=totalProcessedTweetCount%> 
 </div>
 </div>
-
 <div id="requestStatistics" class="divTableCell">
 	<b>Campaign Hashtag Variance & Std. Deviation :  </b> <%=hashtagVarience%> & <%=hashtagStdDev%> 
 </div>
 </div>
 
 <div class="divTableRow">
+<div id="creationTimeGraph" class="divTableCell"><b><big>Creation Times of Users :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userCreationDateMeanVariance" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="creationTimeGraph_2" class="divTableCell"><b><big>Creation Times of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userCreationDateMeanVariance_2" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="creationTimeGraph_10" class="divTableCell"><b><big>Creation Times of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userCreationDateMeanVariance_10" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="creationTimeGraph_50" class="divTableCell"><b><big>Creation Times of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userCreationDateMeanVariance_50" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraph" class="divTableCell"><b><big>Ratios of Users :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraphMeanVariance" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraph_2" class="divTableCell"><b><big>Ratios of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraphMeanVariance_2" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraph_10" class="divTableCell"><b><big>Ratios of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraphMeanVariance_10" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraph_50" class="divTableCell"><b><big>Ratios of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRatiosGraphMeanVariance_50" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<!-- <div id="userPostDevicesRatiosGraph" class="divTableCell"><b><big>Post Device Ratios of Users :</big></b> <br></div> -->
+</div>
+
+
+<div class="divTableRow">
+<div id="userFriendFollowerRatiosGraph" class="divTableCell"><b><big>Friend Follower Ratios of Users :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="friendFollowerRatiosMeanVariance" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userFriendFollowerRatiosGraph_2" class="divTableCell"><b><big>Friend Follower Ratios of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="friendFollowerRatiosMeanVariance_2" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userFriendFollowerRatiosGraph_10" class="divTableCell"><b><big>Friend Follower Ratios of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="friendFollowerRatiosMeanVariance_10" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userFriendFollowerRatiosGraph_50" class="divTableCell"><b><big>Friend Follower Ratios of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="friendFollowerRatiosMeanVariance_50" class="divTableCell">
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsGraph" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsMeanVariance" class="divTableCell">
+
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsGraph_2" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsMeanVariance_2" class="divTableCell">
+
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsGraph_10" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsMeanVariance_10" class="divTableCell">
+
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsGraph_50" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userRoughTweetCountsMeanVariance_50" class="divTableCell">
+
+</div>
+</div>
+
+
+
+<div class="divTableRow">
 <div id="userHashtagCountsGraph" class="divTableCell"><b><big>Post Counts of Users with Campaign Hashtag :</big></b> <br></div>
 </div>
+
 <div class="divTableRow">
 <div id="userHashtagPostCountMeanVariance" class="divTableCell">
 </div>
@@ -194,8 +358,10 @@ function prepareGraphs(){
 <div class="divTableRow">
 <div id="visualizeAvarageDailyPostCountInBarChart" class="divTableCell"><b><big>User Daily Avarage Post Counts:</big></b> <br></div>
 </div>
+
 <div class="divTableRow">
 <div id="userDailyAvarageTweetCountMeanVariance" class="divTableCell">
+
 </div>
 </div>
 
@@ -265,168 +431,19 @@ function prepareGraphs(){
 
 
 
-<div class="divTableRow">
-<div id="creationTimeGraph" class="divTableCell"><b><big>Creation Times of Users :</big></b> <br></div>
-</div>
 
 <div class="divTableRow">
-<div id="userCreationDateMeanVariance" class="divTableCell">
-</div>
-</div>
-
-
-<div class="divTableRow">
-<div id="userRatiosGraph" class="divTableCell"><b><big>Ratios of Users :</big></b> <br></div>
+<div id="hourlyTweetSimilarities" class="divTableCell"><b><big>Hour Basis Percentages of Most Similar (btw:0-30) Posts In Campaign Compared to All Posts :</big></b> <br></div>
 </div>
 
 <div class="divTableRow">
-<div id="userRatiosGraphMeanVariance" class="divTableCell">
-</div>
-</div>
-
-<div class="divTableRow">
-<div id="userFriendFollowerRatiosGraph" class="divTableCell"><b><big>Friend Follower Ratios of Users :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="friendFollowerRatiosMeanVariance" class="divTableCell">
-</div>
-</div>
-
-
-
-<div class="divTableRow">
-<div id="userRoughTweetCountsGraph" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="userRoughTweetCountsMeanVariance" class="divTableCell">
-</div>
+<div id="hourlyTweetSimilaritiesMeanVariance" class="divTableCell"></div>
 </div>
 
 
 
 
-<div class="divTableRow">
-<div id="creationTimeGraph_2" class="divTableCell"><b><big>Creation Times of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
 </div>
-
-<div class="divTableRow">
-<div id="userCreationDateMeanVariance_2" class="divTableCell">
-</div>
-</div>
-
-<div class="divTableRow">
-<div id="creationTimeGraph_10" class="divTableCell"><b><big>Creation Times of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="userCreationDateMeanVariance_10" class="divTableCell">
-</div>
-</div>
-
-<div class="divTableRow">
-<div id="creationTimeGraph_50" class="divTableCell"><b><big>Creation Times of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="userCreationDateMeanVariance_50" class="divTableCell">
-</div>
-</div>
-
-
-<div class="divTableRow">
-<div id="userRatiosGraph_2" class="divTableCell"><b><big>Ratios of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="userRatiosGraphMeanVariance_2" class="divTableCell">
-</div>
-</div>
-
-<div class="divTableRow">
-<div id="userRatiosGraph_10" class="divTableCell"><b><big>Ratios of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="userRatiosGraphMeanVariance_10" class="divTableCell">
-</div>
-</div>
-
-<div class="divTableRow">
-<div id="userRatiosGraph_50" class="divTableCell"><b><big>Ratios of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="userRatiosGraphMeanVariance_50" class="divTableCell">
-</div>
-</div>
-
-
-<div class="divTableRow">
-<div id="userFriendFollowerRatiosGraph_2" class="divTableCell"><b><big>Friend Follower Ratios of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="friendFollowerRatiosMeanVariance_2" class="divTableCell">
-</div>
-</div>
-
-<div class="divTableRow">
-<div id="userFriendFollowerRatiosGraph_10" class="divTableCell"><b><big>Friend Follower Ratios of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="friendFollowerRatiosMeanVariance_10" class="divTableCell">
-</div>
-</div>
-
-<div class="divTableRow">
-<div id="userFriendFollowerRatiosGraph_50" class="divTableCell"><b><big>Friend Follower Ratios of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="friendFollowerRatiosMeanVariance_50" class="divTableCell">
-</div>
-</div>
-
-
-<div class="divTableRow">
-<div id="userRoughTweetCountsGraph_2" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="userRoughTweetCountsMeanVariance_2" class="divTableCell">
-
-</div>
-</div>
-
-<div class="divTableRow">
-<div id="userRoughTweetCountsGraph_10" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="userRoughTweetCountsMeanVariance_10" class="divTableCell">
-
-</div>
-</div>
-
-<div class="divTableRow">
-<div id="userRoughTweetCountsGraph_50" class="divTableCell"><b><big>Favorite & Posted Tweet Counts of Users who used campaign Hashtag in 50 or more Tweets :</big></b> <br></div>
-</div>
-
-<div class="divTableRow">
-<div id="userRoughTweetCountsMeanVariance_50" class="divTableCell">
-
-</div>
-</div>
-
-
-
-
-
-
-
 </div>
 
 </body>

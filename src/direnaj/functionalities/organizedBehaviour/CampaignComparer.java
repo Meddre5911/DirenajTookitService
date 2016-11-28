@@ -116,7 +116,7 @@ public class CampaignComparer implements Runnable {
 				BasicDBObject requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
 						comparisonRequestId);
 				StatisticCalculator statisticCalculator = new StatisticCalculator(comparisonRequestId, requestIdObj,
-						null, null, null);
+						null, null, null,false);
 				statisticCalculator.calculateBasicUserMeanVariances(orgBehaviourProcessInputData);
 				// get comparison data
 				double sameUserPercentage = NumberUtils.roundDouble(commonUserCount * 100d / distinctUserCount);
