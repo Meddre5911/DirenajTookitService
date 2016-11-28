@@ -40,7 +40,8 @@ public class CosineSimilarity {
 	private Gson statusDeserializer;
 
 	public CosineSimilarity(String requestId, boolean calculateGeneralSimilarity, boolean calculateHashTagSimilarity,
-			Date earliestTweetDate, Date latestTweetDate, String campaignId) throws Exception {
+			Date earliestTweetDate, Date latestTweetDate, String campaignId, boolean isExternalDateGiven)
+					throws Exception {
 		requestDataList = new ArrayList<>();
 		originalRequestId = requestId;
 		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
@@ -49,7 +50,7 @@ public class CosineSimilarity {
 
 		Boolean calculateOnlyTopTrendDate = PropertiesUtil.getInstance()
 				.getBooleanProperty("cosSimilarity.calculateOnlyTopTrendDate", true);
-		if (calculateOnlyTopTrendDate) {
+		if (!isExternalDateGiven && calculateOnlyTopTrendDate) {
 			DrenajCampaignRecord drenajCampaignRecord = DirenajMongoDriverUtil.getCampaign(campaignId);
 			earliestTweetDate = drenajCampaignRecord.getMinCampaignDate();
 			latestTweetDate = drenajCampaignRecord.getMaxCampaignDate();
@@ -95,7 +96,7 @@ public class CosineSimilarity {
 				.getNotNullValue(DateTimeUtils.getUTCDateTimeStringInGenericFormat(requestData.getLowerTime())));
 		document.put(MongoCollectionFieldNames.MONGO_UPPER_TIME_INTERVAL, TextUtils
 				.getNotNullValue(DateTimeUtils.getUTCDateTimeStringInGenericFormat(requestData.getUpperTime())));
-		
+
 		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT, 0d);
 		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_POST_COUNT, 0d);
 		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEET_USER_COUNT, 0d);
@@ -104,17 +105,17 @@ public class CosineSimilarity {
 		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_RATIO, 0d);
 		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEET_RATIO, 0d);
 		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEET_USER_RATIO, 0d);
-		
+
 		document.put(MongoCollectionFieldNames.MONGO_TOTAL_MENTION_USER_COUNT, 0d);
 		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_MENTION_COUNT, 0d);
 		document.put(MongoCollectionFieldNames.MONGO_RETWEETED_MENTION_USER_COUNT, 0d);
 		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEETED_MENTION_USER_COUNT, 0d);
 		document.put(MongoCollectionFieldNames.MONGO_NON_RETWEETED_MENTION_USER_COUNT, 0d);
 		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEETED_MENTION_USER_COUNT, 0d);
-		
+
 		document.put(MongoCollectionFieldNames.MONGO_TWEET_FOUND, false);
 		document.put(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT, "");
-		
+
 		if (requestData.getLowerTime() != null) {
 			document.put(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME,
 					DateTimeUtils.getRataDieFormat4Date(requestData.getLowerTime()));

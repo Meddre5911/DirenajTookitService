@@ -2,6 +2,7 @@ package direnaj.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Date;
 import java.util.Map;
 
 import javax.servlet.RequestDispatcher;
@@ -14,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 
 import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
+import direnaj.util.DateTimeUtils;
 import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
 
@@ -73,11 +75,28 @@ public class OrganizedBehaviours extends HttpServlet {
 							.isEmpty(request.getParameter("calculateGeneralSimilarity"));
 					boolean bypassTweetCollection = !TextUtils.isEmpty(request.getParameter("bypassTweetCollection"));
 
+					String latestDateStr = request.getParameter("latestDate");
+					String earliestDateStr = request.getParameter("earliestDate");
+					Date latestDate = null;
+					Date earliestDate = null;
+					boolean isExternalDateGiven = false;
+					
+					if (!TextUtils.isEmpty(latestDateStr) && !TextUtils.isEmpty(earliestDateStr)) {
+						try{
+							latestDate = DateTimeUtils.getUTCDateTimeWithFormat("yyyy-MM-dd hh:mm", latestDateStr);
+							earliestDate = DateTimeUtils.getUTCDateTimeWithFormat("yyyy-MM-dd hh:mm", earliestDateStr);
+							isExternalDateGiven = true;
+						}catch(Exception e){
+							 latestDate = null;
+							 earliestDate = null;
+						}
+					} 
+
 					organizationDetector = new OrganizationDetector(campaignId, topHashTagCount,
 							organizedHashtagDefinition, tracedHashtag,
 							OrganizedBehaviourDetectionRequestType.valueOf(operationType), disableGraphAnalysis,
 							calculateHashTagSimilarity, calculateGeneralSimilarity, bypassTweetCollection,
-							workUntilBreakPoint);
+							workUntilBreakPoint,isExternalDateGiven, earliestDate, latestDate);
 
 					new Thread(organizationDetector).start();
 					forwardRequest(request, response, "/listOrganizedBehaviourRequests.jsp");

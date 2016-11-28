@@ -57,6 +57,9 @@ public class StatisticCalculator {
 	}
 
 	private void calculateGeneralStatistics() throws Exception {
+		Logger.getLogger(StatisticCalculator.class)
+				.debug("General Statistics are getting calculated for requestId : " + requestId);
+
 		DBObject projectionKeys = new BasicDBObject();
 		projectionKeys.put(MongoCollectionFieldNames.MONGO_USER_ID, 1);
 		projectionKeys.put(MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT, 1);
@@ -71,7 +74,6 @@ public class StatisticCalculator {
 						.get(MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT);
 
 				BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
-						.append("$where", "this.hashtagEntities.length > 0")
 						.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
 								new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
 						.append("user.id", Long.valueOf(userId));
@@ -128,6 +130,8 @@ public class StatisticCalculator {
 	}
 
 	private void calculateCampaignStatistics() {
+		Logger.getLogger(StatisticCalculator.class)
+				.debug("Campaign Statistics are getting calculated for requestId : " + requestId);
 		BasicDBObject findQuery = new BasicDBObject();
 		findQuery.put("_id", requestId);
 		DBObject requestObj = DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection().findOne(findQuery);
@@ -141,13 +145,8 @@ public class StatisticCalculator {
 
 		double distinctUserCount = (double) campaignStatisticObj
 				.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_COUNT);
-		// db.OrgBehaviourUserTweets.findOne({"campaign_id":"NBAwards", "$where"
-		// : "this.hashtagEntities.length > 0",
-		// "hashtagEntities" : {$elemMatch: {text: "NBAwards"}},
-		// "tweet.retweetedStatus.id" : {$exists : true}})
 
 		DBObject distinctRetweetUserQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
-				.append("$where", "this.hashtagEntities.length > 0")
 				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
 						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
 				.append("retweetedStatus.id", new BasicDBObject("$exists", true));
@@ -191,6 +190,7 @@ public class StatisticCalculator {
 					DBObject campaignQueryObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID,
 							campaignId);
 					DBObject campaignStatistic = campaignStatisticsCollection.findOne(campaignQueryObj);
+					@SuppressWarnings("unused")
 					double totalTweetCount = (double) campaignStatistic
 							.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_TOTAL_TWEET_COUNT);
 
@@ -293,9 +293,9 @@ public class StatisticCalculator {
 		}
 	}
 
-	
-	public void calculateBasicUserMeanVariances(DBCollection orgBehaviourProcessInputData){
-		
+	public void calculateBasicUserMeanVariances(DBCollection orgBehaviourProcessInputData) {
+		Logger.getLogger(StatisticCalculator.class)
+				.debug("Basic User Mean Variance are getting calculated for requestId : " + requestId);
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
 				MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO, "USER", null);
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
@@ -306,16 +306,15 @@ public class StatisticCalculator {
 				MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, "USER", null);
 		calculateMeanVariance(orgBehaviourProcessInputData, requestIdObj, requestId,
 				MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT, "USER", null);
-		
+
 	}
-	
-	
+
 	private void calculateMeanVariance4All() {
+		Logger.getLogger(StatisticCalculator.class)
+				.debug("Mean Variance are getting calculated for requestId : " + requestId);
 		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
 		calculateBasicUserMeanVariances(orgBehaviourProcessInputData);
-		
-		
-		
+
 		DBObject query4UsersHave2AndMorePosts = new BasicDBObject("requestId", requestId);
 		query4UsersHave2AndMorePosts.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
 				new BasicDBObject("$gte", 2));
@@ -325,7 +324,6 @@ public class StatisticCalculator {
 		DBObject query4UsersHave50AndMorePosts = new BasicDBObject("requestId", requestId);
 		query4UsersHave50AndMorePosts.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
 				new BasicDBObject("$gte", 50));
-
 
 		calculateUserRatios(query4UsersHave2AndMorePosts, query4UsersHave10AndMorePosts, query4UsersHave50AndMorePosts,
 				orgBehaviourProcessInputData);
@@ -537,11 +535,16 @@ public class StatisticCalculator {
 						.getRataDieFormat4Date(DateTimeUtils.getTwitterDate(lowerTimeInterval));
 				double upperTimeInRataDie = DateTimeUtils
 						.getRataDieFormat4Date(DateTimeUtils.getTwitterDate(upperTimeInterval));
-
+				Logger.getLogger(StatisticCalculator.class)
+						.debug("Tweet Dependent Ratios will be calculated for for requestId : " + requestId);
 				calculateTweetDependentRatios(statusDeserializer, totalTweetCount, tweetCountUserCountRatio,
 						lowerTimeInRataDie, upperTimeInRataDie, updateQuery4RequestedCalculation);
+				Logger.getLogger(StatisticCalculator.class)
+						.debug("Hourly Retweet Ratios will be calculated for for requestId : " + requestId);
 				calculateHourlyRetweetRatios(updateQuery4RequestedCalculation, totalTweetCount, distinctUserCount,
 						lowerTimeInRataDie, upperTimeInRataDie);
+				Logger.getLogger(StatisticCalculator.class)
+						.debug("Hourly Non Retweet Ratios will be calculated for for requestId : " + requestId);
 				calculateHourlyNonRetweetRatios(updateQuery4RequestedCalculation, totalTweetCount, distinctUserCount,
 						lowerTimeInRataDie, upperTimeInRataDie);
 
@@ -580,10 +583,8 @@ public class StatisticCalculator {
 
 	private void calculateHourlyRetweetRatios(DBObject updateQuery4RequestedCalculation, double totalTweetCount,
 			double distinctUserCount, double lowerTimeInRataDie, double upperTimeInRataDie) {
-		// FIXME 20161122 - Gorsellestirmeyi unutma
 		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
-				.append("$where", "this.hashtagEntities.length > 0")
 				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
 						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
 				.append("retweetedStatus.id", new BasicDBObject("$exists", true));
@@ -634,10 +635,8 @@ public class StatisticCalculator {
 
 	private void calculateHourlyNonRetweetRatios(DBObject updateQuery4RequestedCalculation, double totalTweetCount,
 			double distinctUserCount, double lowerTimeInRataDie, double upperTimeInRataDie) {
-		// FIXME 20161122 - Gorsellestirmeyi unutma
 		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
-				.append("$where", "this.hashtagEntities.length > 0")
 				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
 						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
 				.append("retweetedStatus.id", new BasicDBObject("$exists", false));
@@ -682,7 +681,6 @@ public class StatisticCalculator {
 
 		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
-				.append("$where", "this.hashtagEntities.length > 0")
 				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
 						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"));
 
@@ -718,7 +716,6 @@ public class StatisticCalculator {
 			}
 		}
 
-		// FIXME 20161122 - Gorsellestirmeyi unutma
 		// get mention count
 		double totalMentionCount = mentionRatio;
 		double distinctMentionCount4Request = getDistinctMentionCount4Request(lowerTimeInRataDie, upperTimeInRataDie);
@@ -809,7 +806,6 @@ public class StatisticCalculator {
 
 	}
 
-	
 	private void calculateMeanVariance(DBCollection collection, DBObject query, String requestId,
 			String calculationField, String calculationDomain, String reduceCalculationType) {
 

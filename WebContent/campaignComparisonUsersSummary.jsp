@@ -91,8 +91,9 @@ function prepareGraphs(){
 	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart&userHashtagPostCount=0','creationTimeGraph','userCrationDate','(%) Percentage');
 	prepareUserRatiosGraphInBarChart('visualizeUserFriendFollowerRatioInBarChart&userHashtagPostCount=0','userFriendFollowerRatiosGraph','Followers Count / Total Friend Follower Count','(%) Percentage');
 	prepareGroupedBarChart('visualizeUserRoughTweetCountsInBarChart&userHashtagPostCount=0','userRoughTweetCountsGraph','Tweet Count','(%) Total User Percentage For Given Tweet Count');
-
-	//	getMeanVariance();
+	
+	prepareUserRatiosGraphInBarChart('visualizeAvarageDailyPostCountInBarChart','visualizeAvarageDailyPostCountInBarChart','Daily Avarage Post Counts','(%) User Percentage');
+	getMeanVariance('getMeanVarianceUserBasics');
 }
 
 </script>
@@ -103,6 +104,7 @@ function prepareGraphs(){
 
 <div class="divTableRow">
 <div id="summaryInfo" class="divTableCell">
+<%=request.getParameter("summaryStr")%>
 </div>
 </div>
 
@@ -132,6 +134,16 @@ function prepareGraphs(){
 
 <div class="divTableRow">
 <div id="userRoughTweetCountsMeanVariance" class="divTableCell">
+
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="visualizeAvarageDailyPostCountInBarChart" class="divTableCell"><b><big>User Daily Avarage Post Counts:</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userDailyAvarageTweetCountMeanVariance" class="divTableCell">
 
 </div>
 </div>

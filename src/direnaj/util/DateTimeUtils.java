@@ -170,6 +170,15 @@ public class DateTimeUtils {
 			return null;
 		}
 	}
+	public static Date getUTCDateTimeWithFormat(String dateFormat,String datetime) {
+		try {
+			Date d = new SimpleDateFormat(dateFormat).parse(datetime);
+			return new Date(d.getTime() + localTZ.getOffset(d.getTime()));
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 	public static Date getUTCDateTime(String datetime, long utcOffSet) {
 		try {
@@ -314,7 +323,9 @@ public class DateTimeUtils {
 //		System.out.println("Start : " + DateTimeUtils.getRataDieFormat4Date(startOfDay.toDate()));
 //		System.out.println("End : " + DateTimeUtils.getRataDieFormat4Date(endOfDay.toDate()));
 //		
-		
+//		("yyyy-MM-dd hh:mm", latestDateStr);
+		Date utcDateTimeWithFormat = DateTimeUtils.getUTCDateTimeWithFormat("yyyy-MM-dd hh:mm", "2016-11-16 23:59");
+		System.out.println(utcDateTimeWithFormat);
 
 	}
 }

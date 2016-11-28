@@ -69,10 +69,12 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			} else if ("visualizeUserRoughTweetCountsInBarChart".equals(requestType)) {
 				visualizeUserRoughTweetCountsInBarChart(jsonArray, query, userPostCountWithHashtag);
 			} else if ("visualizeUserDailyTweetRatiosInBarChart".equals(requestType)) {
-				visualizeUserDailyTweetRatiosInBarChart(jsonArray, query);
-			}
-
-			else if ("visualizeHourlyUserAndTweetCount".equals(requestType)) {
+				visualizeUserDailyTweetRatiosInBarChart(jsonArray, query,
+						MongoCollectionFieldNames.MONGO_USER_HASHTAG_DAY_AVARAGE_DAY_POST_COUNT_RATIO);
+			} else if ("visualizeAvarageDailyPostCountInBarChart".equals(requestType)) {
+				visualizeUserDailyTweetRatiosInBarChart(jsonArray, query,
+						MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT);
+			} else if ("visualizeHourlyUserAndTweetCount".equals(requestType)) {
 				query4CosSimilarityRequest.remove(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
 				visualizeHourlyUserAndTweetCount(jsonArray, query4CosSimilarityRequest,
 						MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT,
@@ -126,11 +128,13 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				visualizeHourlyTweetRatios(jsonArray, query4CosSimilarityRequest);
 			} else if (("getMeanVariance".equals(requestType))) {
 				getMeanVariance4All(jsonArray, query, query4CosSimilarityRequest, requestId);
+			} else if (("getMeanVarianceUserBasics".equals(requestType))) {
+				getMeanVariance4UserBasics(jsonArray, query, query4CosSimilarityRequest, requestId);
 			}
 
 			jsonStr = jsonArray.toString();
-			System.out.println("Request Type : " + requestType);
-			System.out.println("Returned String : " + jsonStr);
+//			System.out.println("Request Type : " + requestType);
+//			System.out.println("Returned String : " + jsonStr);
 		} catch (JSONException e) {
 			Logger.getLogger(MongoPaginationServlet.class)
 					.error("Error in OrganizedBehaviorCampaignVisualizer Servlet.", e);
@@ -181,15 +185,17 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		}
 	}
 
-	private void visualizeUserDailyTweetRatiosInBarChart(JSONArray jsonArray, BasicDBObject query)
-			throws JSONException {
+	private void visualizeUserDailyTweetRatiosInBarChart(JSONArray jsonArray, BasicDBObject query,
+			String mongoValueField) throws JSONException {
 		List<String> limits = new ArrayList<>();
 		limits.add("0-0.9");
 		limits.add("1");
 		limits.add("2");
 		limits.add("3-5");
 		limits.add("6-10");
-		limits.add("11-...");
+		limits.add("11-20");
+		limits.add("21-50");
+		limits.add("51-...");
 		Map<String, Double> rangePercentages = new HashMap<>();
 		for (String limit : limits) {
 			rangePercentages.put(limit, 0d);
@@ -202,8 +208,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		while (paginatedResult.hasNext()) {
 			userCount++;
 			DBObject next = paginatedResult.next();
-			double userDailyPostCountRatio = (double) next
-					.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_DAY_AVARAGE_DAY_POST_COUNT_RATIO);
+			double userDailyPostCountRatio = (double) next.get(mongoValueField);
 			if (userDailyPostCountRatio < 1d) {
 				userDailyPostCountRatio = NumberUtils.roundDouble(1, userDailyPostCountRatio);
 			} else {
@@ -348,6 +353,27 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			jsonObject.put("percentage", entry.getValue());
 			jsonArray.put(jsonObject);
 		}
+
+	}
+
+	private void getMeanVariance4UserBasics(JSONArray jsonArray, BasicDBObject query,
+			BasicDBObject query4CosSimilarityRequest, String requestId) throws Exception {
+		Logger.getLogger(MongoPaginationServlet.class)
+				.debug("getMeanVariance4UserBasics is started for requestId : " + requestId);
+
+		// get user ratios
+		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
+		getUserCreationTimeMeanVariance(jsonArray, query, requestId, orgBehaviourProcessInputData,
+				MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE);
+		getFriendFollowerRatioMeanVariances(jsonArray, query, requestId, orgBehaviourProcessInputData, "");
+		getRougtTweetCountsMeanVariance(jsonArray, query, requestId, orgBehaviourProcessInputData, "");
+
+		DBObject userDailyAvaragePostCount = getMeanVariance(orgBehaviourProcessInputData, query, requestId,
+				MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT, "USER");
+		jsonArray.put(userDailyAvaragePostCount.toMap());
+
+		Logger.getLogger(MongoPaginationServlet.class)
+				.debug("getMeanVariance4UserBasics is finished for requestId : " + requestId);
 
 	}
 
@@ -578,8 +604,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			meanVarianceResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestMeanVarianceCalculations()
 					.findOne(calculationQuery);
 		} catch (Exception e) {
-			// FIXME 20161127 Loglama
-			e.printStackTrace();
+			Logger.getLogger(MongoPaginationServlet.class).error("getMeanVariance got for requestId : " + requestId
+					+ ". Calculation Type : " + calculationType + ". CalculationDomain: " + calculationDomain, e);
 		}
 		return meanVarianceResult;
 	}

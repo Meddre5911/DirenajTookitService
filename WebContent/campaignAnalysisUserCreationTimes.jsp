@@ -132,7 +132,9 @@ function prepareGraphs(){
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyRetweetedTotalAndDistinctMentionCount','visualizeHourlyRetweetedTotalAndDistinctMentionCount','Tweet Post Time','Total / Distinct Mention Count');
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyNonRetweetedTotalAndDistinctMentionCount','visualizeHourlyNonRetweetedTotalAndDistinctMentionCount','Tweet Post Time','Total / Distinct Mention Count');
 
-	getMeanVariance();
+	prepareUserRatiosGraphInBarChart('visualizeAvarageDailyPostCountInBarChart','visualizeAvarageDailyPostCountInBarChart','Daily Avarage Post Counts','(%) User Percentage');
+	
+	getMeanVariance('getMeanVariance');
 }
 
 </script>
@@ -350,6 +352,16 @@ function prepareGraphs(){
 </div>
 <div class="divTableRow">
 <div id="userDailyTweetRatiosMeanVariance" class="divTableCell">
+</div>
+</div>
+
+<div class="divTableRow">
+<div id="visualizeAvarageDailyPostCountInBarChart" class="divTableCell"><b><big>User Daily Avarage Post Counts:</big></b> <br></div>
+</div>
+
+<div class="divTableRow">
+<div id="userDailyAvarageTweetCountMeanVariance" class="divTableCell">
+
 </div>
 </div>
 

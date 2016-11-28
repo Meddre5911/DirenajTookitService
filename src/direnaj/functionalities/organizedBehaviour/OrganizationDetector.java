@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -64,12 +65,13 @@ public class OrganizationDetector implements Runnable {
 	private boolean calculateHashTagSimilarity;
 	private boolean calculateGeneralSimilarity;
 	private boolean bypassTweetCollection;
+	private boolean isExternalDateGiven;
 	private ResumeBreakPoint workUntilBreakPoint;
 
 	public OrganizationDetector(String campaignId, int topHashtagCount, String requestDefinition, String tracedHashtag,
 			OrganizedBehaviourDetectionRequestType detectionRequestType, boolean disableGraphAnalysis,
 			boolean calculateHashTagSimilarity, boolean calculateGeneralSimilarity, boolean bypassTweetCollection,
-			String workUntilBreakPoint) {
+			String workUntilBreakPoint, boolean isExternalDateGiven, Date earliestDate, Date latestDate) {
 		direnajDriver = new DirenajDriverVersion2();
 		direnajMongoDriver = DirenajMongoDriver.getInstance();
 		requestId = TextUtils.generateUniqueId4Request();
@@ -79,6 +81,7 @@ public class OrganizationDetector implements Runnable {
 		this.requestDefinition = requestDefinition;
 		this.tracedHashtagList = new ArrayList<>();
 		if (!TextUtils.isEmpty(tracedHashtag)) {
+			tracedHashtag = tracedHashtag.toLowerCase(Locale.US);
 			this.tracedHashtagList.add(tracedHashtag);
 		}
 		this.detectionRequestType = detectionRequestType;
@@ -88,6 +91,9 @@ public class OrganizationDetector implements Runnable {
 		this.bypassTweetCollection = bypassTweetCollection;
 		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 		isCleaningDone4ResumeProcess = false;
+		this.isExternalDateGiven = isExternalDateGiven;
+		this.earliestTweetDate = earliestDate;
+		this.latestTweetDate = latestDate;
 		insertRequest2Mongo();
 
 		if (!TextUtils.isEmpty(workUntilBreakPoint)) {
@@ -234,8 +240,6 @@ public class OrganizationDetector implements Runnable {
 					Logger.getLogger(OrganizationDetector.class).debug(hashtag.getKey() + " - " + hashtag.getValue());
 					tracedHashtagList.add(hashtag.getKey());
 				}
-				// update found hashtags
-				updateRequestInMongo();
 			}
 			getMetricsOfUsersOfHashTag();
 		} catch (Exception e) {
@@ -245,6 +249,8 @@ public class OrganizationDetector implements Runnable {
 
 	public void getMetricsOfUsersOfHashTag() throws DirenajInvalidJSONException, Exception {
 		try {
+			// update found hashtags
+			updateRequestInMongo();
 			if (!isCleaningDone4ResumeProcess) {
 				DirenajMongoDriverUtil.cleanData4ResumeProcess(requestId, requestIdObj, resumeBreakPoint);
 			}
@@ -300,7 +306,7 @@ public class OrganizationDetector implements Runnable {
 				+ calculateGeneralSimilarity + " - Calculate Hashtag Similarity : " + calculateHashTagSimilarity);
 		// calculate similarity
 		new CosineSimilarity(requestId, calculateGeneralSimilarity, calculateHashTagSimilarity, earliestTweetDate,
-				latestTweetDate, campaignId).calculateTweetSimilarities();
+				latestTweetDate, campaignId,isExternalDateGiven).calculateTweetSimilarities();
 	}
 
 	public void collectTweetsOfAllUsers(String requestId) {
@@ -412,18 +418,21 @@ public class OrganizationDetector implements Runnable {
 					}
 				}
 				// check earliest tweet date
-				if (earliestTweetDate == null) {
-					earliestTweetDate = twitter4jStatus.getCreatedAt();
-				} else if (twitter4jStatus.getCreatedAt() != null
-						&& twitter4jStatus.getCreatedAt().compareTo(earliestTweetDate) < 0) {
-					earliestTweetDate = twitter4jStatus.getCreatedAt();
-				}
-				// check latest tweet date
-				if (latestTweetDate == null) {
-					latestTweetDate = twitter4jStatus.getCreatedAt();
-				} else if (twitter4jStatus.getCreatedAt() != null
-						&& twitter4jStatus.getCreatedAt().compareTo(latestTweetDate) > 0) {
-					latestTweetDate = twitter4jStatus.getCreatedAt();
+
+				if (!isExternalDateGiven) {
+					if (earliestTweetDate == null) {
+						earliestTweetDate = twitter4jStatus.getCreatedAt();
+					} else if (twitter4jStatus.getCreatedAt() != null
+							&& twitter4jStatus.getCreatedAt().compareTo(earliestTweetDate) < 0) {
+						earliestTweetDate = twitter4jStatus.getCreatedAt();
+					}
+					// check latest tweet date
+					if (latestTweetDate == null) {
+						latestTweetDate = twitter4jStatus.getCreatedAt();
+					} else if (twitter4jStatus.getCreatedAt() != null
+							&& twitter4jStatus.getCreatedAt().compareTo(latestTweetDate) > 0) {
+						latestTweetDate = twitter4jStatus.getCreatedAt();
+					}
 				}
 				userTweet.setTweetText(twitter4jStatus.getText());
 				userTweet.setTweetId(String.valueOf(twitter4jStatus.getId()));
@@ -607,7 +616,6 @@ public class OrganizationDetector implements Runnable {
 					DateTimeUtils.getUTCDateTimeStringInGenericFormat(user.getCreationDate()));
 			userInputData.put(MongoCollectionFieldNames.MONGO_USER_CREATION_DATE_IN_RATA_DIE,
 					DateTimeUtils.getRataDieFormat4Date(user.getCreationDate()));
-			// FIXME 20161122 Gorsellestirmeyi unutma
 			userInputData.put(MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT,
 					accountProperties.getAvarageDailyPostCount());
 
@@ -623,7 +631,7 @@ public class OrganizationDetector implements Runnable {
 		List<User> domainUsers = new ArrayList<User>();
 		// get total user count for detection
 		DBCollection orgBehaviorPreProcessUsers = direnajMongoDriver.getOrgBehaviorPreProcessUsers();
-		int  preprocessUserCounts = (int) direnajMongoDriver.executeCountQuery(orgBehaviorPreProcessUsers, requestIdObj);
+		int preprocessUserCounts = (int) direnajMongoDriver.executeCountQuery(orgBehaviorPreProcessUsers, requestIdObj);
 		DBCursor preProcessUsers = orgBehaviorPreProcessUsers.find(requestIdObj).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 		try {
 			int i = 0;

@@ -968,9 +968,9 @@ function prepareGroupedBarChart(requestType,divId,xLineText,yLineText){
 }
 
 
-function getMeanVariance(){
+function getMeanVariance(requestType){
 
-	d3.json("organizedBehaviorCampaignVisualizer?requestType=getMeanVariance&requestId=" + $('#requestId').val(), function(error, data) {
+	d3.json("organizedBehaviorCampaignVisualizer?requestType="+requestType+"&requestId=" + $('#requestId').val(), function(error, data) {
 		if (error) throw error;
 	   
 		var userCount ='';
@@ -1270,7 +1270,9 @@ function getMeanVariance(){
 		  userCount = '&nbsp;&nbsp;<b>Total User Count is : </b>' + userCount + '<br><br>';
 		  
 		  var sumaryHtml =  d3.select("#summaryInfo").html();
-		  sumaryHtml = sumaryHtml + userCount;
+		  if(requestType == 'getMeanVariance'){
+			  sumaryHtml = sumaryHtml + userCount;
+		  }
 		  
 		  d3.select("#userRatiosGraphMeanVariance").html(sumaryHtml+
 				  '<table><tr>'
@@ -1287,6 +1289,11 @@ function getMeanVariance(){
 				  + '</tr><tr>' + tweetAvarageInHashtagDays
 				  + '</tr><tr>'
 				  + userHashtagDayAverageDayPostCountRatio
+				  + '</tr></table>');
+
+		  d3.select("#userDailyAvarageTweetCountMeanVariance").html(sumaryHtml+
+				  '<table><tr>'
+				  + avarageDailyPostCount
 				  + '</tr></table>');
 		  
 		  d3.select("#userRatiosGraphMeanVariance_2").html(sumaryHtml+
