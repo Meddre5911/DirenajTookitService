@@ -407,7 +407,6 @@ function prepareGraphs(){
 
 <div class="divTableRow">
 <div id="userRoughTweetCountsMeanVariance_10" class="divTableCell">
-
 </div>
 </div>
 

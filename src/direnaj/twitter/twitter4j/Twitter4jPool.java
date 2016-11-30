@@ -43,15 +43,15 @@ public class Twitter4jPool {
 		}
 	}
 
-	public static Twitter4jPool getInstance() {
+	public synchronized static Twitter4jPool getInstance() {
+		
 		if (instance == null) {
 			instance = new Twitter4jPool();
 		}
 		return instance;
 	}
 
-	public Twitter getAvailableTwitterObject(TwitterRestApiOperationTypes restApiOperationType) {
-
+	public synchronized Twitter getAvailableTwitterObject(TwitterRestApiOperationTypes restApiOperationType) {
 		while (true) {
 			if (availableObject != null && isAvailable(availableObject, restApiOperationType)) {
 				break;

@@ -67,7 +67,7 @@ public class Twitter4jUtil {
 	}
 
 	public static void getEarliestTweets(User user, Boolean calculateOnlyTopTrendDate, Date minCampaignDate,
-			String campaignId) throws TwitterException {
+			String campaignId) {
 		Date lowestDate;
 		if (calculateOnlyTopTrendDate && minCampaignDate != null) {
 			lowestDate = minCampaignDate;
@@ -81,10 +81,8 @@ public class Twitter4jUtil {
 		paging.setMaxId(Long.valueOf(user.getCampaignTweetId()));
 		for (int i = 0; i < 20; i++) {
 			boolean isEarlierTweetsRemaining = false;
-			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
-					.getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE)
-					.getUserTimeline(Long.valueOf(user.getUserId()), paging, campaignId);
-			if(userTimeline == null){
+			ResponseList<Status> userTimeline = callUserTimeLineTwitterApi(user, campaignId, paging);
+			if (userTimeline == null) {
 				break;
 			}
 			// Status To JSON String
@@ -108,8 +106,30 @@ public class Twitter4jUtil {
 		}
 	}
 
+	private static ResponseList<Status> callUserTimeLineTwitterApi(User user, String campaignId, Paging paging) {
+		ResponseList<Status> userTimeline = null;
+		try {
+			for (int i = 0; i <= 20; i++) {
+				try {
+					userTimeline = Twitter4jPool.getInstance()
+							.getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE)
+							.getUserTimeline(Long.valueOf(user.getUserId()), paging, campaignId);
+					return userTimeline;
+				} catch (TwitterException e) {
+					Logger.getLogger(Twitter4jUtil.class)
+							.error("Try Count : " + i + " - callUserTimeLineTwitterApi get Error", e);
+					Thread.sleep(10000);
+				}
+			}
+		} catch (InterruptedException e) {
+			Logger.getLogger(Twitter4jUtil.class).error("Interrupted Exception - callUserTimeLineTwitterApi get Error",
+					e);
+		}
+		return userTimeline;
+	}
+
 	public static void getRecentTweets(User user, Boolean calculateOnlyTopTrendDate, Date maxCampaignDate,
-			String campaignId) throws TwitterException {
+			String campaignId) {
 
 		Date highestDate;
 		if (calculateOnlyTopTrendDate && maxCampaignDate != null) {
@@ -125,10 +145,8 @@ public class Twitter4jUtil {
 		paging.setSinceId(Long.valueOf(user.getCampaignTweetId()));
 		for (int i = 0; i < 20; i++) {
 			boolean isRecentTweetsRemaining = false;
-			ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
-					.getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE)
-					.getUserTimeline(Long.valueOf(user.getUserId()), paging, campaignId);
-			if(userTimeline == null){
+			ResponseList<Status> userTimeline = callUserTimeLineTwitterApi(user, campaignId, paging);
+			if (userTimeline == null) {
 				break;
 			}
 			// Status To JSON String
@@ -210,6 +228,7 @@ public class Twitter4jUtil {
 			throw e;
 		}
 	}
+
 	public static twitter4j.User deserializeTwitter4jUserFromGson(Gson gson, String statusInJson) {
 		try {
 			twitter4j.User twitter4jUser = (twitter4j.User) gson.fromJson(statusInJson, UserJSONImpl.class);

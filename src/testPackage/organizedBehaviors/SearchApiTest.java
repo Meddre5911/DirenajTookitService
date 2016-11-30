@@ -16,7 +16,7 @@ public class SearchApiTest {
 
 		ResponseList<Status> userTimeline = Twitter4jPool.getInstance()
 				.getAvailableTwitterObject(TwitterRestApiOperationTypes.STATUS_USERTIMELINE)
-				.getUserTimeline(Long.valueOf(78555806), paging);
+				.getUserTimeline(Long.valueOf("2253721447"), paging);
 
 		// get json of object
 		Gson gson = new Gson();

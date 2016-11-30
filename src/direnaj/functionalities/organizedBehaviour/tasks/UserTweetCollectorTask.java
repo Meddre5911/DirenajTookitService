@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 
 import direnaj.domain.User;
 import direnaj.twitter.twitter4j.Twitter4jUtil;
-import twitter4j.TwitterException;
 
 public class UserTweetCollectorTask implements Runnable {
 
@@ -46,7 +45,7 @@ public class UserTweetCollectorTask implements Runnable {
 								+ ", User Id :" + user.getUserId());
 			}
 			cyclicBarrier.await();
-		} catch (InterruptedException | BrokenBarrierException | TwitterException e) {
+		} catch (InterruptedException | BrokenBarrierException e) {
 			Logger.getLogger(UserTweetCollectorTask.class).error("TweetSimilarityRangeCalculatorTask gets Exception",
 					e);
 		}

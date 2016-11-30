@@ -54,105 +54,120 @@ public class CampaignComparer implements Runnable {
 	}
 
 	private void doComparison() {
-		Logger.getLogger(CampaignComparer.class)
-				.debug("Starts Comparison for requestId : " + generalComparisonRequestId);
-		Logger.getLogger(CampaignComparer.class)
-				.debug("Actual Comparison for CampaignId & Hashtag : " + actualCampaignId + " & " + actualHashtag);
-		Gson gsonObject4Deserialization = Twitter4jUtil.getGsonObject4Deserialization();
-		List<ComparisonData> allComparisons = new ArrayList<>();
-		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
-		// get campaign distinct user count
-		DBObject campaignStatisticQuery = new BasicDBObject();
-		campaignStatisticQuery.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, actualCampaignId);
-		DBObject campaignStatistics = DirenajMongoDriver.getInstance().getCampaignStatisticsCollection()
-				.findOne(campaignStatisticQuery);
-		double distinctUserCount = (double) campaignStatistics
-				.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_COUNT);
+		try {
+			Logger.getLogger(CampaignComparer.class)
+					.debug("Starts Comparison for requestId : " + generalComparisonRequestId);
+			Logger.getLogger(CampaignComparer.class)
+					.debug("Actual Comparison for CampaignId & Hashtag : " + actualCampaignId + " & " + actualHashtag);
+			Gson gsonObject4Deserialization = Twitter4jUtil.getGsonObject4Deserialization();
+			List<ComparisonData> allComparisons = new ArrayList<>();
+			DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance()
+					.getOrgBehaviourProcessInputData();
+			// get campaign distinct user count
+			DBObject campaignStatisticQuery = new BasicDBObject();
+			campaignStatisticQuery.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, actualCampaignId);
 
-		StringBuilder comparedEntities = new StringBuilder();
-		for (Entry<String, String> entrySet : comparisonCampaignHashtagInfo.entrySet()) {
-			String comparedCampaignId = entrySet.getKey();
-			String comparedHashtag = actualHashtag;
-			if (givenHashtagComparisonType.equals(comparisonType)) {
-				comparedHashtag = entrySet.getValue();
-			}
-			String comparisonRequestId = TextUtils.generateUniqueId4Request();
-			comparedEntities.append("& " + comparedCampaignId + "-" + comparedHashtag + " ");
+			BasicDBObject userDisnctCountQuery = new BasicDBObject()
+					.append("tweet.hashtagEntities.text",
+							new BasicDBObject("$regex", actualHashtag).append("$options", "i"))
+					.append(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, actualCampaignId);
 
-			Logger.getLogger(CampaignComparer.class).debug("Comparison RequestId : " + comparisonRequestId
-					+ "Compared CampaignId & Hashtag : " + comparedCampaignId + " & " + comparedHashtag
-					+ " - Actual Comparison for CampaignId & Hashtag : " + actualCampaignId + " & " + actualHashtag);
+			double distinctUserCount = DirenajMongoDriver.getInstance().getTweetsCollection()
+					.distinct("tweet.user.id", userDisnctCountQuery).size();
 
-			List<DBObject> allUsersInputData = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
-			Cursor commonUsers = getCommonUsersWithSameHashtagInDifferentCampaigns(comparedCampaignId, comparedHashtag);
-			try {
-				double commonUserCount = 0d;
-				while (commonUsers.hasNext()) {
-					commonUserCount++;
-					DBObject next = commonUsers.next();
-					Long userId = Long.valueOf(String.valueOf(next.get("_id")));
-
-					DBObject userRetrievalQuery = new BasicDBObject();
-					userRetrievalQuery.put("tweet.user.id", userId);
-					userRetrievalQuery.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, actualCampaignId);
-
-					BasicDBObject projectionKey = new BasicDBObject();
-					DBObject queryResult = DirenajMongoDriver.getInstance().getTweetsCollection()
-							.findOne(userRetrievalQuery, projectionKey);
-
-					JSONObject jsonObject = new JSONObject(queryResult.get("tweet").toString());
-					User user = Twitter4jUtil.deserializeTwitter4jUserFromGson(gsonObject4Deserialization,
-							jsonObject.get("user").toString());
-					allUsersInputData.add(prepareUserInputData(user, comparisonRequestId));
-
-					// insert preprocess input
-					allUsersInputData = DirenajMongoDriverUtil
-							.insertBulkData2CollectionIfNeeded(orgBehaviourProcessInputData, allUsersInputData, false);
-
+			StringBuilder comparedEntities = new StringBuilder();
+			for (Entry<String, String> entrySet : comparisonCampaignHashtagInfo.entrySet()) {
+				String comparedCampaignId = entrySet.getKey();
+				String comparedHashtag = actualHashtag;
+				if (givenHashtagComparisonType.equals(comparisonType)) {
+					comparedHashtag = entrySet.getValue();
 				}
-				allUsersInputData = DirenajMongoDriverUtil
-						.insertBulkData2CollectionIfNeeded(orgBehaviourProcessInputData, allUsersInputData, true);
-				// calculate mean variance
-				BasicDBObject requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
-						comparisonRequestId);
-				StatisticCalculator statisticCalculator = new StatisticCalculator(comparisonRequestId, requestIdObj,
-						null, null, null,false);
-				statisticCalculator.calculateBasicUserMeanVariances(orgBehaviourProcessInputData);
-				// get comparison data
-				double sameUserPercentage = NumberUtils.roundDouble(commonUserCount * 100d / distinctUserCount);
-				ComparisonData comparisonData = new ComparisonData(comparedCampaignId, comparedHashtag,
-						sameUserPercentage, comparisonRequestId, commonUserCount, distinctUserCount);
-				allComparisons.add(comparisonData);
-				Logger.getLogger(CampaignComparer.class)
-						.debug("Calculation Ended for Comparison RequestId : " + comparisonRequestId
-								+ "Compared CampaignId & Hashtag : " + comparedCampaignId + " & " + comparedHashtag);
+				String comparisonRequestId = TextUtils.generateUniqueId4Request();
+				comparedEntities.append("& " + comparedCampaignId + "-" + comparedHashtag + " ");
 
-			} catch (Exception e) {
 				Logger.getLogger(CampaignComparer.class)
-						.error("Mean Variance are getting calculated for requestId : " + generalComparisonRequestId, e);
-			} finally {
-				commonUsers.close();
+						.debug("Comparison RequestId : " + comparisonRequestId + " - Compared CampaignId & Hashtag : "
+								+ comparedCampaignId + " & " + comparedHashtag
+								+ " - Actual Comparison for CampaignId & Hashtag : " + actualCampaignId + " & "
+								+ actualHashtag);
+
+				List<DBObject> allUsersInputData = new ArrayList<>(
+						DirenajMongoDriver.getInstance().getBulkInsertSize());
+				Cursor commonUsers = getCommonUsersWithSameHashtagInDifferentCampaigns(comparedCampaignId,
+						comparedHashtag);
+				try {
+					double commonUserCount = 0d;
+					while (commonUsers.hasNext()) {
+						commonUserCount++;
+						DBObject next = commonUsers.next();
+						Long userId = Long.valueOf(String.valueOf(next.get("_id")));
+
+						DBObject userRetrievalQuery = new BasicDBObject();
+						userRetrievalQuery.put("tweet.user.id", userId);
+						userRetrievalQuery.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, actualCampaignId);
+
+						BasicDBObject projectionKey = new BasicDBObject();
+						DBObject queryResult = DirenajMongoDriver.getInstance().getTweetsCollection()
+								.findOne(userRetrievalQuery, projectionKey);
+
+						JSONObject jsonObject = new JSONObject(queryResult.get("tweet").toString());
+						User user = Twitter4jUtil.deserializeTwitter4jUserFromGson(gsonObject4Deserialization,
+								jsonObject.get("user").toString());
+						allUsersInputData.add(prepareUserInputData(user, comparisonRequestId));
+
+						// insert preprocess input
+						allUsersInputData = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+								orgBehaviourProcessInputData, allUsersInputData, false);
+
+					}
+					allUsersInputData = DirenajMongoDriverUtil
+							.insertBulkData2CollectionIfNeeded(orgBehaviourProcessInputData, allUsersInputData, true);
+					// calculate mean variance
+					BasicDBObject requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
+							comparisonRequestId);
+					StatisticCalculator statisticCalculator = new StatisticCalculator(comparisonRequestId, requestIdObj,
+							null, null, null, false);
+					statisticCalculator.calculateBasicUserMeanVariances(orgBehaviourProcessInputData);
+					// get comparison data
+					double sameUserPercentage = NumberUtils.roundDouble(commonUserCount * 100d / distinctUserCount);
+					ComparisonData comparisonData = new ComparisonData(comparedCampaignId, comparedHashtag,
+							sameUserPercentage, comparisonRequestId, commonUserCount, distinctUserCount);
+					allComparisons.add(comparisonData);
+					Logger.getLogger(CampaignComparer.class)
+							.debug("Calculation Ended for Comparison RequestId : " + comparisonRequestId
+									+ "Compared CampaignId & Hashtag : " + comparedCampaignId + " & "
+									+ comparedHashtag);
+
+				} catch (Exception e) {
+					Logger.getLogger(CampaignComparer.class).error(
+							"Mean Variance are getting calculated for requestId : " + generalComparisonRequestId, e);
+				} finally {
+					commonUsers.close();
+				}
 			}
+			// prepare json
+			Gson gson = new Gson();
+			String allComparisonsJson = gson.toJson(allComparisons);
+			@SuppressWarnings("unchecked")
+			List<DBObject> mongoDbObject4Comparisons = (List<DBObject>) JSON.parse(allComparisonsJson);
+			// insert result
+			BasicDBObject comparisonRecord = new BasicDBObject();
+			comparisonRecord.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, generalComparisonRequestId);
+			comparisonRecord.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, actualCampaignId);
+			comparisonRecord.put(MongoCollectionFieldNames.MONGO_COMPARISON_ACTUAL_HASHTAG, actualHashtag);
+			comparisonRecord.put(MongoCollectionFieldNames.MONGO_COMPARISON_REQUEST_DEFINITION, requestDefinition);
+			comparisonRecord.put(MongoCollectionFieldNames.MONGO_COMPARISON_COMPARED_ENTITIES,
+					comparedEntities.substring(2));
+			comparisonRecord.put(MongoCollectionFieldNames.MONGO_COMPARISON_RESULTS, mongoDbObject4Comparisons);
+			DirenajMongoDriver.getInstance().getOrgBehaviourCampaignComparisons().insert(comparisonRecord);
+
+			Logger.getLogger(CampaignComparer.class)
+					.debug("Comparison is Finished. Actual Comparison for CampaignId & Hashtag : " + actualCampaignId
+							+ " & " + actualHashtag);
+		} catch (Exception e) {
+			Logger.getLogger(CampaignComparer.class)
+					.error("Campaign Comparison Exception for " + actualCampaignId + " & " + actualHashtag, e);
 		}
-		// prepare json
-		Gson gson = new Gson();
-		String allComparisonsJson = gson.toJson(allComparisons);
-		@SuppressWarnings("unchecked")
-		List<DBObject> mongoDbObject4Comparisons = (List<DBObject>) JSON.parse(allComparisonsJson);
-		// insert result
-		BasicDBObject comparisonRecord = new BasicDBObject();
-		comparisonRecord.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, generalComparisonRequestId);
-		comparisonRecord.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, actualCampaignId);
-		comparisonRecord.put(MongoCollectionFieldNames.MONGO_COMPARISON_ACTUAL_HASHTAG, actualHashtag);
-		comparisonRecord.put(MongoCollectionFieldNames.MONGO_COMPARISON_REQUEST_DEFINITION, requestDefinition);
-		comparisonRecord.put(MongoCollectionFieldNames.MONGO_COMPARISON_COMPARED_ENTITIES,
-				comparedEntities.substring(2));
-		comparisonRecord.put(MongoCollectionFieldNames.MONGO_COMPARISON_RESULTS, mongoDbObject4Comparisons);
-		DirenajMongoDriver.getInstance().getOrgBehaviourCampaignComparisons().insert(comparisonRecord);
-		
-		Logger.getLogger(CampaignComparer.class)
-				.debug("Comparison is Finished. Actual Comparison for CampaignId & Hashtag : " + actualCampaignId
-						+ " & " + actualHashtag);
 	}
 
 	private BasicDBObject prepareUserInputData(User user, String requestId) {
