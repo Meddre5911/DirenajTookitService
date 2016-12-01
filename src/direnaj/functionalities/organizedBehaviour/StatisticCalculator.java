@@ -145,8 +145,8 @@ public class StatisticCalculator {
 		DBObject campaignStatisticObj = campaignStatisticsCollection.findOne(campaignQuery);
 		check4RecalculationStep(campaignStatisticObj);
 
-		double distinctUserCount = (double) campaignStatisticObj
-				.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_COUNT);
+		double distinctUserCount = Double.valueOf(
+				String.valueOf(campaignStatisticObj.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_COUNT)));
 
 		DBObject distinctRetweetUserQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
 				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
@@ -312,6 +312,8 @@ public class StatisticCalculator {
 	}
 
 	private void calculateMeanVariance4All() {
+		query4CosSimilarityRequest.put(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT, new BasicDBObject("$gt", 5));
+
 		Logger.getLogger(StatisticCalculator.class)
 				.debug("Mean Variance are getting calculated for requestId : " + requestId);
 		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
@@ -502,9 +504,12 @@ public class StatisticCalculator {
 
 	private void calculateHourlyEntityRatio() throws Exception {
 		Gson statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
+
+		BasicDBObject query4AllSimilarityRequests = new BasicDBObject(
+				MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
 		// first do calculation
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
-				.find(query4CosSimilarityRequest);
+				.find(query4AllSimilarityRequests);
 		double wholeRequestProcessTweetCount = 0d;
 		try {
 			while (paginatedResult.hasNext()) {

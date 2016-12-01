@@ -302,8 +302,9 @@ public class OrganizationDetector implements Runnable {
 	private void calculateStatistics() throws Exception {
 		BasicDBObject query4CosSimilarityRequest = new BasicDBObject(
 				MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
+		query4CosSimilarityRequest.put(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT, new BasicDBObject("$gt", 5));
 		StatisticCalculator statisticCalculator = new StatisticCalculator(requestId, requestIdObj,
-				query4CosSimilarityRequest, tracedSingleHashtag, campaignId,bypassSimilarityCalculation);
+				query4CosSimilarityRequest, tracedSingleHashtag, campaignId, bypassSimilarityCalculation);
 		statisticCalculator.calculateStatistics();
 	}
 
@@ -316,7 +317,8 @@ public class OrganizationDetector implements Runnable {
 				+ calculateGeneralSimilarity + " - Calculate Hashtag Similarity : " + calculateHashTagSimilarity);
 		// calculate similarity
 		new CosineSimilarity(requestId, calculateGeneralSimilarity, calculateHashTagSimilarity, earliestTweetDate,
-				latestTweetDate, campaignId, isExternalDateGiven,bypassSimilarityCalculation).calculateTweetSimilarities();
+				latestTweetDate, campaignId, isExternalDateGiven, bypassSimilarityCalculation)
+						.calculateTweetSimilarities();
 	}
 
 	public void collectTweetsOfAllUsers(String requestId) {

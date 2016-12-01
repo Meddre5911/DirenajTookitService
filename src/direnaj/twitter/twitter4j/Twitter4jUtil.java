@@ -79,7 +79,7 @@ public class Twitter4jUtil {
 		int pageNumber = 1;
 		Paging paging = new Paging(1, 200);
 		paging.setMaxId(Long.valueOf(user.getCampaignTweetId()));
-		for (int i = 0; i < 20; i++) {
+		while (true) {
 			boolean isEarlierTweetsRemaining = false;
 			ResponseList<Status> userTimeline = callUserTimeLineTwitterApi(user, campaignId, paging);
 			if (userTimeline == null) {
@@ -143,7 +143,7 @@ public class Twitter4jUtil {
 		int pageNumber = 1;
 		Paging paging = new Paging(1, 200);
 		paging.setSinceId(Long.valueOf(user.getCampaignTweetId()));
-		for (int i = 0; i < 20; i++) {
+		while (true) {
 			boolean isRecentTweetsRemaining = false;
 			ResponseList<Status> userTimeline = callUserTimeLineTwitterApi(user, campaignId, paging);
 			if (userTimeline == null) {

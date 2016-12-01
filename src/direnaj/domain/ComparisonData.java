@@ -11,22 +11,27 @@ public class ComparisonData implements Serializable {
 
 	private String campaign_id;
 	private String hashtag;
-	private Double sameUserPercentage;
+	private Double sameUserPercentage4ActualCampaign;
+	private Double sameUserPercentage4ComparedCampaign;
 	private Double sameUserCount;
-	private Double totalComparedUserCount;
+	private Double totalComparedUserCount4ActualCampaign;
+	private Double totalComparedUserCount4ComparedCampaign;
 	private String requestId;
 
 	public ComparisonData() {
 	}
 
-	public ComparisonData(String campaignId, String hashtag, Double sameUserPercentage, String requestId,
-			Double sameUserCount, Double totalComparedUserCount) {
+	public ComparisonData(String campaignId, String hashtag, Double sameUserPercentage4ActualCampaign, String requestId,
+			Double sameUserCount, Double totalComparedUserCount4ActualCampaign,
+			Double sameUserPercentage4ComparedCampaign, Double totalComparedUserCount4ComparedCampaign) {
 		this.setCampaign_id(campaignId);
 		this.hashtag = hashtag;
-		this.sameUserPercentage = sameUserPercentage;
+		this.setSameUserPercentage4ActualCampaign(sameUserPercentage4ActualCampaign);
 		this.requestId = requestId;
 		this.sameUserCount = sameUserCount;
-		this.setTotalComparedUserCount(totalComparedUserCount);
+		this.setTotalComparedUserCount4ActualCampaign(totalComparedUserCount4ActualCampaign);
+		this.sameUserPercentage4ComparedCampaign = sameUserPercentage4ComparedCampaign;
+		this.totalComparedUserCount4ComparedCampaign = totalComparedUserCount4ComparedCampaign;
 	}
 
 	public String getHashtag() {
@@ -35,14 +40,6 @@ public class ComparisonData implements Serializable {
 
 	public void setHashtag(String hashtag) {
 		this.hashtag = hashtag;
-	}
-
-	public double getSameUserPercentage() {
-		return sameUserPercentage;
-	}
-
-	public void setSameUserPercentage(double sameUserPercentage) {
-		this.sameUserPercentage = sameUserPercentage;
 	}
 
 	public String getRequestId() {
@@ -69,12 +66,36 @@ public class ComparisonData implements Serializable {
 		this.sameUserCount = sameUserCount;
 	}
 
-	public Double getTotalComparedUserCount() {
-		return totalComparedUserCount;
+	public Double getSameUserPercentage4ActualCampaign() {
+		return sameUserPercentage4ActualCampaign;
 	}
 
-	public void setTotalComparedUserCount(Double totalComparedUserCount) {
-		this.totalComparedUserCount = totalComparedUserCount;
+	public void setSameUserPercentage4ActualCampaign(Double sameUserPercentage4ActualCampaign) {
+		this.sameUserPercentage4ActualCampaign = sameUserPercentage4ActualCampaign;
+	}
+
+	public Double getSameUserPercentage4ComparedCampaign() {
+		return sameUserPercentage4ComparedCampaign;
+	}
+
+	public void setSameUserPercentage4ComparedCampaign(Double sameUserPercentage4ComparedCampaign) {
+		this.sameUserPercentage4ComparedCampaign = sameUserPercentage4ComparedCampaign;
+	}
+
+	public Double getTotalComparedUserCount4ActualCampaign() {
+		return totalComparedUserCount4ActualCampaign;
+	}
+
+	public void setTotalComparedUserCount4ActualCampaign(Double totalComparedUserCount4ActualCampaign) {
+		this.totalComparedUserCount4ActualCampaign = totalComparedUserCount4ActualCampaign;
+	}
+
+	public Double getTotalComparedUserCount4ComparedCampaign() {
+		return totalComparedUserCount4ComparedCampaign;
+	}
+
+	public void setTotalComparedUserCount4ComparedCampaign(Double totalComparedUserCount4ComparedCampaign) {
+		this.totalComparedUserCount4ComparedCampaign = totalComparedUserCount4ComparedCampaign;
 	}
 
 }

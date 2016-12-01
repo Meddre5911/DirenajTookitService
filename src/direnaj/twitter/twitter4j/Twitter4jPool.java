@@ -44,7 +44,7 @@ public class Twitter4jPool {
 	}
 
 	public synchronized static Twitter4jPool getInstance() {
-		
+
 		if (instance == null) {
 			instance = new Twitter4jPool();
 		}
@@ -105,7 +105,10 @@ public class Twitter4jPool {
 						Logger.getLogger(Twitter4jPool.class)
 								.error("TwitterException - Error Taken in getAvailableTwitterObject method.", e);
 						try {
-							threadSleepTime = (e.getRateLimitStatus().getSecondsUntilReset() + 1) * 1000;
+							int secondsUntilReset = e.getRateLimitStatus().getSecondsUntilReset();
+							if (secondsUntilReset > 0) {
+								threadSleepTime = (secondsUntilReset + 1) * 1000;
+							}
 						} catch (Exception exp) {
 							Logger.getLogger(Twitter4jPool.class).error("Exception getting getSecondsUntilReset.", e);
 						}

@@ -31,25 +31,18 @@ import twitter4j.User;
 
 public class CampaignComparer implements Runnable {
 
-	@SuppressWarnings("unused")
-	private static final String sameHashtagComparisonType = "sameHashtag";
-	private static final String givenHashtagComparisonType = "givenHashtag";
-
 	private String actualCampaignId;
 	private String actualHashtag;
 	private String requestDefinition;
 	private Map<String, String> comparisonCampaignHashtagInfo;
-	private String comparisonType;
 	private String generalComparisonRequestId;
 
 	public CampaignComparer(String actualCampaignId, String actualHashtag,
-			Map<String, String> comparisonCampaignHashtagInfo, String comparisonType, String requestDefinition)
-					throws Exception {
+			Map<String, String> comparisonCampaignHashtagInfo, String requestDefinition) throws Exception {
 		this.generalComparisonRequestId = TextUtils.generateUniqueId4Request();
 		this.actualCampaignId = actualCampaignId;
 		this.actualHashtag = actualHashtag;
 		this.comparisonCampaignHashtagInfo = comparisonCampaignHashtagInfo;
-		this.comparisonType = comparisonType;
 		this.requestDefinition = requestDefinition;
 	}
 
@@ -63,25 +56,15 @@ public class CampaignComparer implements Runnable {
 			List<ComparisonData> allComparisons = new ArrayList<>();
 			DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance()
 					.getOrgBehaviourProcessInputData();
-			// get campaign distinct user count
-			DBObject campaignStatisticQuery = new BasicDBObject();
-			campaignStatisticQuery.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, actualCampaignId);
 
-			BasicDBObject userDisnctCountQuery = new BasicDBObject()
-					.append("tweet.hashtagEntities.text",
-							new BasicDBObject("$regex", actualHashtag).append("$options", "i"))
-					.append(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, actualCampaignId);
-
-			double distinctUserCount = DirenajMongoDriver.getInstance().getTweetsCollection()
-					.distinct("tweet.user.id", userDisnctCountQuery).size();
+			double distinctUserCount4ActualCampaign = getDistinctUserCount4CampaignAndHashtag(actualCampaignId,
+					actualHashtag);
 
 			StringBuilder comparedEntities = new StringBuilder();
 			for (Entry<String, String> entrySet : comparisonCampaignHashtagInfo.entrySet()) {
 				String comparedCampaignId = entrySet.getKey();
-				String comparedHashtag = actualHashtag;
-				if (givenHashtagComparisonType.equals(comparisonType)) {
-					comparedHashtag = entrySet.getValue();
-				}
+				String comparedHashtag = entrySet.getValue();
+
 				String comparisonRequestId = TextUtils.generateUniqueId4Request();
 				comparedEntities.append("& " + comparedCampaignId + "-" + comparedHashtag + " ");
 
@@ -129,9 +112,19 @@ public class CampaignComparer implements Runnable {
 							null, null, null, false);
 					statisticCalculator.calculateBasicUserMeanVariances(orgBehaviourProcessInputData);
 					// get comparison data
-					double sameUserPercentage = NumberUtils.roundDouble(commonUserCount * 100d / distinctUserCount);
+
+					double distinctUserCount4ComparedCampaign = getDistinctUserCount4CampaignAndHashtag(
+							comparedCampaignId, comparedHashtag);
+
+					double sameUserPercentageActualCampaign = NumberUtils
+							.roundDouble(commonUserCount * 100d / distinctUserCount4ActualCampaign);
+					double sameUserPercentageComparedCampaign = NumberUtils
+							.roundDouble(commonUserCount * 100d / distinctUserCount4ComparedCampaign);
+
 					ComparisonData comparisonData = new ComparisonData(comparedCampaignId, comparedHashtag,
-							sameUserPercentage, comparisonRequestId, commonUserCount, distinctUserCount);
+							sameUserPercentageActualCampaign, comparisonRequestId, commonUserCount,
+							distinctUserCount4ActualCampaign, sameUserPercentageComparedCampaign,
+							distinctUserCount4ComparedCampaign);
 					allComparisons.add(comparisonData);
 					Logger.getLogger(CampaignComparer.class)
 							.debug("Calculation Ended for Comparison RequestId : " + comparisonRequestId
@@ -168,6 +161,18 @@ public class CampaignComparer implements Runnable {
 			Logger.getLogger(CampaignComparer.class)
 					.error("Campaign Comparison Exception for " + actualCampaignId + " & " + actualHashtag, e);
 		}
+	}
+
+	private double getDistinctUserCount4CampaignAndHashtag(String campaignId, String hashtag) {
+		BasicDBObject userDistinctCountQuery4ActaulCompany = new BasicDBObject()
+				.append(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
+		if (!TextUtils.isEmpty(hashtag)) {
+			userDistinctCountQuery4ActaulCompany.append("tweet.hashtagEntities.text",
+					new BasicDBObject("$regex", hashtag).append("$options", "i"));
+		}
+		double distinctUserCount = DirenajMongoDriver.getInstance().getTweetsCollection()
+				.distinct("tweet.user.id", userDistinctCountQuery4ActaulCompany).size();
+		return distinctUserCount;
 	}
 
 	private BasicDBObject prepareUserInputData(User user, String requestId) {
@@ -234,30 +239,37 @@ public class CampaignComparer implements Runnable {
 	private BasicDBObject getInitialMatchQuery(String comparedCampaignId, String comparedHashtag) {
 		BasicDBObject matchQuery4Initial = new BasicDBObject();
 
-		if (actualHashtag.equalsIgnoreCase(comparedHashtag)) {
+		if (!TextUtils.isEmpty(actualHashtag) && actualHashtag.equalsIgnoreCase(comparedHashtag)) {
 			BasicDBObject hashtagQuery = new BasicDBObject().append("tweet.hashtagEntities.text",
 					new BasicDBObject("$regex", actualHashtag).append("$options", "i"));
 			BasicDBObject campaignIdQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID,
 					new BasicDBObject("$in", Arrays.asList(actualCampaignId, comparedCampaignId)));
 			matchQuery4Initial.append("$and", Arrays.asList(hashtagQuery, campaignIdQuery));
 		} else {
-			// prepare first match element
-			BasicDBObject hashtagQuery = new BasicDBObject().append("tweet.hashtagEntities.text",
-					new BasicDBObject("$regex", actualHashtag).append("$options", "i"));
-			BasicDBObject campaignIdQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID,
-					actualCampaignId);
-			matchQuery4Initial.append("$and", Arrays.asList(hashtagQuery, campaignIdQuery));
-
-			BasicDBObject comparedHashtagQuery = new BasicDBObject().append("tweet.hashtagEntities.text",
-					new BasicDBObject("$regex", comparedHashtag).append("$options", "i"));
-			BasicDBObject comparedCampaignIdQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID,
-					comparedCampaignId);
-			BasicDBObject comparedMatchQuery4Initial = new BasicDBObject();
-			comparedMatchQuery4Initial.append("$and", Arrays.asList(comparedHashtagQuery, comparedCampaignIdQuery));
-
-			matchQuery4Initial.append("$or", Arrays.asList(matchQuery4Initial, comparedMatchQuery4Initial));
+			BasicDBObject initialMatch4ActualCampaign = prepareInitialMatchQuery(actualCampaignId, actualHashtag);
+			BasicDBObject initialMatch4ComparedCampaign = prepareInitialMatchQuery(comparedCampaignId, comparedHashtag);
+			matchQuery4Initial.append("$or", Arrays.asList(initialMatch4ActualCampaign, initialMatch4ComparedCampaign));
 		}
 		return matchQuery4Initial;
+	}
+
+	private BasicDBObject prepareInitialMatchQuery(String campaignId, String hashtag) {
+		// prepare first match element
+		BasicDBObject initialMatchQuery = new BasicDBObject();
+		BasicDBObject hashtagQuery = null;
+		List<BasicDBObject> andQuery = null;
+		// first campaign id
+		BasicDBObject campaignIdQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
+		if (!TextUtils.isEmpty(hashtag)) {
+			// check for hashtag
+			hashtagQuery = new BasicDBObject().append("tweet.hashtagEntities.text",
+					new BasicDBObject("$regex", hashtag).append("$options", "i"));
+			andQuery = Arrays.asList(hashtagQuery, campaignIdQuery);
+		} else {
+			andQuery = Arrays.asList(campaignIdQuery);
+		}
+		initialMatchQuery.append("$and", andQuery);
+		return initialMatchQuery;
 	}
 
 	@Override

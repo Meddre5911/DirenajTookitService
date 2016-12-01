@@ -115,8 +115,12 @@ public class CosineSimilarity {
 		document.put(MongoCollectionFieldNames.MONGO_NON_RETWEETED_MENTION_USER_COUNT, 0d);
 		document.put(MongoCollectionFieldNames.MONGO_DISTINCT_NON_RETWEETED_MENTION_USER_COUNT, 0d);
 
+		document.put(MongoCollectionFieldNames.MONGO_NON_RETWEETED_MENTION_DISTINCT_MENTION_RATIO, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_RETWEETED_MENTION_DISTINCT_MENTION_RATIO, 0d);
+		document.put(MongoCollectionFieldNames.MONGO_TOTAL_DISTINCT_MENTION_RATIO, 0d);
+
 		document.put(MongoCollectionFieldNames.MONGO_TWEET_FOUND, false);
-		document.put(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT, "");
+		document.put(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT, ResumeBreakPoint.COS_SIMILARITY_INIT.name());
 
 		if (requestData.getLowerTime() != null) {
 			document.put(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_RATA_DIE_LOWER_TIME,
@@ -177,6 +181,15 @@ public class CosineSimilarity {
 		if (bypassSimilarityCalculation) {
 			Logger.getLogger(CosineSimilarity.class)
 					.debug("Tweet Similarity Calculation is Bypassed for requestId : " + originalRequestId);
+			// prepare query
+			BasicDBObject allUpdateQuery = new BasicDBObject();
+			allUpdateQuery.put(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, originalRequestId);
+			// do update
+			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+					DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), allUpdateQuery,
+					MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT, ResumeBreakPoint.SIMILARTY_CALCULATED.name(),
+					"$set");
+
 			return;
 		}
 		// then start calculations

@@ -29,6 +29,7 @@ import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.util.CollectionUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.NumberUtils;
+import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
 
 public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
@@ -133,8 +134,12 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			}
 
 			jsonStr = jsonArray.toString();
-//			System.out.println("Request Type : " + requestType);
-//			System.out.println("Returned String : " + jsonStr);
+			Boolean printJson2Log = PropertiesUtil.getInstance().getBooleanProperty("toolkit.visualizer.printJson",
+					false);
+			if (printJson2Log) {
+				Logger.getLogger(MongoPaginationServlet.class).debug("Request Type : " + requestType);
+				Logger.getLogger(MongoPaginationServlet.class).debug("Returned String : " + jsonStr);
+			}
 		} catch (JSONException e) {
 			Logger.getLogger(MongoPaginationServlet.class)
 					.error("Error in OrganizedBehaviorCampaignVisualizer Servlet.", e);
@@ -195,7 +200,11 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		limits.add("6-10");
 		limits.add("11-20");
 		limits.add("21-50");
-		limits.add("51-...");
+		limits.add("51-100");
+		limits.add("101-150");
+		limits.add("151-200");
+		limits.add("201-300");
+		limits.add("301-...");
 		Map<String, Double> rangePercentages = new HashMap<>();
 		for (String limit : limits) {
 			rangePercentages.put(limit, 0d);
@@ -470,17 +479,27 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				MongoCollectionFieldNames.MONGO_NON_RETWEETED_MENTION_DISTINCT_MENTION_RATIO, "COS_SIM");
 
 		// tweet similarity
-		DBObject hourlyMostSimilarTweetsRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
-				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.MOST_SIMILAR, "COS_SIM");
-		DBObject hourlyVerySimilarTweetsRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
-				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.VERY_SIMILAR, "COS_SIM");
-		DBObject hourlySimilarTweetsRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
-				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.SIMILAR, "COS_SIM");
-		DBObject hourlySlightlySimilarTweetsRatioMeanVariance = getMeanVariance(
-				orgBehaviourRequestedSimilarityCalculations, query4CosSimilarityRequest, requestId,
-				MongoCollectionFieldNames.SLIGHTLY_SIMILAR, "COS_SIM");
-		DBObject hourlyNonSimilarTweetsRatioMeanVariance = getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
-				query4CosSimilarityRequest, requestId, MongoCollectionFieldNames.NON_SIMILAR, "COS_SIM");
+		// DBObject hourlyMostSimilarTweetsRatioMeanVariance =
+		// getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
+		// query4CosSimilarityRequest, requestId,
+		// MongoCollectionFieldNames.MOST_SIMILAR, "COS_SIM");
+		// DBObject hourlyVerySimilarTweetsRatioMeanVariance =
+		// getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
+		// query4CosSimilarityRequest, requestId,
+		// MongoCollectionFieldNames.VERY_SIMILAR, "COS_SIM");
+		// DBObject hourlySimilarTweetsRatioMeanVariance =
+		// getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
+		// query4CosSimilarityRequest, requestId,
+		// MongoCollectionFieldNames.SIMILAR, "COS_SIM");
+		// DBObject hourlySlightlySimilarTweetsRatioMeanVariance =
+		// getMeanVariance(
+		// orgBehaviourRequestedSimilarityCalculations,
+		// query4CosSimilarityRequest, requestId,
+		// MongoCollectionFieldNames.SLIGHTLY_SIMILAR, "COS_SIM");
+		// DBObject hourlyNonSimilarTweetsRatioMeanVariance =
+		// getMeanVariance(orgBehaviourRequestedSimilarityCalculations,
+		// query4CosSimilarityRequest, requestId,
+		// MongoCollectionFieldNames.NON_SIMILAR, "COS_SIM");
 
 		jsonArray.put(hourlyTweetHashtagRatioMeanVariance.toMap());
 		jsonArray.put(hourlyTweetMentionRatioMeanVariance.toMap());
@@ -488,11 +507,6 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		jsonArray.put(hourlyMediaRatioMeanVariance.toMap());
 		jsonArray.put(hourlyRetweetRatioMeanVariance.toMap());
 		jsonArray.put(hourlyTweetUserCountRatioMeanVariance.toMap());
-		jsonArray.put(hourlyMostSimilarTweetsRatioMeanVariance.toMap());
-		jsonArray.put(hourlyVerySimilarTweetsRatioMeanVariance.toMap());
-		jsonArray.put(hourlySimilarTweetsRatioMeanVariance.toMap());
-		jsonArray.put(hourlySlightlySimilarTweetsRatioMeanVariance.toMap());
-		jsonArray.put(hourlyNonSimilarTweetsRatioMeanVariance.toMap());
 		jsonArray.put(hourlyRetweetUserCountRatioMeanVariance.toMap());
 		jsonArray.put(hourlyNonRetweetUserCountRatioMeanVariance.toMap());
 		jsonArray.put(totalRetweetCountDistinctRetweetCountRatio.toMap());

@@ -123,7 +123,7 @@ function prepareGraphs(){
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyNonRetweetedUserAndTweetCount','hourlyNonRetweetedUserAndPostCountGraph','Non Retweet Post Time','Distinct Non Retweet / User Count');
 	
 	
-	prepareSingleLineUserRatiosGraphForAllSimilarites('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
+// 	prepareSingleLineUserRatiosGraphForAllSimilarites('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
 // 	prepareGroupedBarChartWithTime('visualizeHourlyTweetSimilarities','hourlyTweetSimilarities','Time','(%) Percentage of Similar Tweets within Given Time');
 
 	prepareMultiLineUserRatiosGraphInDate('visualizeHourlyRetweetRatios','hourlyRetweetRatios','Time','(%) Percentage of Retweets');
