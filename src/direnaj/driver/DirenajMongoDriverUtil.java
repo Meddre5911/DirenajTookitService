@@ -80,8 +80,8 @@ public class DirenajMongoDriverUtil {
 		return TextUtils.getNotNullValue(findOne.get("text"));
 	}
 
-	public static void cleanData4ResumeProcess(String requestId, DBObject requestObj,
-			ResumeBreakPoint resumeBreakPoint) {
+	public static void cleanData4ResumeProcess(String requestId, DBObject requestObj, ResumeBreakPoint resumeBreakPoint,
+			boolean bypassSimilarityCalculation) {
 		if (resumeBreakPoint != null) {
 			switch (resumeBreakPoint) {
 			case INIT:
@@ -96,22 +96,31 @@ public class DirenajMongoDriverUtil {
 			case USER_ANALYZE_COMPLETED:
 				DBObject updateQuery = new BasicDBObject();
 				updateQuery.put("originalRequestId", requestId);
-				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
-						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
-						MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "", "$unset");
-				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
-						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
-						MongoCollectionFieldNames.MONGO_URL_RATIO, "", "$unset");
-				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
-						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
-						MongoCollectionFieldNames.MONGO_MENTION_RATIO, "", "$unset");
-				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
-						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
-						MongoCollectionFieldNames.MONGO_RETWEET_RATIO, "", "$unset");
-				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
-						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), updateQuery,
-						MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT_DISTINCT_USER_RATIO, "", "$unset");
-
+				Logger.getLogger(DirenajMongoDriverUtil.class).debug(
+						"USER_ANALYZE_COMPLETED phase bypassSimilarityCalculation : " + bypassSimilarityCalculation);
+				if (bypassSimilarityCalculation) {
+					Logger.getLogger(DirenajMongoDriverUtil.class)
+							.debug("USER_ANALYZE_COMPLETED phase removal of all RequestedSimiarityCalculations");
+					DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
+							.remove(updateQuery);
+				} else {
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+							DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
+							updateQuery, MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, "", "$unset");
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+							DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
+							updateQuery, MongoCollectionFieldNames.MONGO_URL_RATIO, "", "$unset");
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+							DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
+							updateQuery, MongoCollectionFieldNames.MONGO_MENTION_RATIO, "", "$unset");
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+							DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
+							updateQuery, MongoCollectionFieldNames.MONGO_RETWEET_RATIO, "", "$unset");
+					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+							DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
+							updateQuery, MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT_DISTINCT_USER_RATIO, "",
+							"$unset");
+				}
 				DirenajMongoDriver.getInstance().getOrgBehaviourRequestMeanVarianceCalculations().remove(requestObj);
 				Logger.getLogger(DirenajMongoDriverUtil.class)
 						.debug("USER_ANALYZE_COMPLETED phase unnecessary data is removed");

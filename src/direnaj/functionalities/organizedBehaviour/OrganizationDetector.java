@@ -50,7 +50,6 @@ public class OrganizationDetector implements Runnable {
 	private OrganizedBehaviourDetectionRequestType detectionRequestType;
 	private DirenajDriverVersion2 direnajDriver;
 	private DirenajMongoDriver direnajMongoDriver;
-	private boolean disableGraphAnalysis;
 	private String requestDefinition;
 	private String requestId;
 	private Integer topHashtagCount;
@@ -87,7 +86,6 @@ public class OrganizationDetector implements Runnable {
 			this.tracedHashtagList.add(tracedHashtag);
 		}
 		this.detectionRequestType = detectionRequestType;
-		this.disableGraphAnalysis = disableGraphAnalysis;
 		this.calculateHashTagSimilarity = calculateHashTagSimilarity;
 		this.calculateGeneralSimilarity = calculateGeneralSimilarity;
 		this.bypassTweetCollection = bypassTweetCollection;
@@ -104,6 +102,7 @@ public class OrganizationDetector implements Runnable {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public OrganizationDetector(String requestId) {
 		// init objects
 		direnajDriver = new DirenajDriverVersion2();
@@ -139,7 +138,6 @@ public class OrganizationDetector implements Runnable {
 		if (retrievedResumeBreakPoint != null) {
 			resumeBreakPoint = ResumeBreakPoint.valueOf(retrievedResumeBreakPoint.toString());
 		}
-		this.disableGraphAnalysis = false;
 		isCleaningDone4ResumeProcess = false;
 		updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, true);
 	}
@@ -238,7 +236,8 @@ public class OrganizationDetector implements Runnable {
 
 	public void detectOrganizedBehaviourInHashtags() {
 		try {
-			DirenajMongoDriverUtil.cleanData4ResumeProcess(requestId, requestIdObj, resumeBreakPoint);
+			DirenajMongoDriverUtil.cleanData4ResumeProcess(requestId, requestIdObj, resumeBreakPoint,
+					bypassSimilarityCalculation);
 			isCleaningDone4ResumeProcess = true;
 			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.INIT, resumeBreakPoint,
 					workUntilBreakPoint)) {
@@ -263,7 +262,8 @@ public class OrganizationDetector implements Runnable {
 			// update found hashtags
 			updateRequestInMongo();
 			if (!isCleaningDone4ResumeProcess) {
-				DirenajMongoDriverUtil.cleanData4ResumeProcess(requestId, requestIdObj, resumeBreakPoint);
+				DirenajMongoDriverUtil.cleanData4ResumeProcess(requestId, requestIdObj, resumeBreakPoint,
+						bypassSimilarityCalculation);
 			}
 			for (String tracedHashtag : tracedHashtagList) {
 				Logger.getLogger(OrganizationDetector.class.getSimpleName())
@@ -279,6 +279,7 @@ public class OrganizationDetector implements Runnable {
 					saveData4UserAnalysis();
 				}
 			}
+			removePreProcessUsers();
 			calculateTweetSimilarities();
 			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.STATISCTIC_CALCULATED,
 					resumeBreakPoint, workUntilBreakPoint)) {
@@ -394,83 +395,88 @@ public class OrganizationDetector implements Runnable {
 
 		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery, keys)
 				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+		if (tweetsOfUser == null || !tweetsOfUser.hasNext()) {
+			domainUser = null;
+		} else {
+			List<DBObject> allUserTweets = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
+			try {
+				while (tweetsOfUser.hasNext()) {
+					String string = tweetsOfUser.next().toString();
+					// FIXME tweet'leri system.out'a yazmak istediğinde aç
+					// System.out.println(string + ",");
 
-		List<DBObject> allUserTweets = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
-		try {
-			while (tweetsOfUser.hasNext()) {
-				String string = tweetsOfUser.next().toString();
-				// FIXME tweet'leri system.out'a yazmak istediğinde aç
-				// System.out.println(string + ",");
+					Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
+							string);
 
-				Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer, string);
-
-				if ((twitter4jStatus.getExtendedMediaEntities() != null
-						&& twitter4jStatus.getExtendedMediaEntities().length > 0)
-						|| (twitter4jStatus.getMediaEntities() != null
-								&& twitter4jStatus.getMediaEntities().length > 0)) {
-					domainUser.incrementCountOfMediaPosts();
-				}
-				domainUser.addValue2CountOfUsedUrls((double) twitter4jStatus.getURLEntities().length);
-				domainUser.addValue2CountOfHashtags((double) twitter4jStatus.getHashtagEntities().length);
-				domainUser.addValue2CountOfMentionedUsers((double) twitter4jStatus.getUserMentionEntities().length);
-				domainUser.incrementPostDeviceCount(twitter4jStatus.getSource());
-				domainUser.incrementPostCount();
-				domainUser.setFavoriteCount(twitter4jStatus.getUser().getFavouritesCount());
-				domainUser.setWholeStatusesCount(twitter4jStatus.getUser().getStatusesCount());
-				// get user tweet data
-				UserTweets userTweet = new UserTweets();
-				if (twitter4jStatus.getHashtagEntities() != null) {
-					HashtagEntity[] hashtagEntities = twitter4jStatus.getHashtagEntities();
-					for (HashtagEntity hashtagEntity : hashtagEntities) {
-						if (hashtagEntity.getText().equalsIgnoreCase(tracedSingleHashtag)) {
-							userTweet.setHashtagTweet(true);
-							domainUser.incrementHashtagPostCount();
-							break;
+					if ((twitter4jStatus.getExtendedMediaEntities() != null
+							&& twitter4jStatus.getExtendedMediaEntities().length > 0)
+							|| (twitter4jStatus.getMediaEntities() != null
+									&& twitter4jStatus.getMediaEntities().length > 0)) {
+						domainUser.incrementCountOfMediaPosts();
+					}
+					domainUser.addValue2CountOfUsedUrls((double) twitter4jStatus.getURLEntities().length);
+					domainUser.addValue2CountOfHashtags((double) twitter4jStatus.getHashtagEntities().length);
+					domainUser.addValue2CountOfMentionedUsers((double) twitter4jStatus.getUserMentionEntities().length);
+					domainUser.incrementPostDeviceCount(twitter4jStatus.getSource());
+					domainUser.incrementPostCount();
+					domainUser.setFavoriteCount(twitter4jStatus.getUser().getFavouritesCount());
+					domainUser.setWholeStatusesCount(twitter4jStatus.getUser().getStatusesCount());
+					// get user tweet data
+					UserTweets userTweet = new UserTweets();
+					if (twitter4jStatus.getHashtagEntities() != null) {
+						HashtagEntity[] hashtagEntities = twitter4jStatus.getHashtagEntities();
+						for (HashtagEntity hashtagEntity : hashtagEntities) {
+							if (hashtagEntity.getText().equalsIgnoreCase(tracedSingleHashtag)) {
+								userTweet.setHashtagTweet(true);
+								domainUser.incrementHashtagPostCount();
+								break;
+							}
 						}
 					}
-				}
-				// check earliest tweet date
+					// check earliest tweet date
 
-				if (!isExternalDateGiven) {
-					if (earliestTweetDate == null) {
-						earliestTweetDate = twitter4jStatus.getCreatedAt();
-					} else if (twitter4jStatus.getCreatedAt() != null
-							&& twitter4jStatus.getCreatedAt().compareTo(earliestTweetDate) < 0) {
-						earliestTweetDate = twitter4jStatus.getCreatedAt();
+					if (!isExternalDateGiven) {
+						if (earliestTweetDate == null) {
+							earliestTweetDate = twitter4jStatus.getCreatedAt();
+						} else if (twitter4jStatus.getCreatedAt() != null
+								&& twitter4jStatus.getCreatedAt().compareTo(earliestTweetDate) < 0) {
+							earliestTweetDate = twitter4jStatus.getCreatedAt();
+						}
+						// check latest tweet date
+						if (latestTweetDate == null) {
+							latestTweetDate = twitter4jStatus.getCreatedAt();
+						} else if (twitter4jStatus.getCreatedAt() != null
+								&& twitter4jStatus.getCreatedAt().compareTo(latestTweetDate) > 0) {
+							latestTweetDate = twitter4jStatus.getCreatedAt();
+						}
 					}
-					// check latest tweet date
-					if (latestTweetDate == null) {
-						latestTweetDate = twitter4jStatus.getCreatedAt();
-					} else if (twitter4jStatus.getCreatedAt() != null
-							&& twitter4jStatus.getCreatedAt().compareTo(latestTweetDate) > 0) {
-						latestTweetDate = twitter4jStatus.getCreatedAt();
-					}
+					userTweet.setTweetText(twitter4jStatus.getText());
+					userTweet.setTweetId(String.valueOf(twitter4jStatus.getId()));
+					userTweet.setTweetCreationDate(DateTimeUtils.getRataDieFormat4Date(twitter4jStatus.getCreatedAt()));
+					// get user tweets
+					BasicDBObject userTweetData = new BasicDBObject();
+					userTweetData.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
+					userTweetData.put(MongoCollectionFieldNames.MONGO_USER_ID, domainUser.getUserId());
+					userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_ID, userTweet.getTweetId());
+					userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_TEXT, userTweet.getTweetText());
+					userTweetData.put(MongoCollectionFieldNames.MONGO_IS_HASHTAG_TWEET, userTweet.isHashtagTweet());
+					userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_CREATION_DATE,
+							userTweet.getTweetCreationDate());
+					allUserTweets.add(userTweetData);
+					// insert user tweets
+					allUserTweets = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+							DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest(), allUserTweets, false);
+
 				}
-				userTweet.setTweetText(twitter4jStatus.getText());
-				userTweet.setTweetId(String.valueOf(twitter4jStatus.getId()));
-				userTweet.setTweetCreationDate(DateTimeUtils.getRataDieFormat4Date(twitter4jStatus.getCreatedAt()));
-				// get user tweets
-				BasicDBObject userTweetData = new BasicDBObject();
-				userTweetData.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
-				userTweetData.put(MongoCollectionFieldNames.MONGO_USER_ID, domainUser.getUserId());
-				userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_ID, userTweet.getTweetId());
-				userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_TEXT, userTweet.getTweetText());
-				userTweetData.put(MongoCollectionFieldNames.MONGO_IS_HASHTAG_TWEET, userTweet.isHashtagTweet());
-				userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_CREATION_DATE,
-						userTweet.getTweetCreationDate());
-				allUserTweets.add(userTweetData);
-				// insert user tweets
-				allUserTweets = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
-						DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest(), allUserTweets, false);
+				DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+						DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest(), allUserTweets, true);
+			} catch (Exception e) {
+				Logger.getLogger(OrganizationDetector.class.getSimpleName()).error("analyzePreProcessUser method error",
+						e);
+			} finally {
+				tweetsOfUser.close();
 
 			}
-			DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
-					DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest(), allUserTweets, true);
-		} catch (Exception e) {
-			Logger.getLogger(OrganizationDetector.class.getSimpleName()).error("analyzePreProcessUser method error", e);
-		} finally {
-			tweetsOfUser.close();
-
 		}
 		return domainUser;
 	}
@@ -486,6 +492,7 @@ public class OrganizationDetector implements Runnable {
 		bulkWriteOperation.execute();
 	}
 
+	@SuppressWarnings("unused")
 	private void calculateClosenessCentrality(List<String> userIds) {
 		String subgraphEdgeLabel = createSubgraphByAddingEdges(userIds);
 		HashMap<String, Double> userClosenessCentralities = calculateInNeo4J(userIds, subgraphEdgeLabel);
@@ -655,6 +662,9 @@ public class OrganizationDetector implements Runnable {
 				i++;
 				DBObject preProcessUser = preProcessUsers.next();
 				User domainUser = analyzePreProcessUser(preProcessUser);
+				if(domainUser == null){
+					continue;
+				}
 				// do hashtag / mention / url & twitter device ratio
 				UserAccountPropertyAnalyser.getInstance().calculateUserAccountProperties(domainUser);
 				domainUsers.add(domainUser);
@@ -665,11 +675,6 @@ public class OrganizationDetector implements Runnable {
 			}
 		} finally {
 			preProcessUsers.close();
-		}
-		if (!disableGraphAnalysis) {
-			// XXX closeness centrality ile yapılacak
-			// get all userIds
-			// calculateClosenessCentrality(userIds);
 		}
 		updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
 				ResumeBreakPoint.USER_ANALYZE_COMPLETED.name());

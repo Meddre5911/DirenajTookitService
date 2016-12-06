@@ -18,6 +18,7 @@ import com.mongodb.DBObject;
 import com.mongodb.MapReduceCommand;
 import com.mongodb.MapReduceOutput;
 
+import direnaj.domain.HourlyTweetFeatures;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.DirenajMongoDriverUtil;
 import direnaj.driver.MongoCollectionFieldNames;
@@ -25,7 +26,9 @@ import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.NumberUtils;
 import direnaj.util.TextUtils;
+import twitter4j.HashtagEntity;
 import twitter4j.Status;
+import twitter4j.UserMentionEntity;
 
 public class StatisticCalculator {
 	private String requestId;
@@ -34,6 +37,7 @@ public class StatisticCalculator {
 	private String tracedHashtag;
 	private String campaignId;
 	private boolean bypassSimilarityCalculation;
+	private boolean calculateViaAggregationQuery;
 
 	public StatisticCalculator(String requestId, DBObject requestIdObj, BasicDBObject query4CosSimilarityRequest,
 			String tracedHashtag, String campaignId, boolean bypassSimilarityCalculation) {
@@ -43,6 +47,7 @@ public class StatisticCalculator {
 		this.tracedHashtag = tracedHashtag;
 		this.campaignId = campaignId;
 		this.bypassSimilarityCalculation = bypassSimilarityCalculation;
+		this.calculateViaAggregationQuery = false;
 	}
 
 	public void calculateStatistics() throws Exception {
@@ -61,13 +66,15 @@ public class StatisticCalculator {
 	private void calculateGeneralStatistics() throws Exception {
 		Logger.getLogger(StatisticCalculator.class)
 				.debug("General Statistics are getting calculated for requestId : " + requestId);
+		Gson statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 
 		DBObject projectionKeys = new BasicDBObject();
 		projectionKeys.put(MongoCollectionFieldNames.MONGO_USER_ID, 1);
 		projectionKeys.put(MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT, 1);
 		projectionKeys.put("_id", 0);
 		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
-		DBCursor requestUserIds = orgBehaviourProcessInputData.find(requestIdObj, projectionKeys);
+		DBCursor requestUserIds = orgBehaviourProcessInputData.find(requestIdObj, projectionKeys).batchSize(500)
+				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 		try {
 			while (requestUserIds.hasNext()) {
 				DBObject requestUser = requestUserIds.next();
@@ -76,23 +83,40 @@ public class StatisticCalculator {
 						.get(MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT);
 
 				BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
-						.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
-								new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
 						.append("user.id", Long.valueOf(userId));
 
-				DBObject keys = new BasicDBObject("createdAt", 1);
-				keys.put("_id", 0);
+				DBObject keys = new BasicDBObject("_id", 0);
 
 				Set<DateTime> userDateLimits = new HashSet<>();
 
-				DBCursor userTweetDates = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().find(tweetQuery,
-						keys);
-				while (userTweetDates.hasNext()) {
-					double creationTimeInRataDie = (double) userTweetDates.next()
-							.get(MongoCollectionFieldNames.MONGO_TWEET_CREATED_AT);
-					DateTime date = new DateTime(
-							DateTimeUtils.getTwitterDateFromRataDieFormat(String.valueOf(creationTimeInRataDie)));
-					userDateLimits.add(date.withTimeAtStartOfDay());
+				DBCursor userTweetDates = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+						.find(tweetQuery, keys)
+						.hint(MongoCollectionFieldNames.IDX_ORGBEHAV_USER_TWEETS_CAMPAIGN_USERID_CREATEDAT)
+						.batchSize(500).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+				try {
+					while (userTweetDates.hasNext()) {
+						boolean isHashtagTweet = false;
+						DBObject status = userTweetDates.next();
+						Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
+								status.toString());
+						for (HashtagEntity hashtagEntity : twitter4jStatus.getHashtagEntities()) {
+							if (hashtagEntity != null && !TextUtils.isEmpty(hashtagEntity.getText())
+									&& hashtagEntity.getText().equalsIgnoreCase(tracedHashtag)) {
+								isHashtagTweet = true;
+								break;
+							}
+						}
+						if (!isHashtagTweet) {
+							continue;
+						}
+						double creationTimeInRataDie = (double) status
+								.get(MongoCollectionFieldNames.MONGO_TWEET_CREATED_AT);
+						DateTime date = new DateTime(
+								DateTimeUtils.getTwitterDateFromRataDieFormat(String.valueOf(creationTimeInRataDie)));
+						userDateLimits.add(date.withTimeAtStartOfDay());
+					}
+				} finally {
+					userTweetDates.close();
 				}
 				double dayCountOfHashtagUsage = 0d;
 				double tweetCount = 0d;
@@ -108,7 +132,8 @@ public class StatisticCalculator {
 							.append(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
 
 					tweetCount += DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
-							.distinct("id", tweetsRetrievalQuery).size();
+							.find(tweetsRetrievalQuery)
+							.hint(MongoCollectionFieldNames.IDX_ORGBEHAV_USER_TWEETS_CAMPAIGN_USERID_CREATEDAT).count();
 
 				}
 				double dailyAvarageTweetCount4HashtagDays = NumberUtils.roundDouble(2,
@@ -180,7 +205,8 @@ public class StatisticCalculator {
 	private void calculateAllCampaignFeaturesFromScratch() {
 
 		BasicDBObject query = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_TYPE, "Search Api");
-		DBCursor allCampaigns = DirenajMongoDriver.getInstance().getCampaignsCollection().find(query);
+		DBCursor allCampaigns = DirenajMongoDriver.getInstance().getCampaignsCollection().find(query).batchSize(200)
+				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 		try {
 			DBCollection campaignStatisticsCollection = DirenajMongoDriver.getInstance()
 					.getCampaignStatisticsCollection();
@@ -503,13 +529,161 @@ public class StatisticCalculator {
 	}
 
 	private void calculateHourlyEntityRatio() throws Exception {
-		Gson statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 
+		// calculate with aggregation DB queries
+		if (calculateViaAggregationQuery) {
+			calculateWithAggregationDBQueries();
+		} else {
+			calculateIteratively();
+		}
+	}
+
+	private void calculateIteratively() throws Exception {
+		Gson statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 		BasicDBObject query4AllSimilarityRequests = new BasicDBObject(
 				MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
 		// first do calculation
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
-				.find(query4AllSimilarityRequests);
+				.find(query4AllSimilarityRequests).batchSize(500).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+		double wholeRequestProcessTweetCount = 0d;
+		try {
+			while (paginatedResult.hasNext()) {
+				DBObject requestedSimilarityCalculation = paginatedResult.next();
+				String requestId = (String) requestedSimilarityCalculation.get("requestId");
+				String originalRequestId = (String) requestedSimilarityCalculation.get("originalRequestId");
+				// update
+				DBObject updateQuery4RequestedCalculation = new BasicDBObject();
+				updateQuery4RequestedCalculation.put("requestId", requestId);
+				updateQuery4RequestedCalculation.put("originalRequestId", originalRequestId);
+				// get time
+				String lowerTimeInterval = (String) requestedSimilarityCalculation
+						.get(MongoCollectionFieldNames.MONGO_LOWER_TIME_INTERVAL);
+				String upperTimeInterval = (String) requestedSimilarityCalculation
+						.get(MongoCollectionFieldNames.MONGO_UPPER_TIME_INTERVAL);
+
+				double lowerTimeInRataDie = DateTimeUtils
+						.getRataDieFormat4Date(DateTimeUtils.getTwitterDate(lowerTimeInterval));
+				double upperTimeInRataDie = DateTimeUtils
+						.getRataDieFormat4Date(DateTimeUtils.getTwitterDate(upperTimeInterval));
+
+				HourlyTweetFeatures hourlyTweetFeatures = new HourlyTweetFeatures();
+				if (bypassSimilarityCalculation) {
+					iterateHourlyTweets(statusDeserializer, lowerTimeInRataDie, upperTimeInRataDie,
+							updateQuery4RequestedCalculation, hourlyTweetFeatures);
+				} else {
+					hourlyTweetFeatures.setTotalTweetCount((double) requestedSimilarityCalculation
+							.get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT));
+				}
+				wholeRequestProcessTweetCount += hourlyTweetFeatures.getTotalTweetCount();
+			}
+		} finally {
+			paginatedResult.close();
+		}
+
+		BasicDBObject findQuery = new BasicDBObject();
+		findQuery.put("_id", requestId);
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+				DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection(), findQuery,
+				MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT, wholeRequestProcessTweetCount, "$set");
+	}
+
+	private void iterateHourlyTweets(Gson statusDeserializer, double lowerTimeInRataDie, double upperTimeInRataDie,
+			DBObject updateQuery4RequestedCalculation, HourlyTweetFeatures hourlyTweetFeatures) {
+		Logger.getLogger(StatisticCalculator.class)
+				.debug("Iteratively Calculations will be made for requestId : "
+						+ updateQuery4RequestedCalculation.get(MongoCollectionFieldNames.MONGO_REQUEST_ID)
+						+ " between times : " + lowerTimeInRataDie + " - " + upperTimeInRataDie);
+		// prepare find query
+		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
+				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie));
+		// exclude mongo primary key
+		BasicDBObject keys = new BasicDBObject("_id", false);
+		// get cursor
+		DBCursor userTweetCursor = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().find(tweetQuery, keys)
+				.hint(MongoCollectionFieldNames.IDX_ORGBEHAV_USER_TWEETS_CAMPAIGN_CREATEDAT).batchSize(500)
+				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+		Logger.getLogger(StatisticCalculator.class).debug("Iterative Calculations query returns requestId : "
+				+ updateQuery4RequestedCalculation.get(MongoCollectionFieldNames.MONGO_REQUEST_ID));
+		// define HashSets
+		Set<Long> distinctRetweetIds = new HashSet<>(1000);
+		Set<Long> distinctUserIds = new HashSet<>(1000);
+		Set<Long> distinctRetweetUserIds = new HashSet<>(1000);
+		Set<Long> distinctNonRetweetUserIds = new HashSet<>(1000);
+		Set<Long> distinctMentionUserIds = new HashSet<>(1000);
+		Set<Long> distinctRetweetedMentionUserIds = new HashSet<>(1000);
+		// iterate
+		try {
+			while (userTweetCursor.hasNext()) {
+				boolean isHashtagTweet = false;
+				DBObject status = userTweetCursor.next();
+				Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
+						status.toString());
+				for (HashtagEntity hashtagEntity : twitter4jStatus.getHashtagEntities()) {
+
+					if (hashtagEntity != null && !TextUtils.isEmpty(hashtagEntity.getText())
+							&& hashtagEntity.getText().equalsIgnoreCase(tracedHashtag)) {
+						isHashtagTweet = true;
+						break;
+					}
+				}
+				if (!isHashtagTweet) {
+					continue;
+				}
+				// increment total tweet count
+				hourlyTweetFeatures.incrementTotalTweetCount(1);
+				distinctUserIds.add(twitter4jStatus.getUser().getId());
+				// increment general features
+				hourlyTweetFeatures.incrementHashtagCount(twitter4jStatus.getHashtagEntities().length - 1);
+				hourlyTweetFeatures.incrementUrlCount(twitter4jStatus.getURLEntities().length);
+				hourlyTweetFeatures.incrementTotalMentionCount(twitter4jStatus.getUserMentionEntities().length);
+				// get mention count
+				if (twitter4jStatus.getUserMentionEntities().length > 0) {
+					for (UserMentionEntity userMentionEntity : twitter4jStatus.getUserMentionEntities()) {
+						distinctMentionUserIds.add(userMentionEntity.getId());
+					}
+				}
+
+				if ((twitter4jStatus.getExtendedMediaEntities() != null
+						&& twitter4jStatus.getExtendedMediaEntities().length > 0)
+						|| (twitter4jStatus.getMediaEntities() != null
+								&& twitter4jStatus.getMediaEntities().length > 0)) {
+					hourlyTweetFeatures.incrementMediaCount(1);
+				}
+				// increment retweet related features
+				if (twitter4jStatus.getRetweetedStatus() != null && twitter4jStatus.getRetweetedStatus().getId() > 0) {
+					hourlyTweetFeatures.incrementTotalRetweetCount(1);
+					hourlyTweetFeatures.incrementRetweetedMentionCount(twitter4jStatus.getUserMentionEntities().length);
+					distinctRetweetIds.add(twitter4jStatus.getRetweetedStatus().getId());
+					distinctRetweetUserIds.add(twitter4jStatus.getUser().getId());
+					// get mention ids
+					for (UserMentionEntity userMentionEntity : twitter4jStatus.getUserMentionEntities()) {
+						distinctRetweetedMentionUserIds.add(userMentionEntity.getId());
+					}
+				} else {
+					distinctNonRetweetUserIds.add(twitter4jStatus.getUser().getId());
+					hourlyTweetFeatures.incrementDistinctNoneRetweetCount(1);
+				}
+			}
+			hourlyTweetFeatures.setDistinctUserCount(distinctUserIds.size());
+			hourlyTweetFeatures.setDistinctRetweetCount(distinctRetweetIds.size());
+			hourlyTweetFeatures.setDistinctRetweetUserCount(distinctRetweetUserIds.size());
+			hourlyTweetFeatures.setDistinctNoneRetweetUserCount(distinctNonRetweetUserIds.size());
+			hourlyTweetFeatures.setDistinctMentionCount4Request(distinctMentionUserIds.size());
+			hourlyTweetFeatures.setDistinctRetweetedMentionCount4Request(distinctRetweetedMentionUserIds.size());
+		} finally {
+			userTweetCursor.close();
+		}
+		hourlyTweetFeatures.calculateAllRatios();
+		hourlyTweetFeatures.save2Mongo(updateQuery4RequestedCalculation);
+	}
+
+	private void calculateWithAggregationDBQueries() throws Exception {
+		Gson statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
+		BasicDBObject query4AllSimilarityRequests = new BasicDBObject(
+				MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
+		// first do calculation
+		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
+				.find(query4AllSimilarityRequests).batchSize(200).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 		double wholeRequestProcessTweetCount = 0d;
 		try {
 			while (paginatedResult.hasNext()) {
@@ -752,23 +926,28 @@ public class StatisticCalculator {
 		double mediaRatio = 0d;
 		double retweetedMentionCount = 0d;
 
-		while (userTweetCursor.hasNext()) {
-			DBObject status = userTweetCursor.next();
-			Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
-					status.toString());
-			hashtagRatio += (double) (twitter4jStatus.getHashtagEntities().length - 1);
-			urlRatio += (double) (twitter4jStatus.getURLEntities().length);
-			mentionRatio += (double) (twitter4jStatus.getUserMentionEntities().length);
-			if ((twitter4jStatus.getExtendedMediaEntities() != null
-					&& twitter4jStatus.getExtendedMediaEntities().length > 0)
-					|| (twitter4jStatus.getMediaEntities() != null && twitter4jStatus.getMediaEntities().length > 0)) {
-				mediaRatio++;
-			}
+		try {
+			while (userTweetCursor.hasNext()) {
+				DBObject status = userTweetCursor.next();
+				Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
+						status.toString());
+				hashtagRatio += (double) (twitter4jStatus.getHashtagEntities().length - 1);
+				urlRatio += (double) (twitter4jStatus.getURLEntities().length);
+				mentionRatio += (double) (twitter4jStatus.getUserMentionEntities().length);
+				if ((twitter4jStatus.getExtendedMediaEntities() != null
+						&& twitter4jStatus.getExtendedMediaEntities().length > 0)
+						|| (twitter4jStatus.getMediaEntities() != null
+								&& twitter4jStatus.getMediaEntities().length > 0)) {
+					mediaRatio++;
+				}
 
-			if (twitter4jStatus.getRetweetCount() > 0) {
-				retweetRatio += 1d;
-				retweetedMentionCount += (double) (twitter4jStatus.getUserMentionEntities().length);
+				if (twitter4jStatus.getRetweetCount() > 0) {
+					retweetRatio += 1d;
+					retweetedMentionCount += (double) (twitter4jStatus.getUserMentionEntities().length);
+				}
 			}
+		} finally {
+			userTweetCursor.close();
 		}
 
 		// get mention count

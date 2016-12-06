@@ -31,11 +31,11 @@ public class DateTimeUtils {
 		}
 		return null;
 	}
-	
-	public static Date cast2Date(Object dateObj){
-		try{
+
+	public static Date cast2Date(Object dateObj) {
+		try {
 			return (Date) dateObj;
-		}catch(Exception e){
+		} catch (Exception e) {
 			return null;
 		}
 	}
@@ -47,9 +47,14 @@ public class DateTimeUtils {
 	}
 
 	public static String getStringOfDate(String dateFormatInStr, Date date) throws Exception {
-		SimpleDateFormat formatter = new SimpleDateFormat(dateFormatInStr);
-		String reportDate = formatter.format(date);
-		return reportDate;
+		try {
+			SimpleDateFormat formatter = new SimpleDateFormat(dateFormatInStr);
+			String reportDate = formatter.format(date);
+			return reportDate;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "";
+		}
 	}
 
 	public static Date getTwitterDateFromRataDieFormat(String dateInRataDie) throws Exception {
@@ -134,14 +139,14 @@ public class DateTimeUtils {
 		Date dateAfterProcess = plusWeeks.toDate();
 		return getRataDieFormat4Date(dateAfterProcess);
 	}
-	
+
 	public static double addDaysToDate(Date date, int i) {
 		DateTime dateTime = new DateTime(date);
 		DateTime plusDays = dateTime.plusDays(i);
 		Date dateAfterProcess = plusDays.toDate();
 		return getRataDieFormat4Date(dateAfterProcess);
 	}
-	
+
 	public static Date addDaysToDateInDateFormat(Date date, int i) {
 		DateTime dateTime = new DateTime(date);
 		DateTime plusDays = dateTime.plusDays(i);
@@ -178,7 +183,8 @@ public class DateTimeUtils {
 			return null;
 		}
 	}
-	public static Date getUTCDateTimeWithFormat(String dateFormat,String datetime) {
+
+	public static Date getUTCDateTimeWithFormat(String dateFormat, String datetime) {
 		try {
 			Date d = new SimpleDateFormat(dateFormat).parse(datetime);
 			return new Date(d.getTime() + localTZ.getOffset(d.getTime()));
@@ -293,47 +299,10 @@ public class DateTimeUtils {
 
 	public static void main(String[] args) throws Exception {
 
-//		String rataDie = "736626.3775";
-//		System.out.println(DateTimeUtils.getTwitterDateFromRataDieFormat(rataDie));
-//		System.out.println(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie));
-//		System.out.println(DateTimeUtils.getUTCDateTimeStringInGenericFormat(DateTimeUtils.getUTCDateFromRataDieFormat(rataDie)));
-//		
-		// "lowerTimeInterval" : "Tue Nov 15 01:00:00 GMT 2016",
-		// "upperTimeInterval" : "Tue Nov 15 02:00:00 GMT 2016",
 
-		
-//        "lowerTimeInterval" : "Mon Nov 14 22:00:00 GMT 2016",
-//        "upperTimeInterval" : "Mon Nov 14 23:00:00 GMT 2016",
-
-		
-		Date lowerDate = DateTimeUtils.getTwitterDate("Mon Nov 14 22:00:00 GMT 2016");
-		Date upperDate = DateTimeUtils.getTwitterDate("Mon Nov 14 23:00:00 GMT 2016");
-		
-		
-		double rataDieFormat4Date = DateTimeUtils.getRataDieFormat4Date(lowerDate);
-		System.out.println("Lower : " + lowerDate + " - " + rataDieFormat4Date);
-		System.out.println("Upper : " + upperDate + " - " + DateTimeUtils.getRataDieFormat4Date(upperDate));
-		
-		
-		System.out.println(DateTimeUtils.getTwitterDateFromRataDieFormat(String.valueOf(rataDieFormat4Date)));
-		System.out.println(DateTimeUtils.getUTCDateFromRataDieFormat(String.valueOf(rataDieFormat4Date)));
-		
-		
-//		DateTime date = new DateTime(lowerDate);
-//		DateTime startOfDay = date.withTimeAtStartOfDay();
-//		DateTime endOfDay = date.withTime(23, 59, 59, 999);
-//		
-//		
-//		System.out.println(startOfDay.toDate());
-//		System.out.println(endOfDay.toDate());
-//		
-//		
-//		System.out.println("Start : " + DateTimeUtils.getRataDieFormat4Date(startOfDay.toDate()));
-//		System.out.println("End : " + DateTimeUtils.getRataDieFormat4Date(endOfDay.toDate()));
-//		
-//		("yyyy-MM-dd hh:mm", latestDateStr);
-		Date utcDateTimeWithFormat = DateTimeUtils.getUTCDateTimeWithFormat("yyyy-MM-dd hh:mm", "2016-11-16 23:59");
-		System.out.println(utcDateTimeWithFormat);
+		// // "Oct 31, 2016 11:59:00 PM"
+		Date date = DateTimeUtils.getDate("MMM dd, yyyy HH:mm:ss aaa", "Oct 31, 2016 11:59:00 PM");
+		System.out.println(date);
 
 	}
 }

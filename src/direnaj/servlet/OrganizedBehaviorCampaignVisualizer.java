@@ -203,8 +203,10 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		limits.add("51-100");
 		limits.add("101-150");
 		limits.add("151-200");
-		limits.add("201-300");
-		limits.add("301-...");
+		limits.add("201-500");
+		limits.add("501-1000");
+		limits.add("1001-2000");
+		limits.add("2001-...");
 		Map<String, Double> rangePercentages = new HashMap<>();
 		for (String limit : limits) {
 			rangePercentages.put(limit, 0d);

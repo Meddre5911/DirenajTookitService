@@ -51,15 +51,15 @@
 	</br>
 	<table>
 		<tr>
-			<td><b>Compared_Campaign_Id</b>&nbsp;&nbsp;</td>
-			<td><b>Compared_Hashtag</b>&nbsp;&nbsp;</td>
+			<td><b>Compared Campaign Id</b>&nbsp;&nbsp;</td>
+			<td><b>Compared Hashtag</b>&nbsp;&nbsp;</td>
 			<td><b>Date</b>&nbsp;&nbsp;</td>
-			<td><b>Same_User_Count</b>&nbsp;&nbsp;</td>
-			<td><b>Same_User_Percentage(Actual_Campaign)</b>&nbsp;&nbsp;</td>
-			<td><b>Total_Compared_User_Count(Actual_Campaign)</b>&nbsp;&nbsp;</td>
-			<td><b>Same_User_Percentage(Compared_Campaign)</b>&nbsp;&nbsp;</td>
-			<td><b>Total_Compared_User_Count(Compared_Campaign)</b>&nbsp;&nbsp;</td>
-			<td><b>Summary_of_Same_Users</b>&nbsp;&nbsp;</td>
+			<td><b>Same User Count</b>&nbsp;&nbsp;</td>
+			<td><b>Same User Percentage (Actual_Campaign)</b>&nbsp;&nbsp;</td>
+			<td><b>Total Compared User Count (Actual_Campaign)</b>&nbsp;&nbsp;</td>
+			<td><b>Same User Percentage (Compared_Campaign)</b>&nbsp;&nbsp;</td>
+			<td><b>Total Compared User Count (Compared_Campaign)</b>&nbsp;&nbsp;</td>
+			<td><b>Same User Summary</b>&nbsp;&nbsp;</td>
 		</tr>
 		<%
 			// get map
@@ -98,8 +98,8 @@
 				sBuilder.append("<tr><td>" + comparisonResult.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID)
 						+ "</td><td><a href=\"https://twitter.com/hashtag/" + comparisonResult.get("hashtag")
 						+ "?src=hash\" target=\"_blank\">#" + comparisonResult.get("hashtag") + "</a></td><td>"
-						+ comparedCampaignObject.get("minCampaignDate") + "<br>"
-						+ comparedCampaignObject.get("maxCampaignDate") + "</td><td> "
+						+ DateTimeUtils.getStringOfDate("yyyyMMdd", DateTimeUtils.getDate("MMM dd, yyyy HH:mm:ss aaa",(String)comparedCampaignObject.get("minCampaignDate"))) + "<br>"
+						+ DateTimeUtils.getStringOfDate("yyyyMMdd", DateTimeUtils.getDate("MMM dd, yyyy HH:mm:ss aaa",(String)comparedCampaignObject.get("maxCampaignDate"))) + "</td><td> "
 						+ comparisonResult.get("sameUserCount") + "</td><td> % "
 						+ comparisonResult.get("sameUserPercentage4ActualCampaign") + "</td><td>"
 						+ comparisonResult.get("totalComparedUserCount4ActualCampaign") + "</td><td>% "

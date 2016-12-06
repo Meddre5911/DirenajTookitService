@@ -18,10 +18,10 @@ public class Deneme {
 //		System.out.println("???___ : " + "???___".matches("[^a-zA-Z0-9]*[a-zA-Z0-9]+[^a-zA-Z0-9]*"));
 		
 		
-		String retweetInfo = "7557.0-%83.74194061927884";
-		String[] split = retweetInfo.split("-");
-		double retweetCount = Double.valueOf(split[0]);
-		double retweetPercentage = Double.valueOf(split[1].substring(1));
+		long l =5l;
+		if(l>0){
+			System.out.println("oldu");
+		}
 		
 	}
 
