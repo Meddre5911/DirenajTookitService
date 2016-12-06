@@ -59,7 +59,8 @@
 			<td><b>Total Compared User Count (Actual_Campaign)</b>&nbsp;&nbsp;</td>
 			<td><b>Same User Percentage (Compared_Campaign)</b>&nbsp;&nbsp;</td>
 			<td><b>Total Compared User Count (Compared_Campaign)</b>&nbsp;&nbsp;</td>
-			<td><b>Same User Summary</b>&nbsp;&nbsp;</td>
+			<td><b>Same Users Summary</b>&nbsp;&nbsp;</td>
+			<td><b>Uncommon Users Summary</b>&nbsp;&nbsp;</td>
 		</tr>
 		<%
 			// get map
@@ -86,9 +87,14 @@
 						+ comparisonResult.get("totalComparedUserCount4ComparedCampaign")
 						+ "&nbsp;&nbsp;<b>Same User Percentage (Compared Campaign):</b>"
 						+ comparisonResult.get("sameUserPercentage4ComparedCampaign") + "<br><br>";
+						
 
 				summaryStr = URLEncoder.encode(summaryStr, "UTF-8");
-
+				
+				
+				String uncommonUsersSummaryStr = "<b>Uncommon Users</b>&nbsp;&nbsp;<b>User Count :</b>" +comparisonResult.get("uncommonUsersCount");
+				uncommonUsersSummaryStr = URLEncoder.encode(uncommonUsersSummaryStr, "UTF-8");
+				
 				String comparedCampaignId = (String) comparisonResult.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID);
 				BasicDBObject comparedCampaignQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID,
 						comparedCampaignId);
@@ -104,9 +110,16 @@
 						+ comparisonResult.get("sameUserPercentage4ActualCampaign") + "</td><td>"
 						+ comparisonResult.get("totalComparedUserCount4ActualCampaign") + "</td><td>% "
 						+ comparisonResult.get("sameUserPercentage4ComparedCampaign") + "</td><td>"
-						+ comparisonResult.get("totalComparedUserCount4ComparedCampaign") + "</td><td>"
+						+ comparisonResult.get("totalComparedUserCount4ComparedCampaign") + "</td>"
+						+"<td>"
 						+ "<a href=campaignComparisonUsersSummary.jsp?requestId=" + comparisonResult.get("requestId")
-						+ "&summaryStr=" + summaryStr + ">User Summary</a>" + "</td></tr>");
+						+ "&summaryStr=" + summaryStr + ">Same User Summary</a>" + "</td>"
+						+"<td>"
+						+ "<a href=campaignComparisonUsersSummary.jsp?requestId=" + comparisonResult.get("requestId4UncommonUsers")
+						+ "&summaryStr="+uncommonUsersSummaryStr+">Uncommmon Users Summary</a>" + "</td>"
+						
+						
+						+"</tr>");
 			}
 			out.println(sBuilder.toString());
 		%>

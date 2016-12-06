@@ -17,6 +17,8 @@ public class ComparisonData implements Serializable {
 	private Double totalComparedUserCount4ActualCampaign;
 	private Double totalComparedUserCount4ComparedCampaign;
 	private String requestId;
+	private String requestId4UncommonUsers;
+	private double uncommonUsersCount;
 
 	public ComparisonData() {
 	}
@@ -96,6 +98,22 @@ public class ComparisonData implements Serializable {
 
 	public void setTotalComparedUserCount4ComparedCampaign(Double totalComparedUserCount4ComparedCampaign) {
 		this.totalComparedUserCount4ComparedCampaign = totalComparedUserCount4ComparedCampaign;
+	}
+
+	public String getRequestId4UncommonUsers() {
+		return requestId4UncommonUsers;
+	}
+
+	public void setRequestId4UncommonUsers(String requestId4UncommonUsers) {
+		this.requestId4UncommonUsers = requestId4UncommonUsers;
+	}
+
+	public double getUncommonUsersCount() {
+		return uncommonUsersCount;
+	}
+
+	public void setUncommonUsersCount(double uncommonUsersCount) {
+		this.uncommonUsersCount = uncommonUsersCount;
 	}
 
 }

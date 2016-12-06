@@ -52,6 +52,9 @@ public class CampaignComparisonServlet extends HttpServlet {
 				Map<String, String> comparisonCampaignHashtagInfo = new HashMap<>();
 				for (int i = 1; i <= 10; i++) {
 					String comparedCampaign = request.getParameter("comparedCampaignId" + i);
+					if(actualCampaignId.equals(comparedCampaign)){
+						throw new Exception("can not compare same Campaign");
+					}
 					String comparedHashtag = request.getParameter("comparedHashtag" + i);
 					if (!TextUtils.isEmpty(comparedCampaign)) {
 						comparisonCampaignHashtagInfo.put(comparedCampaign, comparedHashtag);
