@@ -39,6 +39,7 @@ public class CosineSimilarity {
 	private List<CosineSimilarityRequestData> requestDataList;
 	private Gson statusDeserializer;
 	private boolean bypassSimilarityCalculation;
+	private boolean isRequestInitiedEarlier;
 
 	public CosineSimilarity(String requestId, boolean calculateGeneralSimilarity, boolean calculateHashTagSimilarity,
 			Date earliestTweetDate, Date latestTweetDate, String campaignId, boolean isExternalDateGiven,
@@ -176,20 +177,24 @@ public class CosineSimilarity {
 				Logger.getLogger(CosineSimilarity.class)
 						.debug("Request Data is getting inserted. \n" + requestData.toString());
 				insertRequest2Mongo(requestData);
+			} else {
+				isRequestInitiedEarlier = true;
 			}
 		}
 		if (bypassSimilarityCalculation) {
 			Logger.getLogger(CosineSimilarity.class)
 					.debug("Tweet Similarity Calculation is Bypassed for requestId : " + originalRequestId);
 			// prepare query
-			BasicDBObject allUpdateQuery = new BasicDBObject();
-			allUpdateQuery.put(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, originalRequestId);
-			// do update
-			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
-					DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(), allUpdateQuery,
-					MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT, ResumeBreakPoint.SIMILARTY_CALCULATED.name(),
-					"$set");
+			if (!isRequestInitiedEarlier) {
+				BasicDBObject allUpdateQuery = new BasicDBObject();
+				allUpdateQuery.put(MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, originalRequestId);
 
+				// do update
+				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
+						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),
+						allUpdateQuery, MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+						ResumeBreakPoint.SIMILARTY_CALCULATED.name(), "$set");
+			}
 			return;
 		}
 		// then start calculations

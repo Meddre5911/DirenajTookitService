@@ -99,10 +99,22 @@ public class DirenajMongoDriverUtil {
 				Logger.getLogger(DirenajMongoDriverUtil.class).debug(
 						"USER_ANALYZE_COMPLETED phase bypassSimilarityCalculation : " + bypassSimilarityCalculation);
 				if (bypassSimilarityCalculation) {
-					Logger.getLogger(DirenajMongoDriverUtil.class)
-							.debug("USER_ANALYZE_COMPLETED phase removal of all RequestedSimiarityCalculations");
-					DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
-							.remove(updateQuery);
+					DBObject findQuery = new BasicDBObject();
+					findQuery.put("originalRequestId", requestId);
+					findQuery.put(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+							ResumeBreakPoint.SIMILARTY_CALCULATED.name());
+					long calculations = DirenajMongoDriver.getInstance()
+							.getOrgBehaviourRequestedSimilarityCalculations().count(findQuery);
+
+					if (calculations <= 0) {
+						Logger.getLogger(DirenajMongoDriverUtil.class)
+								.debug("USER_ANALYZE_COMPLETED phase removal of all RequestedSimiarityCalculations");
+						DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
+								.remove(updateQuery);
+					} else {
+						Logger.getLogger(DirenajMongoDriverUtil.class)
+								.debug("USER_ANALYZE_COMPLETED phase - " + calculations + " exists. No removal needed.");
+					}
 				} else {
 					DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
 							DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations(),

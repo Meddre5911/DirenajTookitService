@@ -175,7 +175,7 @@ public class CampaignComparer implements Runnable {
 		// calculate mean variance
 		BasicDBObject requestIdObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, comparisonRequestId);
 		StatisticCalculator statisticCalculator = new StatisticCalculator(comparisonRequestId, requestIdObj, null, null,
-				null, false);
+				null, false, null, null);
 		statisticCalculator.calculateBasicUserMeanVariances(orgBehaviourProcessInputData);
 
 		if (search4CommonUsers) {

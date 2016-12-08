@@ -1,13 +1,19 @@
 package direnaj.functionalities.organizedBehaviour;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
@@ -18,17 +24,18 @@ import com.mongodb.DBObject;
 import com.mongodb.MapReduceCommand;
 import com.mongodb.MapReduceOutput;
 
-import direnaj.domain.HourlyTweetFeatures;
+import direnaj.driver.DirenajDriverUtils;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.DirenajMongoDriverUtil;
 import direnaj.driver.MongoCollectionFieldNames;
+import direnaj.functionalities.organizedBehaviour.tasks.HourlyStatisticCalculatorTask;
 import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.NumberUtils;
+import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
 import twitter4j.HashtagEntity;
 import twitter4j.Status;
-import twitter4j.UserMentionEntity;
 
 public class StatisticCalculator {
 	private String requestId;
@@ -38,9 +45,13 @@ public class StatisticCalculator {
 	private String campaignId;
 	private boolean bypassSimilarityCalculation;
 	private boolean calculateViaAggregationQuery;
+	private Gson statusDeserializer;
+	private ResumeBreakPoint resumeBreakPoint;
+	private ResumeBreakPoint workUntilBreakPoint;
 
 	public StatisticCalculator(String requestId, DBObject requestIdObj, BasicDBObject query4CosSimilarityRequest,
-			String tracedHashtag, String campaignId, boolean bypassSimilarityCalculation) {
+			String tracedHashtag, String campaignId, boolean bypassSimilarityCalculation,
+			ResumeBreakPoint resumeBreakPoint, ResumeBreakPoint workUntilBreakPoint) {
 		this.requestId = requestId;
 		this.requestIdObj = requestIdObj;
 		this.query4CosSimilarityRequest = query4CosSimilarityRequest;
@@ -48,25 +59,50 @@ public class StatisticCalculator {
 		this.campaignId = campaignId;
 		this.bypassSimilarityCalculation = bypassSimilarityCalculation;
 		this.calculateViaAggregationQuery = false;
+		statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
+		this.resumeBreakPoint = resumeBreakPoint;
+		this.workUntilBreakPoint = workUntilBreakPoint;
 	}
 
 	public void calculateStatistics() throws Exception {
 		Logger.getLogger(StatisticCalculator.class).debug("Statistics will be calculated for requestId : " + requestId);
-		calculateHourlyEntityRatio();
+		DBObject updateQuery4OrgBehaviourCollection = new BasicDBObject("_id", requestId);
+		DBCollection orgBehaviorRequestCollection = DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection();
+
+		if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.ALL_HOURLY_CALCULATION_DONE,
+				resumeBreakPoint, workUntilBreakPoint)) {
+			calculateHourlyEntityRatio();
+			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(orgBehaviorRequestCollection,
+					updateQuery4OrgBehaviourCollection, MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+					ResumeBreakPoint.ALL_HOURLY_CALCULATION_DONE.name(), "$set");
+		}
 		Logger.getLogger(StatisticCalculator.class)
 				.debug("Hourly Entitiy ratios are calculated for requestId : " + requestId);
-
-		calculateGeneralStatistics();
-		calculateCampaignStatistics();
+		if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.GENERAL_STATISCTIC_CALCULATION_DONE,
+				resumeBreakPoint, workUntilBreakPoint)) {
+			calculateGeneralStatistics();
+			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(orgBehaviorRequestCollection,
+					updateQuery4OrgBehaviourCollection, MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+					ResumeBreakPoint.GENERAL_STATISCTIC_CALCULATION_DONE.name(), "$set");
+		}
+		if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.GENERAL_CAMPAIGN_CALCULATION_DONE,
+				resumeBreakPoint, workUntilBreakPoint)) {
+			calculateCampaignStatistics();
+			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(orgBehaviorRequestCollection,
+					updateQuery4OrgBehaviourCollection, MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+					ResumeBreakPoint.GENERAL_CAMPAIGN_CALCULATION_DONE.name(), "$set");
+		}
 		calculateMeanVariance4All();
 		Logger.getLogger(StatisticCalculator.class).debug("Mean Variences are calculated for requestId : " + requestId);
+		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(orgBehaviorRequestCollection,
+				updateQuery4OrgBehaviourCollection, MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+				ResumeBreakPoint.STATISCTIC_CALCULATED.name(), "$set");
 
 	}
 
 	private void calculateGeneralStatistics() throws Exception {
 		Logger.getLogger(StatisticCalculator.class)
 				.debug("General Statistics are getting calculated for requestId : " + requestId);
-		Gson statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 
 		DBObject projectionKeys = new BasicDBObject();
 		projectionKeys.put(MongoCollectionFieldNames.MONGO_USER_ID, 1);
@@ -75,6 +111,7 @@ public class StatisticCalculator {
 		DBCollection orgBehaviourProcessInputData = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
 		DBCursor requestUserIds = orgBehaviourProcessInputData.find(requestIdObj, projectionKeys).batchSize(500)
 				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+
 		try {
 			while (requestUserIds.hasNext()) {
 				DBObject requestUser = requestUserIds.next();
@@ -89,10 +126,10 @@ public class StatisticCalculator {
 
 				Set<DateTime> userDateLimits = new HashSet<>();
 
+				int batchSize = PropertiesUtil.getInstance()
+						.getIntProperty("toolkit.statisticCalculator.batchSizeCount", 500);
 				DBCursor userTweetDates = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
-						.find(tweetQuery, keys)
-						.hint(MongoCollectionFieldNames.IDX_ORGBEHAV_USER_TWEETS_CAMPAIGN_USERID_CREATEDAT)
-						.batchSize(500).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+						.find(tweetQuery, keys).batchSize(batchSize).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 				try {
 					while (userTweetDates.hasNext()) {
 						boolean isHashtagTweet = false;
@@ -132,8 +169,7 @@ public class StatisticCalculator {
 							.append(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
 
 					tweetCount += DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
-							.find(tweetsRetrievalQuery)
-							.hint(MongoCollectionFieldNames.IDX_ORGBEHAV_USER_TWEETS_CAMPAIGN_USERID_CREATEDAT).count();
+							.find(tweetsRetrievalQuery).count();
 
 				}
 				double dailyAvarageTweetCount4HashtagDays = NumberUtils.roundDouble(2,
@@ -150,13 +186,14 @@ public class StatisticCalculator {
 						MongoCollectionFieldNames.MONGO_USER_HASHTAG_DAY_AVARAGE_DAY_POST_COUNT_RATIO,
 						hashtagDailyCountAvarageDailyCountRatio, "$set");
 			}
+
 		} finally {
 			requestUserIds.close();
 		}
 
 	}
 
-	private void calculateCampaignStatistics() {
+	private void calculateCampaignStatistics() throws JSONException {
 		Logger.getLogger(StatisticCalculator.class)
 				.debug("Campaign Statistics are getting calculated for requestId : " + requestId);
 		BasicDBObject findQuery = new BasicDBObject();
@@ -172,24 +209,52 @@ public class StatisticCalculator {
 
 		double distinctUserCount = Double.valueOf(
 				String.valueOf(campaignStatisticObj.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_COUNT)));
+		double distinctRetweetUserCount = NumberUtils
+				.getDouble(campaignStatisticObj.get(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT));
 
-		DBObject distinctRetweetUserQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
-				.append(MongoCollectionFieldNames.MONGO_TWEET_HASHTAG_ENTITIES_TEXT,
-						new BasicDBObject("$regex", tracedHashtag).append("$options", "i"))
-				.append("retweetedStatus.id", new BasicDBObject("$exists", true));
+		if (distinctRetweetUserCount == 0) {
+			Set<Long> distinctRetweetUserIds = new HashSet<>();
+			BasicDBObject allCampaignTweetsQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID,
+					campaignId);
+			// exclude mongo primary key
+			BasicDBObject keys = new BasicDBObject("_id", false);
 
-		double distinctRetweetUserCount = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
-				.distinct("user.id", distinctRetweetUserQuery).size();
+			int batchSize = PropertiesUtil.getInstance().getIntProperty("toolkit.statisticCalculator.batchSizeCount",
+					500);
+			// get cursor
+			DBCursor allCampaignTweetsCursor = DirenajMongoDriver.getInstance().getTweetsCollection()
+					.find(allCampaignTweetsQuery, keys).batchSize(batchSize).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 
+			try {
+				while (allCampaignTweetsCursor.hasNext()) {
+					JSONObject tweet = new JSONObject(allCampaignTweetsCursor.next().toString());
+					Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
+							DirenajDriverUtils.getTweet(tweet).toString());
+
+					if (twitter4jStatus.getRetweetedStatus() != null
+							&& twitter4jStatus.getRetweetedStatus().getId() > 0) {
+						distinctRetweetUserIds.add(twitter4jStatus.getUser().getId());
+					}
+				}
+			} finally {
+				allCampaignTweetsCursor.close();
+			}
+
+			distinctRetweetUserCount = distinctRetweetUserIds.size();
+			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection, campaignQuery,
+					MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT, distinctRetweetUserCount, "$set");
+		} else {
+			Logger.getLogger(StatisticCalculator.class)
+					.debug("Campaign Statistic distintRetweetUser count already calculated before for campaign id : "
+							+ campaignId + " for requestId : " + requestId);
+		}
 		double distintRetweetUserPercentage = NumberUtils.roundDouble(4,
 				distinctRetweetUserCount * 100d / distinctUserCount);
-
-		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection, campaignQuery,
-				MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT, distinctRetweetUserCount, "$set");
+		Logger.getLogger(StatisticCalculator.class)
+				.debug("Campaign Statistic distintRetweetUserPercentage calculated for requestId : " + requestId);
 		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection, campaignQuery,
 				MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT_PERCENTAGE, distintRetweetUserPercentage,
 				"$set");
-
 	}
 
 	private void check4RecalculationStep(DBObject campaignObj) {
@@ -542,139 +607,70 @@ public class StatisticCalculator {
 		Gson statusDeserializer = Twitter4jUtil.getGsonObject4Deserialization();
 		BasicDBObject query4AllSimilarityRequests = new BasicDBObject(
 				MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
+		query4AllSimilarityRequests.append(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
+				ResumeBreakPoint.SIMILARTY_CALCULATED.name());
+
 		// first do calculation
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
 				.find(query4AllSimilarityRequests).batchSize(500).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
-		double wholeRequestProcessTweetCount = 0d;
 		try {
+			List<DBObject> requestedSimilarityCalculations = new ArrayList<>();
 			while (paginatedResult.hasNext()) {
-				DBObject requestedSimilarityCalculation = paginatedResult.next();
-				String requestId = (String) requestedSimilarityCalculation.get("requestId");
-				String originalRequestId = (String) requestedSimilarityCalculation.get("originalRequestId");
-				// update
-				DBObject updateQuery4RequestedCalculation = new BasicDBObject();
-				updateQuery4RequestedCalculation.put("requestId", requestId);
-				updateQuery4RequestedCalculation.put("originalRequestId", originalRequestId);
-				// get time
-				String lowerTimeInterval = (String) requestedSimilarityCalculation
-						.get(MongoCollectionFieldNames.MONGO_LOWER_TIME_INTERVAL);
-				String upperTimeInterval = (String) requestedSimilarityCalculation
-						.get(MongoCollectionFieldNames.MONGO_UPPER_TIME_INTERVAL);
-
-				double lowerTimeInRataDie = DateTimeUtils
-						.getRataDieFormat4Date(DateTimeUtils.getTwitterDate(lowerTimeInterval));
-				double upperTimeInRataDie = DateTimeUtils
-						.getRataDieFormat4Date(DateTimeUtils.getTwitterDate(upperTimeInterval));
-
-				HourlyTweetFeatures hourlyTweetFeatures = new HourlyTweetFeatures();
-				if (bypassSimilarityCalculation) {
-					iterateHourlyTweets(statusDeserializer, lowerTimeInRataDie, upperTimeInRataDie,
-							updateQuery4RequestedCalculation, hourlyTweetFeatures);
-				} else {
-					hourlyTweetFeatures.setTotalTweetCount((double) requestedSimilarityCalculation
-							.get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT));
+				requestedSimilarityCalculations.add(paginatedResult.next());
+				int parallelThreadCount = PropertiesUtil.getInstance()
+						.getIntProperty("toolkit.statisticCalculator.threadCount", 3);
+				if (requestedSimilarityCalculations.size() == parallelThreadCount) {
+					requestedSimilarityCalculations = runCalculationInParallel(statusDeserializer,
+							requestedSimilarityCalculations);
 				}
-				wholeRequestProcessTweetCount += hourlyTweetFeatures.getTotalTweetCount();
 			}
+			if (requestedSimilarityCalculations.size() > 0) {
+				requestedSimilarityCalculations = runCalculationInParallel(statusDeserializer,
+						requestedSimilarityCalculations);
+			}
+
 		} finally {
 			paginatedResult.close();
 		}
 
+		calculateWholeTweetCount();
+	}
+
+	private void calculateWholeTweetCount() {
+		double wholeRequestProcessTweetCount = 0d;
+		BasicDBObject query4AllSimilarityRequests = new BasicDBObject(
+				MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
+		// first do calculation
+		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestedSimilarityCalculations()
+				.find(query4AllSimilarityRequests).batchSize(500).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+		while (paginatedResult.hasNext()) {
+			DBObject next = paginatedResult.next();
+			double totalTweetCount = (double) next.get(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT);
+			wholeRequestProcessTweetCount += totalTweetCount;
+		}
 		BasicDBObject findQuery = new BasicDBObject();
 		findQuery.put("_id", requestId);
 		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(
 				DirenajMongoDriver.getInstance().getOrgBehaviorRequestCollection(), findQuery,
 				MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT, wholeRequestProcessTweetCount, "$set");
+
 	}
 
-	private void iterateHourlyTweets(Gson statusDeserializer, double lowerTimeInRataDie, double upperTimeInRataDie,
-			DBObject updateQuery4RequestedCalculation, HourlyTweetFeatures hourlyTweetFeatures) {
-		Logger.getLogger(StatisticCalculator.class)
-				.debug("Iteratively Calculations will be made for requestId : "
-						+ updateQuery4RequestedCalculation.get(MongoCollectionFieldNames.MONGO_REQUEST_ID)
-						+ " between times : " + lowerTimeInRataDie + " - " + upperTimeInRataDie);
-		// prepare find query
-		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
-				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie));
-		// exclude mongo primary key
-		BasicDBObject keys = new BasicDBObject("_id", false);
-		// get cursor
-		DBCursor userTweetCursor = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().find(tweetQuery, keys)
-				.hint(MongoCollectionFieldNames.IDX_ORGBEHAV_USER_TWEETS_CAMPAIGN_CREATEDAT).batchSize(500)
-				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
-		Logger.getLogger(StatisticCalculator.class).debug("Iterative Calculations query returns requestId : "
-				+ updateQuery4RequestedCalculation.get(MongoCollectionFieldNames.MONGO_REQUEST_ID));
-		// define HashSets
-		Set<Long> distinctRetweetIds = new HashSet<>(1000);
-		Set<Long> distinctUserIds = new HashSet<>(1000);
-		Set<Long> distinctRetweetUserIds = new HashSet<>(1000);
-		Set<Long> distinctNonRetweetUserIds = new HashSet<>(1000);
-		Set<Long> distinctMentionUserIds = new HashSet<>(1000);
-		Set<Long> distinctRetweetedMentionUserIds = new HashSet<>(1000);
-		// iterate
-		try {
-			while (userTweetCursor.hasNext()) {
-				boolean isHashtagTweet = false;
-				DBObject status = userTweetCursor.next();
-				Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
-						status.toString());
-				for (HashtagEntity hashtagEntity : twitter4jStatus.getHashtagEntities()) {
-
-					if (hashtagEntity != null && !TextUtils.isEmpty(hashtagEntity.getText())
-							&& hashtagEntity.getText().equalsIgnoreCase(tracedHashtag)) {
-						isHashtagTweet = true;
-						break;
-					}
-				}
-				if (!isHashtagTweet) {
-					continue;
-				}
-				// increment total tweet count
-				hourlyTweetFeatures.incrementTotalTweetCount(1);
-				distinctUserIds.add(twitter4jStatus.getUser().getId());
-				// increment general features
-				hourlyTweetFeatures.incrementHashtagCount(twitter4jStatus.getHashtagEntities().length - 1);
-				hourlyTweetFeatures.incrementUrlCount(twitter4jStatus.getURLEntities().length);
-				hourlyTweetFeatures.incrementTotalMentionCount(twitter4jStatus.getUserMentionEntities().length);
-				// get mention count
-				if (twitter4jStatus.getUserMentionEntities().length > 0) {
-					for (UserMentionEntity userMentionEntity : twitter4jStatus.getUserMentionEntities()) {
-						distinctMentionUserIds.add(userMentionEntity.getId());
-					}
-				}
-
-				if ((twitter4jStatus.getExtendedMediaEntities() != null
-						&& twitter4jStatus.getExtendedMediaEntities().length > 0)
-						|| (twitter4jStatus.getMediaEntities() != null
-								&& twitter4jStatus.getMediaEntities().length > 0)) {
-					hourlyTweetFeatures.incrementMediaCount(1);
-				}
-				// increment retweet related features
-				if (twitter4jStatus.getRetweetedStatus() != null && twitter4jStatus.getRetweetedStatus().getId() > 0) {
-					hourlyTweetFeatures.incrementTotalRetweetCount(1);
-					hourlyTweetFeatures.incrementRetweetedMentionCount(twitter4jStatus.getUserMentionEntities().length);
-					distinctRetweetIds.add(twitter4jStatus.getRetweetedStatus().getId());
-					distinctRetweetUserIds.add(twitter4jStatus.getUser().getId());
-					// get mention ids
-					for (UserMentionEntity userMentionEntity : twitter4jStatus.getUserMentionEntities()) {
-						distinctRetweetedMentionUserIds.add(userMentionEntity.getId());
-					}
-				} else {
-					distinctNonRetweetUserIds.add(twitter4jStatus.getUser().getId());
-					hourlyTweetFeatures.incrementDistinctNoneRetweetCount(1);
-				}
-			}
-			hourlyTweetFeatures.setDistinctUserCount(distinctUserIds.size());
-			hourlyTweetFeatures.setDistinctRetweetCount(distinctRetweetIds.size());
-			hourlyTweetFeatures.setDistinctRetweetUserCount(distinctRetweetUserIds.size());
-			hourlyTweetFeatures.setDistinctNoneRetweetUserCount(distinctNonRetweetUserIds.size());
-			hourlyTweetFeatures.setDistinctMentionCount4Request(distinctMentionUserIds.size());
-			hourlyTweetFeatures.setDistinctRetweetedMentionCount4Request(distinctRetweetedMentionUserIds.size());
-		} finally {
-			userTweetCursor.close();
+	private List<DBObject> runCalculationInParallel(Gson statusDeserializer,
+			List<DBObject> requestedSimilarityCalculations) throws InterruptedException, BrokenBarrierException {
+		CyclicBarrier barrier = new CyclicBarrier(requestedSimilarityCalculations.size() + 1);
+		int i = 0;
+		for (DBObject requestedSimilarityCalculation : requestedSimilarityCalculations) {
+			i++;
+			HourlyStatisticCalculatorTask hourlyStatisticCalculatorTask = new HourlyStatisticCalculatorTask(barrier,
+					statusDeserializer, requestedSimilarityCalculation, campaignId, tracedHashtag,
+					bypassSimilarityCalculation, i);
+			new Thread(hourlyStatisticCalculatorTask).start();
 		}
-		hourlyTweetFeatures.calculateAllRatios();
-		hourlyTweetFeatures.save2Mongo(updateQuery4RequestedCalculation);
+		barrier.await();
+		// reset the list
+		requestedSimilarityCalculations = new ArrayList<>();
+		return requestedSimilarityCalculations;
 	}
 
 	private void calculateWithAggregationDBQueries() throws Exception {

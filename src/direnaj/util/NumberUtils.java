@@ -3,6 +3,8 @@ package direnaj.util;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import direnaj.driver.MongoCollectionFieldNames;
+
 public class NumberUtils {
 
 	public static double roundDouble(int decimalDigit, double number) {
@@ -38,6 +40,14 @@ public class NumberUtils {
 			return Integer.valueOf(value);
 		} catch (Exception e) {
 			return 0;
+		}
+	}
+
+	public static double getDouble(Object value) {
+		try {
+			return Double.valueOf(String.valueOf(value));
+		} catch (Exception e) {
+			return 0d;
 		}
 	}
 

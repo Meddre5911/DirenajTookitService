@@ -2,9 +2,6 @@ package direnaj.driver;
 
 public interface MongoCollectionFieldNames {
 
-	public static final String IDX_ORGBEHAV_USER_TWEETS_CAMPAIGN_CREATEDAT = "campaign_id_1_createdAt_1";
-	public static final String IDX_ORGBEHAV_USER_TWEETS_CAMPAIGN_USERID_CREATEDAT = "campaign_id_1_user.id_1_createdAt_1";
-
 	
 	public static final String MONGO_REQUEST_ID = "requestId";
 	public final static String MONGO_USER_ID = "userId";
@@ -63,6 +60,7 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_BYPASS_SIMILARITY_CALCULATION = "bypassSimilarityCalculation";
 
 	// legacy direnaj
+	
 	public static final String MONGO_CAMPAIGN_ID = "campaign_id";
 	public static final String MONGO_REQUEST_CAMPAIGN_ID = "campaignId";
 

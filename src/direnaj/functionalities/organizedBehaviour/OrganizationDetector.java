@@ -139,7 +139,7 @@ public class OrganizationDetector implements Runnable {
 			resumeBreakPoint = ResumeBreakPoint.valueOf(retrievedResumeBreakPoint.toString());
 		}
 		isCleaningDone4ResumeProcess = false;
-		updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, true);
+		updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, false);
 	}
 
 	public HashMap<String, Double> calculateInNeo4J(List<String> userIds, String subgraphEdgeLabel) {
@@ -305,7 +305,8 @@ public class OrganizationDetector implements Runnable {
 				MongoCollectionFieldNames.MONGO_COS_SIM_REQ_ORG_REQUEST_ID, requestId);
 		query4CosSimilarityRequest.put(MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT, new BasicDBObject("$gt", 5));
 		StatisticCalculator statisticCalculator = new StatisticCalculator(requestId, requestIdObj,
-				query4CosSimilarityRequest, tracedSingleHashtag, campaignId, bypassSimilarityCalculation);
+				query4CosSimilarityRequest, tracedSingleHashtag, campaignId, bypassSimilarityCalculation,
+				resumeBreakPoint, workUntilBreakPoint);
 		statisticCalculator.calculateStatistics();
 	}
 
@@ -662,7 +663,7 @@ public class OrganizationDetector implements Runnable {
 				i++;
 				DBObject preProcessUser = preProcessUsers.next();
 				User domainUser = analyzePreProcessUser(preProcessUser);
-				if(domainUser == null){
+				if (domainUser == null) {
 					continue;
 				}
 				// do hashtag / mention / url & twitter device ratio
