@@ -2,8 +2,12 @@ package direnaj.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
@@ -49,15 +53,16 @@ public class CampaignComparisonServlet extends HttpServlet {
 				String actualHashtag = request.getParameter("actualHashtag");
 				String requestDefinition = request.getParameter("requestDefinition");
 
-				Map<String, String> comparisonCampaignHashtagInfo = new HashMap<>();
+				List<Entry<String, String>> comparisonCampaignHashtagInfo = new ArrayList<>();
 				for (int i = 1; i <= 10; i++) {
 					String comparedCampaign = request.getParameter("comparedCampaignId" + i);
-					if(actualCampaignId.equals(comparedCampaign)){
+					if (actualCampaignId.equals(comparedCampaign)) {
 						throw new Exception("can not compare same Campaign");
 					}
 					String comparedHashtag = request.getParameter("comparedHashtag" + i);
 					if (!TextUtils.isEmpty(comparedCampaign)) {
-						comparisonCampaignHashtagInfo.put(comparedCampaign, comparedHashtag);
+						Entry<String, String> entry = new AbstractMap.SimpleEntry<String, String>(comparedCampaign, comparedHashtag);
+						comparisonCampaignHashtagInfo.add(entry);
 					}
 				}
 

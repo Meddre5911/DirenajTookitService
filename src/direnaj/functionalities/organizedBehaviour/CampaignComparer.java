@@ -3,7 +3,6 @@ package direnaj.functionalities.organizedBehaviour;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
@@ -35,11 +34,11 @@ public class CampaignComparer implements Runnable {
 	private String actualCampaignId;
 	private String actualHashtag;
 	private String requestDefinition;
-	private Map<String, String> comparisonCampaignHashtagInfo;
+	private List<Entry<String, String>>  comparisonCampaignHashtagInfo;
 	private String generalComparisonRequestId;
 
 	public CampaignComparer(String actualCampaignId, String actualHashtag,
-			Map<String, String> comparisonCampaignHashtagInfo, String requestDefinition) throws Exception {
+			List<Entry<String, String>>  comparisonCampaignHashtagInfo, String requestDefinition) throws Exception {
 		this.generalComparisonRequestId = TextUtils.generateUniqueId4Request();
 		this.actualCampaignId = actualCampaignId;
 		this.actualHashtag = actualHashtag;
@@ -62,7 +61,7 @@ public class CampaignComparer implements Runnable {
 					actualHashtag);
 
 			StringBuilder comparedEntities = new StringBuilder();
-			for (Entry<String, String> entrySet : comparisonCampaignHashtagInfo.entrySet()) {
+			for (Entry<String, String> entrySet : comparisonCampaignHashtagInfo) {
 				String comparedCampaignId = entrySet.getKey();
 				String comparedHashtag = entrySet.getValue();
 
