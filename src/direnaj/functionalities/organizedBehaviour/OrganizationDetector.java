@@ -333,8 +333,15 @@ public class OrganizationDetector implements Runnable {
 			Boolean calculateOnlyTopTrendDate = PropertiesUtil.getInstance()
 					.getBooleanProperty("cosSimilarity.calculateOnlyTopTrendDate", true);
 			DrenajCampaignRecord drenajCampaignRecord = DirenajMongoDriverUtil.getCampaign(campaignId);
+
+			int maxUserCount = PropertiesUtil.getInstance().getIntProperty("toolkit.tweetCollection.maxUserCount",
+					5000);
+			int userCount = 0;
 			try {
-				while (preProcessUsers.hasNext()) {
+				while (preProcessUsers.hasNext() && userCount <= maxUserCount) {
+					userCount++;
+					Logger.getLogger(OrganizationDetector.class.getSimpleName())
+							.debug("Processed User Count : " + userCount);
 					DBObject preProcessUser = preProcessUsers.next();
 					try {
 						User user = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);

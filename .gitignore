@@ -1,7 +1,5 @@
 /bin
 /classes
-.project
 .settings*
-.classpath
 WebContent/WEB-INF/classes/*
 
