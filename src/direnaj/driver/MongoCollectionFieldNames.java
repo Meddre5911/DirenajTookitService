@@ -153,6 +153,9 @@ public interface MongoCollectionFieldNames {
 	public static final String MONGO_COMPARISON_RESULTS = "comparisonResults";
 	public static final String MONGO_IS_EXTERNAL_DATE_GIVEN = "isExternalDateGiven";
 	
+	//
+	public static final String MONGO_ACTUAL_TWEET_OBJECT = "actualTweet";
+	
 	
 	
 	

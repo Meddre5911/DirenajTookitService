@@ -279,7 +279,6 @@ public class OrganizationDetector implements Runnable {
 					saveData4UserAnalysis();
 				}
 			}
-			removePreProcessUsers();
 			calculateTweetSimilarities();
 			if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.STATISCTIC_CALCULATED,
 					resumeBreakPoint, workUntilBreakPoint)) {
@@ -290,14 +289,18 @@ public class OrganizationDetector implements Runnable {
 			} else {
 				changeRequestStatusInMongo(true);
 			}
-
-			// removePreProcessUsers();
+			cleanTempData();
 			Logger.getLogger(OrganizationDetector.class.getSimpleName())
 					.debug("Hashtag Analysis is Finished for requestId : " + requestId);
 		} catch (Exception e) {
 			updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, Boolean.TRUE);
 			throw e;
 		}
+	}
+
+	private void cleanTempData() {
+		removePreProcessUsers();
+		DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest().remove(requestIdObj);
 	}
 
 	private void calculateStatistics() throws Exception {
@@ -380,19 +383,17 @@ public class OrganizationDetector implements Runnable {
 
 	public User analyzePreProcessUser(DBObject preProcessUser) throws Exception {
 		// get collection
-		DBCollection tweetsCollection = direnajMongoDriver.getOrgBehaviourUserTweets();
 		// parse user
 		User domainUser = DirenajMongoDriverUtil.parsePreProcessUsers(preProcessUser);
 		// get tweets of users in an interval of two weeks
 
 		Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inWeeks", 1);
-		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId()))
-				.append("createdAt",
-						new BasicDBObject("$gt",
-								DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(),
-										tweetDuration)).append("$lt",
-												DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(),
-														tweetDuration)));
+		BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId())).append(
+				"createdAt",
+				new BasicDBObject("$gt",
+						DateTimeUtils.subtractWeeksFromDate(domainUser.getCampaignTweetPostDate(), tweetDuration))
+								.append("$lt", DateTimeUtils.addWeeksToDate(domainUser.getCampaignTweetPostDate(),
+										tweetDuration)));
 
 		Logger.getLogger(OrganizationDetector.class)
 				.debug("Tweets Retrieval Query : " + tweetsRetrievalQuery.toString());
@@ -401,7 +402,7 @@ public class OrganizationDetector implements Runnable {
 		// Long.valueOf(633531082739216384l));
 		BasicDBObject keys = new BasicDBObject("_id", false);
 
-		DBCursor tweetsOfUser = tweetsCollection.find(tweetsRetrievalQuery, keys)
+		DBCursor tweetsOfUser = direnajMongoDriver.getOrgBehaviourUserTweets().find(tweetsRetrievalQuery, keys)
 				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 		if (tweetsOfUser == null || !tweetsOfUser.hasNext()) {
 			domainUser = null;
@@ -409,7 +410,8 @@ public class OrganizationDetector implements Runnable {
 			List<DBObject> allUserTweets = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
 			try {
 				while (tweetsOfUser.hasNext()) {
-					String string = tweetsOfUser.next().toString();
+					DBObject tweetObj = tweetsOfUser.next();
+					String string = tweetObj.toString();
 					// FIXME tweet'leri system.out'a yazmak istediğinde aç
 					// System.out.println(string + ",");
 
@@ -442,7 +444,6 @@ public class OrganizationDetector implements Runnable {
 						}
 					}
 					// check earliest tweet date
-
 					if (!isExternalDateGiven) {
 						if (earliestTweetDate == null) {
 							earliestTweetDate = twitter4jStatus.getCreatedAt();
@@ -461,15 +462,17 @@ public class OrganizationDetector implements Runnable {
 					userTweet.setTweetText(twitter4jStatus.getText());
 					userTweet.setTweetId(String.valueOf(twitter4jStatus.getId()));
 					userTweet.setTweetCreationDate(DateTimeUtils.getRataDieFormat4Date(twitter4jStatus.getCreatedAt()));
+
 					// get user tweets
 					BasicDBObject userTweetData = new BasicDBObject();
 					userTweetData.put(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
-					userTweetData.put(MongoCollectionFieldNames.MONGO_USER_ID, domainUser.getUserId());
+					userTweetData.put(MongoCollectionFieldNames.MONGO_USER_ID, Long.valueOf(domainUser.getUserId()));
 					userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_ID, userTweet.getTweetId());
 					userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_TEXT, userTweet.getTweetText());
 					userTweetData.put(MongoCollectionFieldNames.MONGO_IS_HASHTAG_TWEET, userTweet.isHashtagTweet());
 					userTweetData.put(MongoCollectionFieldNames.MONGO_TWEET_CREATION_DATE,
 							userTweet.getTweetCreationDate());
+					userTweetData.put(MongoCollectionFieldNames.MONGO_ACTUAL_TWEET_OBJECT, tweetObj);
 					allUserTweets.add(userTweetData);
 					// insert user tweets
 					allUserTweets = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
@@ -681,6 +684,7 @@ public class OrganizationDetector implements Runnable {
 					domainUsers = saveOrganizedBehaviourInputData(domainUsers);
 				}
 			}
+			saveOrganizedBehaviourInputData(domainUsers);
 		} finally {
 			preProcessUsers.close();
 		}

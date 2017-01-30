@@ -22,8 +22,6 @@ import direnaj.functionalities.organizedBehaviour.StatisticCalculator;
 import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.PropertiesUtil;
-import direnaj.util.TextUtils;
-import twitter4j.HashtagEntity;
 import twitter4j.Status;
 import twitter4j.UserMentionEntity;
 
@@ -36,10 +34,11 @@ public class HourlyStatisticCalculatorTask implements Runnable {
 	private DBObject requestedSimilarityCalculation;
 	private boolean bypassSimilarityCalculation;
 	private int threadNumber;
+	private String requestId;
 
 	public HourlyStatisticCalculatorTask(CyclicBarrier cyclicBarrier, Gson statusDeserializer,
 			DBObject requestedSimilarityCalculation, String campaignId, String tracedHashtag,
-			boolean bypassSimilarityCalculation, int threadNumber) {
+			boolean bypassSimilarityCalculation, int threadNumber, String requestId) {
 		this.cyclicBarrier = cyclicBarrier;
 		this.statusDeserializer = statusDeserializer;
 		this.campaignId = campaignId;
@@ -47,6 +46,7 @@ public class HourlyStatisticCalculatorTask implements Runnable {
 		this.requestedSimilarityCalculation = requestedSimilarityCalculation;
 		this.bypassSimilarityCalculation = bypassSimilarityCalculation;
 		this.threadNumber = threadNumber;
+		this.requestId = requestId;
 	}
 
 	@Override
@@ -106,16 +106,19 @@ public class HourlyStatisticCalculatorTask implements Runnable {
 						+ updateQuery4RequestedCalculation.get(MongoCollectionFieldNames.MONGO_REQUEST_ID)
 						+ " between times : " + lowerTimeInRataDie + " - " + upperTimeInRataDie);
 		// prepare find query
-		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
-				.append("createdAt", new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie));
+		BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId)
+				.append(MongoCollectionFieldNames.MONGO_TWEET_CREATION_DATE,
+						new BasicDBObject("$gt", lowerTimeInRataDie).append("$lt", upperTimeInRataDie))
+				.append(MongoCollectionFieldNames.MONGO_IS_HASHTAG_TWEET, true);
 
 		// exclude mongo primary key
 		BasicDBObject keys = new BasicDBObject("_id", false);
-		
+		keys.put(MongoCollectionFieldNames.MONGO_ACTUAL_TWEET_OBJECT, true);
+
 		int batchSize = PropertiesUtil.getInstance().getIntProperty("toolkit.statisticCalculator.batchSizeCount", 500);
 		// get cursor
-		DBCursor userTweetCursor = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets().find(tweetQuery, keys)
-				.batchSize(batchSize).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+		DBCursor userTweetCursor = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest()
+				.find(tweetQuery, keys).batchSize(batchSize).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 		Boolean applyHint = PropertiesUtil.getInstance().getBooleanProperty("toolkit.statisticCalculator.applyHint",
 				false);
 		if (applyHint) {
@@ -134,20 +137,10 @@ public class HourlyStatisticCalculatorTask implements Runnable {
 		// iterate
 		try {
 			while (userTweetCursor.hasNext()) {
-				DBObject status = userTweetCursor.next();
+				DBObject actualTweet = userTweetCursor.next();
+				DBObject status = (DBObject) actualTweet.get(MongoCollectionFieldNames.MONGO_ACTUAL_TWEET_OBJECT);
 				Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
 						status.toString());
-				boolean isHashtagTweet = false;
-				for (HashtagEntity hashtagEntity : twitter4jStatus.getHashtagEntities()) {
-					if (hashtagEntity != null && !TextUtils.isEmpty(hashtagEntity.getText())
-							&& hashtagEntity.getText().equalsIgnoreCase(tracedHashtag)) {
-						isHashtagTweet = true;
-						break;
-					}
-				}
-				if (!isHashtagTweet) {
-					continue;
-				}
 				// increment total tweet count
 				hourlyTweetFeatures.incrementTotalTweetCount(1);
 				distinctUserIds.add(twitter4jStatus.getUser().getId());
@@ -195,7 +188,8 @@ public class HourlyStatisticCalculatorTask implements Runnable {
 		hourlyTweetFeatures.calculateAllRatios();
 		hourlyTweetFeatures.save2Mongo(updateQuery4RequestedCalculation);
 		Logger.getLogger(StatisticCalculator.class)
-				.debug("Thread : " + threadNumber + " - Iteration Finished" + " - Iterative Calculations for requestId : "
+				.debug("Thread : " + threadNumber + " - Iteration Finished"
+						+ " - Iterative Calculations for requestId : "
 						+ updateQuery4RequestedCalculation.get(MongoCollectionFieldNames.MONGO_REQUEST_ID)
 						+ " between times : " + lowerTimeInRataDie + " - " + upperTimeInRataDie);
 	}

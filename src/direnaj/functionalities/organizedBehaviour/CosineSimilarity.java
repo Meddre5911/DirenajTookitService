@@ -177,6 +177,7 @@ public class CosineSimilarity {
 				Logger.getLogger(CosineSimilarity.class)
 						.debug("Request Data is getting inserted. \n" + requestData.toString());
 				insertRequest2Mongo(requestData);
+				initHourlyTweetInfo(requestData);
 			} else {
 				isRequestInitiedEarlier = true;
 			}
@@ -609,6 +610,56 @@ public class CosineSimilarity {
 							.append(MongoCollectionFieldNames.MONGO_ALL_TWEET_IDS, allTweetIds)
 							.append(MongoCollectionFieldNames.MONGO_ALL_USER_IDS, allUserIds));
 
+			// update request
+			updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT,
+					distinctUserIdCount);
+			updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.MONGO_TOTAL_TWEET_COUNT,
+					totalTweetCount);
+		} finally {
+			tweetsOfRequest.close();
+		}
+	}
+
+	private void initHourlyTweetInfo(CosineSimilarityRequestData requestData) {
+		List<String> allTweetIds = new ArrayList<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
+		Set<String> allUserIds = new HashSet<>(DirenajMongoDriver.getInstance().getBulkInsertSize());
+		List<DBObject> tweetSimilarityWithOtherTweets = new ArrayList<>(
+				DirenajMongoDriver.getInstance().getBulkInsertSize());
+		// get tweets first
+		DBCursor tweetsOfRequest = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest()
+				.find(requestData.getQuery4OrgBehaviourTweetsOfRequestCollection())
+				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+		try {
+			double totalTweetCount = 0;
+			while (tweetsOfRequest.hasNext()) {
+				totalTweetCount++;
+				DBObject userTweetObj = tweetsOfRequest.next();
+				// find distinct user ids & tweet ids
+				String tweetId = TextUtils.getNotNullValue(userTweetObj.get(MongoCollectionFieldNames.MONGO_TWEET_ID));
+				String userId = TextUtils.getNotNullValue(userTweetObj.get(MongoCollectionFieldNames.MONGO_USER_ID));
+				allTweetIds.add(tweetId);
+				allUserIds.add(userId);
+				// init tweet similarity obj
+				BasicDBObject tweetSimilarityObj = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID,
+						requestData.getRequestId()).append(MongoCollectionFieldNames.MONGO_TWEET_ID,
+								userTweetObj.get(MongoCollectionFieldNames.MONGO_TWEET_ID));
+				tweetSimilarityObj.put(MongoCollectionFieldNames.MONGO_TWEET_TEXT,
+						userTweetObj.get(MongoCollectionFieldNames.MONGO_TWEET_TEXT));
+				tweetSimilarityWithOtherTweets.add(tweetSimilarityObj);
+				// make bulk insert
+				tweetSimilarityWithOtherTweets = DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+						DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity(),
+						tweetSimilarityWithOtherTweets, false);
+
+			}
+			DirenajMongoDriverUtil.insertBulkData2CollectionIfNeeded(
+					DirenajMongoDriver.getInstance().getOrgBehaviourProcessTweetSimilarity(),
+					tweetSimilarityWithOtherTweets, true);
+
+			if (totalTweetCount > 0d) {
+				updateRequestInMongo(requestData, true);
+			}
+			int distinctUserIdCount = allUserIds.size();
 			// update request
 			updateRequestInMongoByColumnName(requestData, MongoCollectionFieldNames.MONGO_DISTINCT_USER_COUNT,
 					distinctUserIdCount);

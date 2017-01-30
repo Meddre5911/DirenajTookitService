@@ -34,7 +34,6 @@ import direnaj.util.DateTimeUtils;
 import direnaj.util.NumberUtils;
 import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
-import twitter4j.HashtagEntity;
 import twitter4j.Status;
 
 public class StatisticCalculator {
@@ -100,6 +99,11 @@ public class StatisticCalculator {
 
 	}
 
+	/**
+	 * FIXME burayı da yeni collection dan beslecek şekilde yapalım
+	 * 
+	 * @throws Exception
+	 */
 	private void calculateGeneralStatistics() throws Exception {
 		Logger.getLogger(StatisticCalculator.class)
 				.debug("General Statistics are getting calculated for requestId : " + requestId);
@@ -119,35 +123,25 @@ public class StatisticCalculator {
 				double userDailyPostCount = (double) requestUser
 						.get(MongoCollectionFieldNames.MONGO_USER_DAILY_AVARAGE_POST_COUNT);
 
-				BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId)
-						.append("user.id", Long.valueOf(userId));
+				BasicDBObject tweetQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId)
+						.append(MongoCollectionFieldNames.MONGO_USER_ID, Long.valueOf(userId))
+						.append(MongoCollectionFieldNames.MONGO_IS_HASHTAG_TWEET, true);
 
 				DBObject keys = new BasicDBObject("_id", 0);
+				keys.put(MongoCollectionFieldNames.MONGO_TWEET_CREATION_DATE, true);
 
 				Set<DateTime> userDateLimits = new HashSet<>();
 
 				int batchSize = PropertiesUtil.getInstance()
 						.getIntProperty("toolkit.statisticCalculator.batchSizeCount", 500);
-				DBCursor userTweetDates = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+
+				DBCursor userTweetDates = DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest()
 						.find(tweetQuery, keys).batchSize(batchSize).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 				try {
 					while (userTweetDates.hasNext()) {
-						boolean isHashtagTweet = false;
-						DBObject status = userTweetDates.next();
-						Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
-								status.toString());
-						for (HashtagEntity hashtagEntity : twitter4jStatus.getHashtagEntities()) {
-							if (hashtagEntity != null && !TextUtils.isEmpty(hashtagEntity.getText())
-									&& hashtagEntity.getText().equalsIgnoreCase(tracedHashtag)) {
-								isHashtagTweet = true;
-								break;
-							}
-						}
-						if (!isHashtagTweet) {
-							continue;
-						}
-						double creationTimeInRataDie = (double) status
-								.get(MongoCollectionFieldNames.MONGO_TWEET_CREATED_AT);
+						DBObject tweetInfo = userTweetDates.next();
+						double creationTimeInRataDie = (double) tweetInfo
+								.get(MongoCollectionFieldNames.MONGO_TWEET_CREATION_DATE);
 						DateTime date = new DateTime(
 								DateTimeUtils.getTwitterDateFromRataDieFormat(String.valueOf(creationTimeInRataDie)));
 						userDateLimits.add(date.withTimeAtStartOfDay());
@@ -161,17 +155,18 @@ public class StatisticCalculator {
 					dayCountOfHashtagUsage++;
 					DateTime endOfDay = userLimitTime.withTime(23, 59, 59, 999);
 
-					BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(userId))
-							.append("createdAt",
+					BasicDBObject tweetsRetrievalQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_USER_ID,
+							Long.valueOf(userId)).append(
+									MongoCollectionFieldNames.MONGO_TWEET_CREATION_DATE,
 									new BasicDBObject("$gt",
 											DateTimeUtils.getRataDieFormat4Date(userLimitTime.toDate())).append("$lt",
 													DateTimeUtils.getRataDieFormat4Date(endOfDay.toDate())))
-							.append(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
+									.append(MongoCollectionFieldNames.MONGO_REQUEST_ID, requestId);
 
-					tweetCount += DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+					tweetCount += DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest()
 							.find(tweetsRetrievalQuery).count();
-
 				}
+				
 				double dailyAvarageTweetCount4HashtagDays = NumberUtils.roundDouble(2,
 						tweetCount / dayCountOfHashtagUsage);
 				double hashtagDailyCountAvarageDailyCountRatio = NumberUtils.roundDouble(3,
@@ -664,7 +659,7 @@ public class StatisticCalculator {
 			i++;
 			HourlyStatisticCalculatorTask hourlyStatisticCalculatorTask = new HourlyStatisticCalculatorTask(barrier,
 					statusDeserializer, requestedSimilarityCalculation, campaignId, tracedHashtag,
-					bypassSimilarityCalculation, i);
+					bypassSimilarityCalculation, i, requestId);
 			new Thread(hourlyStatisticCalculatorTask).start();
 		}
 		barrier.await();
