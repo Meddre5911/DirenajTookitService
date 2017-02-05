@@ -50,7 +50,7 @@ public class PropertiesUtil {
 
 	public String getProperty(String property, String defaultValue) {
 		try {
-			String foundProperty = prop.getProperty(property);
+			String foundProperty = prop.getProperty(property).trim();
 			if (TextUtils.isEmpty(foundProperty)) {
 				foundProperty = defaultValue;
 			}
@@ -62,7 +62,7 @@ public class PropertiesUtil {
 
 	public Integer getIntProperty(String property, Integer defaultValue) {
 		try {
-			return Integer.valueOf(prop.getProperty(property));
+			return Integer.valueOf(prop.getProperty(property).trim());
 		} catch (Exception e) {
 			return defaultValue;
 		}
@@ -70,7 +70,7 @@ public class PropertiesUtil {
 
 	public Boolean getBooleanProperty(String property, Boolean defaultValue) {
 		try {
-			return Boolean.valueOf(prop.getProperty(property));
+			return Boolean.valueOf(prop.getProperty(property).trim());
 		} catch (Exception e) {
 			return defaultValue;
 		}

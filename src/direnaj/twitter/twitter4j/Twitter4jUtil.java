@@ -49,32 +49,85 @@ import twitter4j.UserJSONImpl;
 
 public class Twitter4jUtil {
 
+	private static int TWEET_CHECK_INTERVAL_HOUR = 12;
+
 	public static void saveTweetsOfUser(User user, Boolean calculateOnlyTopTrendDate, Date minCampaignDate,
 			Date maxCampaignDate, String campaignId) {
 		try {
-			CyclicBarrier barrier = new CyclicBarrier(3);
-			UserTweetCollectorTask earlierTweetsCollector = new UserTweetCollectorTask(barrier, true, user,
-					calculateOnlyTopTrendDate, minCampaignDate, maxCampaignDate, campaignId);
-			UserTweetCollectorTask recentTweetsCollector = new UserTweetCollectorTask(barrier, false, user,
-					calculateOnlyTopTrendDate, minCampaignDate, maxCampaignDate, campaignId);
-			new Thread(earlierTweetsCollector).start();
-			new Thread(recentTweetsCollector).start();
-			barrier.await();
+			boolean isUserTweetsExist = isUserTweetsExist(user, calculateOnlyTopTrendDate, minCampaignDate,
+					maxCampaignDate, campaignId);
+
+			if (!isUserTweetsExist) {
+				CyclicBarrier barrier = new CyclicBarrier(3);
+				UserTweetCollectorTask earlierTweetsCollector = new UserTweetCollectorTask(barrier, true, user,
+						calculateOnlyTopTrendDate, minCampaignDate, maxCampaignDate, campaignId);
+				UserTweetCollectorTask recentTweetsCollector = new UserTweetCollectorTask(barrier, false, user,
+						calculateOnlyTopTrendDate, minCampaignDate, maxCampaignDate, campaignId);
+				new Thread(earlierTweetsCollector).start();
+				new Thread(recentTweetsCollector).start();
+				barrier.await();
+			}
 		} catch (InterruptedException | BrokenBarrierException e) {
 			Logger.getLogger(Twitter4jUtil.class.getSimpleName()).error("Twitter4jUtil saveTweetsOfUser", e);
 			e.printStackTrace();
 		}
 	}
 
+	private static boolean isUserTweetsExist(User domainUser, Boolean calculateOnlyTopTrendDate, Date minCampaignDate,
+			Date maxCampaignDate, String campaignId) {
+
+		boolean isUserTweetsExist = true;
+		Date latestTweetDate = getHighestDate4TweetCollection(domainUser, calculateOnlyTopTrendDate, maxCampaignDate);
+		Date earliestTweetDate = getLowestDate4TweetCollection(domainUser, calculateOnlyTopTrendDate, minCampaignDate);
+		// check for tweets
+		if (earliestTweetDate != null && latestTweetDate != null && earliestTweetDate.before(latestTweetDate)) {
+			Date lowerTime = earliestTweetDate;
+			Date upperTime;
+			do {
+				// calculate upper time
+				upperTime = DateTimeUtils.addHoursToDate(lowerTime, TWEET_CHECK_INTERVAL_HOUR);
+				BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId()))
+						.append("createdAt", new BasicDBObject("$gt", DateTimeUtils.getRataDieFormat4Date(lowerTime))
+								.append("$lt", DateTimeUtils.getRataDieFormat4Date(upperTime)));
+
+				DBObject existedTweetObj = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+						.findOne(tweetsRetrievalQuery);
+				if (existedTweetObj == null || existedTweetObj.get("user") == null) {
+					Logger.getLogger(Twitter4jUtil.class)
+							.debug("User Tweet Does Not Exist For : " + tweetsRetrievalQuery.toString());
+					isUserTweetsExist = false;
+					break;
+				}
+				// assign new lower time
+				lowerTime = upperTime;
+			} while (upperTime.before(latestTweetDate));
+		}
+		// update tweet campaigns
+		if (isUserTweetsExist) {
+			if (earliestTweetDate != null && latestTweetDate != null && earliestTweetDate.before(latestTweetDate)) {
+				Date lowerTime = earliestTweetDate;
+				Date upperTime;
+				do {
+					// calculate upper time
+					upperTime = DateTimeUtils.addHoursToDate(lowerTime, TWEET_CHECK_INTERVAL_HOUR);
+					BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id",
+							Long.valueOf(domainUser.getUserId())).append("createdAt",
+									new BasicDBObject("$gt", DateTimeUtils.getRataDieFormat4Date(lowerTime))
+											.append("$lt", DateTimeUtils.getRataDieFormat4Date(upperTime)));
+					tryUpdate4ExistedTweets(campaignId, tweetsRetrievalQuery);
+					// assign new lower time
+					lowerTime = upperTime;
+				} while (upperTime.before(latestTweetDate));
+			}
+		}
+		Logger.getLogger(Twitter4jUtil.class)
+				.debug("Checked For Existed User Tweets. User Tweets Exist : " + isUserTweetsExist);
+		return isUserTweetsExist;
+	}
+
 	public static void getEarliestTweets(User user, Boolean calculateOnlyTopTrendDate, Date minCampaignDate,
 			String campaignId) {
-		Date lowestDate;
-		if (calculateOnlyTopTrendDate && minCampaignDate != null) {
-			lowestDate = minCampaignDate;
-		} else {
-			Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inDays", 4);
-			lowestDate = DateTimeUtils.subtractDaysFromDateInDateFormat(user.getCampaignTweetPostDate(), tweetDuration);
-		}
+		Date lowestDate = getLowestDate4TweetCollection(user, calculateOnlyTopTrendDate, minCampaignDate);
 		// first collect earlier tweets
 		int pageNumber = 1;
 		Paging paging = new Paging(1, 200);
@@ -106,6 +159,18 @@ public class Twitter4jUtil {
 		}
 	}
 
+	public static Date getLowestDate4TweetCollection(User user, Boolean calculateOnlyTopTrendDate,
+			Date minCampaignDate) {
+		Date lowestDate;
+		if (calculateOnlyTopTrendDate && minCampaignDate != null) {
+			lowestDate = minCampaignDate;
+		} else {
+			Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inDays", 4);
+			lowestDate = DateTimeUtils.subtractDaysFromDateInDateFormat(user.getCampaignTweetPostDate(), tweetDuration);
+		}
+		return lowestDate;
+	}
+
 	private static ResponseList<Status> callUserTimeLineTwitterApi(User user, String campaignId, Paging paging) {
 		ResponseList<Status> userTimeline = null;
 		try {
@@ -131,18 +196,18 @@ public class Twitter4jUtil {
 	public static void getRecentTweets(User user, Boolean calculateOnlyTopTrendDate, Date maxCampaignDate,
 			String campaignId) {
 
-		Date highestDate;
-		if (calculateOnlyTopTrendDate && maxCampaignDate != null) {
-			highestDate = maxCampaignDate;
-		} else {
-			Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inDays", 4);
-			highestDate = DateTimeUtils.addDaysToDateInDateFormat(user.getCampaignTweetPostDate(), tweetDuration);
-		}
+		Date highestDate = getHighestDate4TweetCollection(user, calculateOnlyTopTrendDate, maxCampaignDate);
 
 		// first collect earlier tweets
 		int pageNumber = 1;
 		Paging paging = new Paging(1, 200);
 		paging.setSinceId(Long.valueOf(user.getCampaignTweetId()));
+
+		Long maxTweetId = getTweetMaxId(highestDate);
+		if (maxTweetId != null) {
+			Logger.getLogger(Twitter4jUtil.class).debug("Max Id is retrived. Id is : " + maxTweetId);
+			paging.setMaxId(maxTweetId);
+		}
 		while (true) {
 			boolean isRecentTweetsRemaining = false;
 			ResponseList<Status> userTimeline = callUserTimeLineTwitterApi(user, campaignId, paging);
@@ -175,18 +240,45 @@ public class Twitter4jUtil {
 		}
 	}
 
+	private static Long getTweetMaxId(Date highestDate) {
+		Long maxTweetId = null;
+		try {
+			Date timeIntervalDate = DateTimeUtils.addDaysToDateInDateFormat(highestDate, 1);
+			BasicDBObject tweetsExistanceQuery = new BasicDBObject("createdAt",
+					new BasicDBObject("$gte", DateTimeUtils.getRataDieFormat4Date(highestDate)).append("$lte",
+							DateTimeUtils.getRataDieFormat4Date(timeIntervalDate)));
+			DBObject findOne = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+					.findOne(tweetsExistanceQuery);
+			if (findOne != null && findOne.get("id") != null) {
+				maxTweetId = (long) findOne.get("id");
+			}
+		} catch (Exception e) {
+			Logger.getLogger(Twitter4jUtil.class).error("Error during max Id retrieval. ", e);
+		}
+		return maxTweetId;
+	}
+
+	public static Date getHighestDate4TweetCollection(User user, Boolean calculateOnlyTopTrendDate,
+			Date maxCampaignDate) {
+		Date highestDate;
+		if (calculateOnlyTopTrendDate && maxCampaignDate != null) {
+			highestDate = maxCampaignDate;
+		} else {
+			Integer tweetDuration = PropertiesUtil.getInstance().getIntProperty("tweet.checkInterval.inDays", 4);
+			highestDate = DateTimeUtils.addDaysToDateInDateFormat(user.getCampaignTweetPostDate(), tweetDuration);
+		}
+		return highestDate;
+	}
+
 	private static void upsertTweet4GivenTimeInterval(User user, String campaignId, ResponseList<Status> userTimeline,
 			Date tweetCreationDateOfFirstTweet, Date tweetCreationDateOfLastTweet) {
 		BasicDBObject tweetsExistanceQuery = new BasicDBObject("user.id", Long.valueOf(user.getUserId())).append(
 				"createdAt", new BasicDBObject("$gt", DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet))
 						.append("$lt", DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet)));
-		BasicDBObject updateQuery = new BasicDBObject();
-		updateQuery.append("$addToSet",
-				new BasicDBObject().append(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId));
 
-		WriteResult updateMulti = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
-				.updateMulti(tweetsExistanceQuery, updateQuery);
-		if (updateMulti.getN() > 0) {
+		boolean isUpsertDone = tryUpdate4ExistedTweets(campaignId, tweetsExistanceQuery);
+
+		if (isUpsertDone) {
 			Logger.getLogger(Twitter4jUtil.class)
 					.debug("For retrieved time interval, Direnaj already has User's tweets. Rata Die Interval of Retrieved Tweets : "
 							+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet) + " - "
@@ -201,6 +293,17 @@ public class Twitter4jUtil {
 							+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfFirstTweet) + " - "
 							+ DateTimeUtils.getRataDieFormat4Date(tweetCreationDateOfLastTweet));
 		}
+	}
+
+	private static boolean tryUpdate4ExistedTweets(String campaignId, BasicDBObject tweetsExistanceQuery) {
+		BasicDBObject updateQuery = new BasicDBObject();
+		updateQuery.append("$addToSet",
+				new BasicDBObject().append(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId));
+
+		WriteResult updateMulti = DirenajMongoDriver.getInstance().getOrgBehaviourUserTweets()
+				.updateMulti(tweetsExistanceQuery, updateQuery);
+		boolean isUpsertDone = updateMulti.getN() > 0;
+		return isUpsertDone;
 	}
 
 	private static void saveTweets(ResponseList<Status> userTimeline) {
