@@ -105,19 +105,11 @@ public class Twitter4jUtil {
 		// update tweet campaigns
 		if (isUserTweetsExist) {
 			if (earliestTweetDate != null && latestTweetDate != null && earliestTweetDate.before(latestTweetDate)) {
-				Date lowerTime = earliestTweetDate;
-				Date upperTime;
-				do {
-					// calculate upper time
-					upperTime = DateTimeUtils.addHoursToDate(lowerTime, TWEET_CHECK_INTERVAL_HOUR);
-					BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id",
-							Long.valueOf(domainUser.getUserId())).append("createdAt",
-									new BasicDBObject("$gt", DateTimeUtils.getRataDieFormat4Date(lowerTime))
-											.append("$lt", DateTimeUtils.getRataDieFormat4Date(upperTime)));
-					tryUpdate4ExistedTweets(campaignId, tweetsRetrievalQuery);
-					// assign new lower time
-					lowerTime = upperTime;
-				} while (upperTime.before(latestTweetDate));
+				BasicDBObject tweetsRetrievalQuery = new BasicDBObject("user.id", Long.valueOf(domainUser.getUserId()))
+						.append("createdAt",
+								new BasicDBObject("$gt", DateTimeUtils.getRataDieFormat4Date(earliestTweetDate))
+										.append("$lt", DateTimeUtils.getRataDieFormat4Date(latestTweetDate)));
+				tryUpdate4ExistedTweets(campaignId, tweetsRetrievalQuery);
 			}
 		}
 		Logger.getLogger(Twitter4jUtil.class)
