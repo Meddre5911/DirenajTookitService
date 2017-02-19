@@ -62,13 +62,10 @@ public class CampaignComparisonServlet extends HttpServlet {
 				List<Entry<String, String>> comparisonCampaignHashtagInfo = new ArrayList<>();
 				for (int i = 1; i <= 35; i++) {
 					String comparedCampaign = request.getParameter("comparedCampaignId" + i);
-					if (actualCampaignId.equals(comparedCampaign)) {
-						throw new Exception("can not compare same Campaign");
-					}
 					String comparedHashtag = request.getParameter("comparedHashtag" + i);
 					if (!TextUtils.isEmpty(comparedCampaign)) {
-						Entry<String, String> entry = new AbstractMap.SimpleEntry<String, String>(comparedCampaign,
-								comparedHashtag);
+						Entry<String, String> entry = new AbstractMap.SimpleEntry<String, String>(
+								comparedCampaign.trim(), comparedHashtag.trim());
 						comparisonCampaignHashtagInfo.add(entry);
 					}
 				}
@@ -76,8 +73,8 @@ public class CampaignComparisonServlet extends HttpServlet {
 				if (TextUtils.isEmpty(actualCampaignId) || comparisonCampaignHashtagInfo.isEmpty()) {
 					throw new Exception();
 				}
-				Entry<String, String> entry = new AbstractMap.SimpleEntry<String, String>(actualCampaignId,
-						actualHashtag);
+				Entry<String, String> entry = new AbstractMap.SimpleEntry<String, String>(actualCampaignId.trim(),
+						actualHashtag.trim());
 				comparisonCampaignHashtagInfo.add(entry);
 
 				if (doCartesianComparison) {
@@ -86,9 +83,9 @@ public class CampaignComparisonServlet extends HttpServlet {
 
 					for (Entry<String, String> entrySet : comparisonCampaignHashtagInfo) {
 						String cartesianActualCampaignId = entrySet.getKey();
-						String cartesianActualHashtag = entry.getValue();
-						String cartesianRequestDefinition = cartesianActualCampaignId + "_" + cartesianActualHashtag
-								+ "_Analysis";
+						String cartesianActualHashtag = entrySet.getValue();
+						String cartesianRequestDefinition = requestDefinition + "_" + cartesianActualCampaignId + "_"
+								+ cartesianActualHashtag + "_Analysis";
 						CampaignComparer campaignComparer = new CampaignComparer(cartesianActualCampaignId,
 								cartesianActualHashtag, comparisonCampaignHashtagInfo, cartesianRequestDefinition);
 						executorService.submit(campaignComparer);

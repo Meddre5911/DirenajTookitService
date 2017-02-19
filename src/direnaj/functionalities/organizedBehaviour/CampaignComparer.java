@@ -64,8 +64,7 @@ public class CampaignComparer implements Runnable {
 			for (Entry<String, String> entrySet : comparisonCampaignHashtagInfo) {
 				String comparedCampaignId = entrySet.getKey();
 				String comparedHashtag = entrySet.getValue();
-				if (actualCampaignId.equalsIgnoreCase(comparedCampaignId)
-						&& actualHashtag.equalsIgnoreCase(comparedHashtag)) {
+				if (actualCampaignId.equalsIgnoreCase(comparedCampaignId)) {
 					continue;
 				}
 				comparedEntities.append("& " + comparedCampaignId + "-" + comparedHashtag + " ");

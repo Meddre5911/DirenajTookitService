@@ -32,7 +32,6 @@ $(document).ready(function() {
             { "mData": "campaign_id" },
             { "mData": "actualHashtag" },
             { "mData": "requestDefinition" },
-            { "mData": "comparedEntities" },
             { "mData": "requestId", 
               "mRender": function ( data, type, row ) {
   	          		  	  return '<a href=campaignComparisonResult.jsp?requestId='+data+'>Results</a>';
@@ -57,7 +56,6 @@ $(document).ready(function() {
                 <th>Campaign Id</th>
                 <th>Hashtag</th>
                 <th>Request Definition</th>
-                <th>Compared Entities</th>
                 <th>Result</th>
             </tr>
         </thead>       
