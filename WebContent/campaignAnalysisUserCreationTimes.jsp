@@ -158,8 +158,7 @@ function prepareGraphs(){
 		BasicDBObject campaignQuery = new BasicDBObject();
 		campaignQuery.put("campaign_id", campaignId);
 		DBObject campaignStatistics = DirenajMongoDriver.getInstance().getCampaignStatisticsCollection().findOne(campaignQuery);
-		Double hashtagVarience = (Double)campaignStatistics.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_VARIANCE); 
-		Double hashtagStdDev = (Double )campaignStatistics.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_STANDARD_DEVIATION); 
+		
 		
 	%>
 <div id="summaryInfo" class="divTableCell">
@@ -171,7 +170,14 @@ function prepareGraphs(){
 </div>
 
 <div id="requestStatistics" class="divTableCell">
-	<b>Campaign Hashtag Variance & Std. Deviation :  </b> <%=hashtagVarience%> & <%=hashtagStdDev%> 
+	<%
+		
+		if(campaignStatistics != null){
+		Double hashtagVarience = (Double)campaignStatistics.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_VARIANCE); 
+		Double hashtagStdDev = (Double )campaignStatistics.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_STANDARD_DEVIATION); 
+	%>
+	<b>Campaign Hashtag Variance & Std. Deviation :  </b> <%=hashtagVarience%> & <%=hashtagStdDev%>
+	<%} %> 
 </div>
 </div>
 

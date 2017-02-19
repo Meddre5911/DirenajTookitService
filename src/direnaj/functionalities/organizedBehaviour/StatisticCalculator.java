@@ -166,7 +166,7 @@ public class StatisticCalculator {
 					tweetCount += DirenajMongoDriver.getInstance().getOrgBehaviourTweetsOfRequest()
 							.find(tweetsRetrievalQuery).count();
 				}
-				
+
 				double dailyAvarageTweetCount4HashtagDays = NumberUtils.roundDouble(2,
 						tweetCount / dayCountOfHashtagUsage);
 				double hashtagDailyCountAvarageDailyCountRatio = NumberUtils.roundDouble(3,
@@ -200,60 +200,63 @@ public class StatisticCalculator {
 		campaignQuery.put(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID, campaignId);
 		DBCollection campaignStatisticsCollection = DirenajMongoDriver.getInstance().getCampaignStatisticsCollection();
 		DBObject campaignStatisticObj = campaignStatisticsCollection.findOne(campaignQuery);
-		check4RecalculationStep(campaignStatisticObj);
+		if (campaignStatisticObj != null) {
+			check4RecalculationStep(campaignStatisticObj);
 
-		double distinctUserCount = Double.valueOf(
-				String.valueOf(campaignStatisticObj.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_COUNT)));
-		double distinctRetweetUserCount = NumberUtils
-				.getDouble(campaignStatisticObj.get(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT));
+			double distinctUserCount = Double.valueOf(String
+					.valueOf(campaignStatisticObj.get(MongoCollectionFieldNames.MONGO_CAMPAIGN_DISTINCT_USER_COUNT)));
+			double distinctRetweetUserCount = NumberUtils
+					.getDouble(campaignStatisticObj.get(MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT));
 
-		if (distinctRetweetUserCount == 0) {
-			Set<Long> distinctRetweetUserIds = new HashSet<>();
-			BasicDBObject allCampaignTweetsQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID,
-					campaignId);
-			// exclude mongo primary key
-			BasicDBObject keys = new BasicDBObject("_id", false);
+			if (distinctRetweetUserCount == 0) {
+				Set<Long> distinctRetweetUserIds = new HashSet<>();
+				BasicDBObject allCampaignTweetsQuery = new BasicDBObject(MongoCollectionFieldNames.MONGO_CAMPAIGN_ID,
+						campaignId);
+				// exclude mongo primary key
+				BasicDBObject keys = new BasicDBObject("_id", false);
 
-			int batchSize = PropertiesUtil.getInstance().getIntProperty("toolkit.statisticCalculator.batchSizeCount",
-					500);
-			// get cursor
-			DBCursor allCampaignTweetsCursor = DirenajMongoDriver.getInstance().getTweetsCollection()
-					.find(allCampaignTweetsQuery, keys).batchSize(batchSize).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+				int batchSize = PropertiesUtil.getInstance()
+						.getIntProperty("toolkit.statisticCalculator.batchSizeCount", 500);
+				// get cursor
+				DBCursor allCampaignTweetsCursor = DirenajMongoDriver.getInstance().getTweetsCollection()
+						.find(allCampaignTweetsQuery, keys).batchSize(batchSize).addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 
-			try {
-				while (allCampaignTweetsCursor.hasNext()) {
-					JSONObject tweet = new JSONObject(allCampaignTweetsCursor.next().toString());
-					Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
-							DirenajDriverUtils.getTweet(tweet).toString());
+				try {
+					while (allCampaignTweetsCursor.hasNext()) {
+						JSONObject tweet = new JSONObject(allCampaignTweetsCursor.next().toString());
+						Status twitter4jStatus = Twitter4jUtil.deserializeTwitter4jStatusFromGson(statusDeserializer,
+								DirenajDriverUtils.getTweet(tweet).toString());
 
-					if (twitter4jStatus.getRetweetedStatus() != null
-							&& twitter4jStatus.getRetweetedStatus().getId() > 0) {
-						distinctRetweetUserIds.add(twitter4jStatus.getUser().getId());
+						if (twitter4jStatus.getRetweetedStatus() != null
+								&& twitter4jStatus.getRetweetedStatus().getId() > 0) {
+							distinctRetweetUserIds.add(twitter4jStatus.getUser().getId());
+						}
 					}
+				} finally {
+					allCampaignTweetsCursor.close();
 				}
-			} finally {
-				allCampaignTweetsCursor.close();
-			}
 
-			distinctRetweetUserCount = distinctRetweetUserIds.size();
-			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection, campaignQuery,
-					MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT, distinctRetweetUserCount, "$set");
-		} else {
+				distinctRetweetUserCount = distinctRetweetUserIds.size();
+				DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection, campaignQuery,
+						MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT, distinctRetweetUserCount, "$set");
+			} else {
+				Logger.getLogger(StatisticCalculator.class)
+						.debug("Campaign Statistic distintRetweetUser count already calculated before for campaign id : "
+								+ campaignId + " for requestId : " + requestId);
+			}
+			double distintRetweetUserPercentage = NumberUtils.roundDouble(4,
+					distinctRetweetUserCount * 100d / distinctUserCount);
 			Logger.getLogger(StatisticCalculator.class)
-					.debug("Campaign Statistic distintRetweetUser count already calculated before for campaign id : "
-							+ campaignId + " for requestId : " + requestId);
+					.debug("Campaign Statistic distintRetweetUserPercentage calculated for requestId : " + requestId);
+			DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection, campaignQuery,
+					MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT_PERCENTAGE,
+					distintRetweetUserPercentage, "$set");
 		}
-		double distintRetweetUserPercentage = NumberUtils.roundDouble(4,
-				distinctRetweetUserCount * 100d / distinctUserCount);
-		Logger.getLogger(StatisticCalculator.class)
-				.debug("Campaign Statistic distintRetweetUserPercentage calculated for requestId : " + requestId);
-		DirenajMongoDriverUtil.updateRequestInMongoByColumnName(campaignStatisticsCollection, campaignQuery,
-				MongoCollectionFieldNames.MONGO_DISTINCT_RETWEET_USER_COUNT_PERCENTAGE, distintRetweetUserPercentage,
-				"$set");
 	}
 
 	private void check4RecalculationStep(DBObject campaignObj) {
-		if (!campaignObj.containsField(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_STANDARD_DEVIATION)) {
+		if (campaignObj != null
+				&& !campaignObj.containsField(MongoCollectionFieldNames.MONGO_CAMPAIGN_HASHTAG_STANDARD_DEVIATION)) {
 			Logger.getLogger(StatisticCalculator.class)
 					.debug("All Campaign Features are getting calculated from scratch for requestId : " + requestId);
 			calculateAllCampaignFeaturesFromScratch();

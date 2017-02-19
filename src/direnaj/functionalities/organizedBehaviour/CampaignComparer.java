@@ -34,11 +34,11 @@ public class CampaignComparer implements Runnable {
 	private String actualCampaignId;
 	private String actualHashtag;
 	private String requestDefinition;
-	private List<Entry<String, String>>  comparisonCampaignHashtagInfo;
+	private List<Entry<String, String>> comparisonCampaignHashtagInfo;
 	private String generalComparisonRequestId;
 
 	public CampaignComparer(String actualCampaignId, String actualHashtag,
-			List<Entry<String, String>>  comparisonCampaignHashtagInfo, String requestDefinition) throws Exception {
+			List<Entry<String, String>> comparisonCampaignHashtagInfo, String requestDefinition) throws Exception {
 		this.generalComparisonRequestId = TextUtils.generateUniqueId4Request();
 		this.actualCampaignId = actualCampaignId;
 		this.actualHashtag = actualHashtag;
@@ -64,7 +64,10 @@ public class CampaignComparer implements Runnable {
 			for (Entry<String, String> entrySet : comparisonCampaignHashtagInfo) {
 				String comparedCampaignId = entrySet.getKey();
 				String comparedHashtag = entrySet.getValue();
-
+				if (actualCampaignId.equalsIgnoreCase(comparedCampaignId)
+						&& actualHashtag.equalsIgnoreCase(comparedHashtag)) {
+					continue;
+				}
 				comparedEntities.append("& " + comparedCampaignId + "-" + comparedHashtag + " ");
 
 				ComparisonData comparisonData = new ComparisonData();
