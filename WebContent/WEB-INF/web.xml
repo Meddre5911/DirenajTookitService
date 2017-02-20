@@ -48,6 +48,12 @@
 		<servlet-class>direnaj.servlet.OrganizedBehaviorCampaignVisualizer</servlet-class>
 	</servlet>
 	<servlet>
+		<servlet-name>OrganizedBehavioursExtractFeaturesServlet</servlet-name>
+		<servlet-class>direnaj.servlet.OrganizedBehavioursExtractFeaturesServlet</servlet-class>
+	</servlet>
+	
+	
+	<servlet>
 		<servlet-name>ListOrganizedBehaviourRequest</servlet-name>
 		<jsp-file>/listOrganizedBehaviourRequests.jsp</jsp-file>
 	</servlet>
@@ -84,6 +90,13 @@
 		<servlet-name>CampaignCreationServlet</servlet-name>
 		<url-pattern>/campaignCreation</url-pattern>
 	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>OrganizedBehavioursExtractFeaturesServlet</servlet-name>
+		<url-pattern>/organizedBehaviourExtractFeature</url-pattern>
+	</servlet-mapping>
+	
+	
 	<servlet-mapping>
 		<servlet-name>CampaignComparisonServlet</servlet-name>
 		<url-pattern>/campaignHashtagComparison</url-pattern>
