@@ -59,10 +59,16 @@ public class TextUtils {
 	
 	public static String generateUniqueId4Request() {
 		// get current time
+		String timestamp = getTimeStamp();
+		String strDate = timestamp + UUID.randomUUID();
+		return strDate;
+	}
+
+	public static String getTimeStamp() {
 		SimpleDateFormat sdfDate = new SimpleDateFormat("yyyyMMddHHmmssSS");
 		Date now = DateTimeUtils.getLocalDate();
-		String strDate = sdfDate.format(now) + UUID.randomUUID();
-		return strDate;
+		String timestamp = sdfDate.format(now);
+		return timestamp;
 	}
 	
 	public static void main(String[] args) {

@@ -46,13 +46,7 @@ public class OrganizedBehavioursExtractFeaturesServlet extends HttpServlet {
 
 					String[] featureExtractionIds = params.get("willBeExtracted");
 					OrganizedBehaviourFeatureExtractor featureExtractor = new OrganizedBehaviourFeatureExtractor(featureExtractionIds);
-
 					new Thread(featureExtractor).start();
-					
-					
-					
-					forwardRequest(request, response, "/listOrganizedBehaviourRequests.jsp");
-					return;
 				}
 				retHtmlStr += "<br><b>Feature Extraction Process started to Run</b>";
 				out.println(retHtmlStr + "</body></html>");
@@ -64,7 +58,7 @@ public class OrganizedBehavioursExtractFeaturesServlet extends HttpServlet {
 		} finally {
 			out.close();
 		}
-
+		return;
 	}
 
 	private void forwardRequest(HttpServletRequest request, HttpServletResponse response, String jspName)

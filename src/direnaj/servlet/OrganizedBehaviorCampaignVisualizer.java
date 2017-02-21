@@ -26,6 +26,7 @@ import com.mongodb.DBObject;
 
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.MongoCollectionFieldNames;
+import direnaj.functionalities.organizedBehaviour.FeatureExtractorUtil;
 import direnaj.util.CollectionUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.NumberUtils;
@@ -120,7 +121,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 			} else if ("visualizeUserFriendFollowerRatioInBarChart".equals(requestType)) {
 				visualizeUserFriendFollowerRatioInBarChart(jsonArray, query, requestId, userPostCountWithHashtag);
 			} else if ("visualizeUserRoughHashtagTweetCountsInBarChart".equals(requestType)) {
-				visualizeUserRoughHashtagTweetCountsInBarChart(jsonArray, query);
+				FeatureExtractorUtil.visualizeUserRoughHashtagTweetCountsInBarChart(jsonArray, query);
 			} else if ("visualizeUserTweetEntityRatiosInBarChart".equals(requestType)) {
 				visualizeUserTweetEntityRatiosInBarChart(jsonArray, query, userPostCountWithHashtag);
 			} else if ("visualizeHourlyEntityRatios".equals(requestType)) {
@@ -153,42 +154,7 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		printout.println(jsonStr);
 	}
 
-	private void visualizeUserRoughHashtagTweetCountsInBarChart(JSONArray jsonArray, BasicDBObject query)
-			throws JSONException {
-		List<String> limits = new ArrayList<>();
-		limits.add("1");
-		limits.add("2");
-		limits.add("3-5");
-		limits.add("6-10");
-		limits.add("11-20");
-		limits.add("21-50");
-		limits.add("51-100");
-		limits.add("100-200");
-		limits.add("200-...");
-		Map<String, Double> rangePercentages = new HashMap<>();
-		for (String limit : limits) {
-			rangePercentages.put(limit, 0d);
-		}
 
-		// get cursor
-		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
-		// get objects from cursor
-		int userCount = 0;
-		while (paginatedResult.hasNext()) {
-			userCount++;
-			DBObject next = paginatedResult.next();
-			double userHashtagPostCount = NumberUtils.roundDouble(4,
-					(double) next.get(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT));
-			CollectionUtil.findGenericRange(limits, rangePercentages, userHashtagPostCount);
-		}
-		CollectionUtil.calculatePercentage(rangePercentages, userCount);
-		for (String limit : limits) {
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("ratio", limit);
-			jsonObject.put("percentage", rangePercentages.get(limit));
-			jsonArray.put(jsonObject);
-		}
-	}
 
 	private void visualizeUserDailyTweetRatiosInBarChart(JSONArray jsonArray, BasicDBObject query,
 			String mongoValueField) throws JSONException {
