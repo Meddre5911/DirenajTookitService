@@ -1,18 +1,17 @@
-package direnaj.domain;
+package direnaj.domain.feature;
 
 import java.util.List;
 import java.util.Map;
 
-public class ProcessedPercentageFeature {
+public class ProcessedDoubleMapPercentageFeature {
 	
 	private List<String> limits; 
-	private Map<String, Double> rangePercentages;
+	private Map<Double, Double> rangePercentages;
 	
-	public ProcessedPercentageFeature(List<String> limits, Map<String, Double> rangePercentages){
+	public ProcessedDoubleMapPercentageFeature(List<String> limits, Map<Double, Double> rangePercentages){
 		this.limits = limits;
 		this.rangePercentages = rangePercentages;
 	}
-	
 	
 	public List<String> getLimits() {
 		return limits;
@@ -20,10 +19,10 @@ public class ProcessedPercentageFeature {
 	public void setLimits(List<String> limits) {
 		this.limits = limits;
 	}
-	public Map<String, Double> getRangePercentages() {
+	public Map<Double, Double> getRangePercentages() {
 		return rangePercentages;
 	}
-	public void setRangePercentages(Map<String, Double> rangePercentages) {
+	public void setRangePercentages(Map<Double, Double> rangePercentages) {
 		this.rangePercentages = rangePercentages;
 	}
 

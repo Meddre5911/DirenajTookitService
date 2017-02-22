@@ -13,7 +13,7 @@ import com.mongodb.Bytes;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 
-import direnaj.domain.HourlyTweetFeatures;
+import direnaj.domain.feature.HourlyTweetFeatures;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.DirenajMongoDriverUtil;
 import direnaj.driver.MongoCollectionFieldNames;

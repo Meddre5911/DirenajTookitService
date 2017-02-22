@@ -5,48 +5,96 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONArray;
+import org.apache.log4j.Logger;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 
-import direnaj.domain.ExtractedFeature;
-import direnaj.domain.ProcessedPercentageFeature;
+import direnaj.domain.feature.ExtractedFeature;
+import direnaj.domain.feature.ProcessedDoubleMapPercentageFeature;
+import direnaj.domain.feature.ProcessedNestedPercentageFeature;
+import direnaj.domain.feature.ProcessedPercentageFeature;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.MongoCollectionFieldNames;
+import direnaj.servlet.MongoPaginationServlet;
 import direnaj.util.CollectionUtil;
 import direnaj.util.NumberUtils;
 
 public class FeatureExtractorUtil {
 
-	public static void visualizeUserRoughHashtagTweetCountsInBarChart(JSONArray jsonArray, BasicDBObject query)
-			throws JSONException {
-		ProcessedPercentageFeature percentageFeature = extractUserRoughHashtagTweetCountsFeatures(query);
-		for (String limit : percentageFeature.getLimits()) {
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("ratio", limit);
-			jsonObject.put("percentage", percentageFeature.getRangePercentages().get(limit));
-			jsonArray.put(jsonObject);
-		}
-	}
-
-	public static ExtractedFeature extractUserRoughHashtagTweetCountsFeatures4Classification(String featureInitial,
-			BasicDBObject query) throws JSONException {
+	public static ExtractedFeature extractPercentageFeature4Classification(String featureInitial,
+			ProcessedPercentageFeature percentageFeature) throws JSONException {
 		StringBuilder values = new StringBuilder();
 		StringBuilder keys = new StringBuilder();
-		ProcessedPercentageFeature percentageFeature = extractUserRoughHashtagTweetCountsFeatures(query);
 
 		for (String limit : percentageFeature.getLimits()) {
-			keys.append(featureInitial + "_" + limit+",");
+			keys.append(featureInitial + "_" + limit + ",");
 			values.append(percentageFeature.getRangePercentages().get(limit) + ",");
 		}
 		return new ExtractedFeature(keys.toString(), values.toString());
 	}
 
-	private static ProcessedPercentageFeature extractUserRoughHashtagTweetCountsFeatures(BasicDBObject query) {
+	public static void extractMeanVariance(StringBuilder trainingDataKeys, StringBuilder trainingData,
+			String featureInitial, DBCollection orgBehaviourProcessInputData, String requestId, String calculationType,
+			String calculationDomain) {
+
+		featureInitial += calculationType;
+
+		StringBuilder values = new StringBuilder();
+		StringBuilder keys = new StringBuilder();
+		DBObject meanVariance = getMeanVariance(orgBehaviourProcessInputData, requestId, calculationType,
+				calculationDomain);
+
+		keys.append(featureInitial + "_average,");
+		keys.append(featureInitial + "_population_variance,");
+		keys.append(featureInitial + "_population_standard_deviation,");
+		keys.append(featureInitial + "_minValue,");
+		keys.append(featureInitial + "_maxValue,");
+
+		values.append(String.valueOf(meanVariance.get("average")) + ",");
+		values.append(String.valueOf(meanVariance.get("population_variance")) + ",");
+		values.append(String.valueOf(meanVariance.get("population_standard_deviation")) + ",");
+		values.append(String.valueOf(meanVariance.get("min")) + ",");
+		values.append(String.valueOf(meanVariance.get("max")) + ",");
+
+		trainingData.append(values.toString());
+		trainingDataKeys.append(keys.toString());
+
+	}
+
+	/**
+	 * 
+	 * DBObject meanVarianceResult = getMeanVariance(query, requestId,
+	 * MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO);
+	 * 
+	 * @param requestId
+	 * @param calculationType
+	 * 
+	 * @return
+	 */
+	public static DBObject getMeanVariance(DBCollection collection, String requestId, String calculationType,
+			String calculationDomain) {
+		DBObject meanVarianceResult = new BasicDBObject();
+		try {
+			Logger.getLogger(MongoPaginationServlet.class)
+					.debug("getMeanVariance is executed for requestId : " + requestId + ". Calculation Type : "
+							+ calculationType + ". CalculationDomain: " + calculationDomain);
+
+			DBObject calculationQuery = new BasicDBObject("requestId", requestId)
+					.append("calculationType", calculationType).append("calculationDomain", calculationDomain);
+			meanVarianceResult = DirenajMongoDriver.getInstance().getOrgBehaviourRequestMeanVarianceCalculations()
+					.findOne(calculationQuery);
+		} catch (Exception e) {
+			Logger.getLogger(MongoPaginationServlet.class).error("getMeanVariance got for requestId : " + requestId
+					+ ". Calculation Type : " + calculationType + ". CalculationDomain: " + calculationDomain, e);
+		}
+		return meanVarianceResult;
+	}
+
+	public static ProcessedPercentageFeature extractUserRoughHashtagTweetCountsFeatures(BasicDBObject query) {
 		List<String> limits = new ArrayList<>();
 		limits.add("1");
 		limits.add("2");
@@ -61,7 +109,6 @@ public class FeatureExtractorUtil {
 		for (String limit : limits) {
 			rangePercentages.put(limit, 0d);
 		}
-
 		// get cursor
 		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
 		// get objects from cursor
@@ -75,6 +122,228 @@ public class FeatureExtractorUtil {
 		}
 		CollectionUtil.calculatePercentage(rangePercentages, userCount);
 		ProcessedPercentageFeature percentageFeature = new ProcessedPercentageFeature(limits, rangePercentages);
+		return percentageFeature;
+	}
+
+	public static ProcessedPercentageFeature extractUserDailyTweetRatios(BasicDBObject query, String mongoValueField)
+			throws JSONException {
+		List<String> limits = new ArrayList<>();
+		limits.add("0-0.9");
+		limits.add("1");
+		limits.add("2");
+		limits.add("3-5");
+		limits.add("6-10");
+		limits.add("11-20");
+		limits.add("21-50");
+		limits.add("51-100");
+		limits.add("101-150");
+		limits.add("151-200");
+		limits.add("201-500");
+		limits.add("501-1000");
+		limits.add("1001-2000");
+		limits.add("2001-...");
+		Map<String, Double> rangePercentages = new HashMap<>();
+		for (String limit : limits) {
+			rangePercentages.put(limit, 0d);
+		}
+		// get cursor
+		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
+		// get objects from cursor
+		int userCount = 0;
+		while (paginatedResult.hasNext()) {
+			userCount++;
+			DBObject next = paginatedResult.next();
+			double userDailyPostCountRatio = (double) next.get(mongoValueField);
+			if (userDailyPostCountRatio < 1d) {
+				userDailyPostCountRatio = NumberUtils.roundDouble(1, userDailyPostCountRatio);
+			} else {
+				userDailyPostCountRatio = NumberUtils.roundDouble(0, userDailyPostCountRatio);
+			}
+
+			CollectionUtil.findGenericRange(limits, rangePercentages, userDailyPostCountRatio);
+		}
+		CollectionUtil.calculatePercentage(rangePercentages, userCount);
+		ProcessedPercentageFeature percentageFeature = new ProcessedPercentageFeature(limits, rangePercentages);
+		return percentageFeature;
+	}
+
+	public static ProcessedNestedPercentageFeature extractUserTweetEntityRatiosFeature(BasicDBObject query,
+			int userPostCountWithHashtag) throws JSONException {
+		Map<String, Map<String, Double>> ratioValues = new HashMap<>();
+		// define limits
+		List<String> limits = new ArrayList<>();
+		limits.add("0");
+		limits.add("0.0001-0.5");
+		limits.add("0.6-0.9");
+		for (int i = 1; i <= 20; i++) {
+			limits.add(String.valueOf(i));
+
+		}
+		limits.add("21-...");
+		// init hash map
+		for (String limit : limits) {
+			// range percentages
+			Map<String, Double> rangePercentages = new HashMap<>();
+			rangePercentages.put(MongoCollectionFieldNames.MONGO_URL_RATIO, 0d);
+			rangePercentages.put(MongoCollectionFieldNames.MONGO_HASHTAG_RATIO, 0d);
+			rangePercentages.put(MongoCollectionFieldNames.MONGO_MENTION_RATIO, 0d);
+			rangePercentages.put(MongoCollectionFieldNames.MONGO_MEDIA_RATIO, 0d);
+			// add to ratio values
+			ratioValues.put(limit, rangePercentages);
+		}
+
+		// get cursor
+		query.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
+				new BasicDBObject("$gte", userPostCountWithHashtag));
+		DBCursor processInputResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
+
+		// get objects from cursor
+		// get url ratio
+		int userCount = 0;
+		while (processInputResult.hasNext()) {
+			userCount++;
+			DBObject next = processInputResult.next();
+			// url ratio
+			double urlRatio = NumberUtils.roundDouble(1, (double) next.get(MongoCollectionFieldNames.MONGO_URL_RATIO));
+			if (urlRatio > 1d) {
+				urlRatio = NumberUtils.roundDouble(0, urlRatio);
+			}
+			// hashtag ratio
+			double hashtagRatio = NumberUtils.roundDouble(1,
+					(double) next.get(MongoCollectionFieldNames.MONGO_HASHTAG_RATIO));
+			if (hashtagRatio > 1d) {
+				hashtagRatio = NumberUtils.roundDouble(0, hashtagRatio);
+			}
+			// mention ratio
+			double mentionRatio = NumberUtils.roundDouble(1,
+					(double) next.get(MongoCollectionFieldNames.MONGO_MENTION_RATIO));
+			if (mentionRatio > 1d) {
+				mentionRatio = NumberUtils.roundDouble(0, mentionRatio);
+			}
+			// media ratio
+			double mediaRatio = NumberUtils.roundDouble(1,
+					(double) next.get(MongoCollectionFieldNames.MONGO_MEDIA_RATIO));
+			if (mediaRatio > 1d) {
+				mediaRatio = NumberUtils.roundDouble(0, mediaRatio);
+			}
+
+			// get range
+			CollectionUtil.findGenericRange(limits, ratioValues, MongoCollectionFieldNames.MONGO_URL_RATIO, urlRatio);
+			CollectionUtil.findGenericRange(limits, ratioValues, MongoCollectionFieldNames.MONGO_HASHTAG_RATIO,
+					hashtagRatio);
+			CollectionUtil.findGenericRange(limits, ratioValues, MongoCollectionFieldNames.MONGO_MENTION_RATIO,
+					mentionRatio);
+			CollectionUtil.findGenericRange(limits, ratioValues, MongoCollectionFieldNames.MONGO_MEDIA_RATIO,
+					mediaRatio);
+		}
+
+		CollectionUtil.calculatePercentageForNestedMap(ratioValues, userCount);
+
+		ProcessedNestedPercentageFeature percentageFeature = new ProcessedNestedPercentageFeature(limits, ratioValues);
+		return percentageFeature;
+	}
+
+	public static ProcessedDoubleMapPercentageFeature extractUserFriendFollowerRatioFeature(BasicDBObject query,
+			int userPostCountWithHashtag) throws JSONException {
+		// Collection initialization
+		List<String> limits = new ArrayList<>();
+		limits.add("0");
+		for (int i = 1; i <= 9; i++) {
+			limits.add("0." + i);
+		}
+		limits.add("1");
+		Map<Double, Double> ratioPercentages = new HashMap<>();
+		for (String limit : limits) {
+			ratioPercentages.put(Double.valueOf(limit), 0d);
+		}
+
+		if (userPostCountWithHashtag > 0) {
+			// get cursor
+			query.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
+					new BasicDBObject("$gte", userPostCountWithHashtag));
+		}
+		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
+
+		// get objects from cursor
+		int userCount = 0;
+
+		while (paginatedResult.hasNext()) {
+			userCount++;
+			DBObject next = paginatedResult.next();
+			double friendFolloweRatio = NumberUtils.roundDouble(1,
+					(double) next.get(MongoCollectionFieldNames.MONGO_USER_FRIEND_FOLLOWER_RATIO));
+			CollectionUtil.incrementKeyValueInMap(ratioPercentages, friendFolloweRatio);
+		}
+		CollectionUtil.calculatePercentage(ratioPercentages, userCount);
+		ratioPercentages = CollectionUtil.sortByComparator4Key(ratioPercentages);
+
+		ProcessedDoubleMapPercentageFeature percentageFeature = new ProcessedDoubleMapPercentageFeature(limits,
+				ratioPercentages);
+		return percentageFeature;
+	}
+
+	public static ProcessedNestedPercentageFeature extractUserRoughTweetCountsFeature( BasicDBObject query,
+			int userPostCountWithHashtag) throws JSONException {
+
+		Map<String, Map<String, Double>> ratioValues = new HashMap<>();
+		// define limits
+		List<String> limits = new ArrayList<>();
+		// limits between 0 - 1000
+		limits.add("0");
+		int previous = 1;
+		for (int i = 100; i <= 1000; i = i + 100) {
+			limits.add(previous + "-" + i);
+			previous = i + 1;
+		}
+		// limits between 1000 - 10000
+		previous = 1001;
+		for (int i = 2000; i <= 10000; i = i + 1000) {
+			limits.add(previous + "-" + i);
+			previous = i + 1;
+		}
+		limits.add("10000-50000");
+		limits.add("50001-100000");
+		// limits between 100.000 - 1.000.000
+		previous = 100001;
+		for (int i = 200000; i <= 1000000; i = i + 100000) {
+			limits.add(previous + "-" + i);
+			previous = i + 1;
+		}
+		limits.add("1000001-...");
+
+		// init hash map
+		for (String limit : limits) {
+			// range percentages
+			Map<String, Double> rangePercentages = new HashMap<>();
+			rangePercentages.put(MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT, 0d);
+			rangePercentages.put(MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT, 0d);
+			// add to ratio values
+			ratioValues.put(limit, rangePercentages);
+		}
+
+		// get cursor
+		// get cursor
+		if (userPostCountWithHashtag > 0) {
+			query.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
+					new BasicDBObject("$gte", userPostCountWithHashtag));
+		}
+		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
+		// get objects from cursor
+		int userCount = 0;
+		while (paginatedResult.hasNext()) {
+			userCount++;
+			DBObject next = paginatedResult.next();
+			double favoriteStatusCount = (double) next.get(MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT);
+			double statusCount = (double) next.get(MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT);
+			CollectionUtil.findGenericRange(limits, ratioValues, MongoCollectionFieldNames.MONGO_USER_FAVORITE_COUNT,
+					favoriteStatusCount);
+			CollectionUtil.findGenericRange(limits, ratioValues, MongoCollectionFieldNames.MONGO_USER_STATUS_COUNT,
+					statusCount);
+		}
+
+		CollectionUtil.calculatePercentageForNestedMap(ratioValues, userCount);
+		
+		ProcessedNestedPercentageFeature percentageFeature = new ProcessedNestedPercentageFeature(limits, ratioValues);
 		return percentageFeature;
 	}
 }

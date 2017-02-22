@@ -1,4 +1,4 @@
-package direnaj.domain;
+package direnaj.domain.feature;
 
 public class ExtractedFeature {
 	
