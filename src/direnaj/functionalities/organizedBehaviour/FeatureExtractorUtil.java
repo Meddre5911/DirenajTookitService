@@ -2,8 +2,11 @@ package direnaj.functionalities.organizedBehaviour;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 import org.json.JSONException;
@@ -21,6 +24,7 @@ import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.servlet.MongoPaginationServlet;
 import direnaj.util.CollectionUtil;
+import direnaj.util.DateTimeUtils;
 import direnaj.util.NumberUtils;
 
 public class FeatureExtractorUtil {
@@ -31,8 +35,8 @@ public class FeatureExtractorUtil {
 		StringBuilder keys = new StringBuilder();
 
 		for (String limit : percentageFeature.getLimits()) {
-			keys.append(featureInitial + "_" + limit + ",");
-			values.append(percentageFeature.getRangePercentages().get(limit) + ",");
+			keys.append(featureInitial + "_" + limit + ";");
+			values.append(percentageFeature.getRangePercentages().get(limit) + ";");
 		}
 		return new ExtractedFeature(keys.toString(), values.toString());
 	}
@@ -41,24 +45,24 @@ public class FeatureExtractorUtil {
 			String featureInitial, DBCollection orgBehaviourProcessInputData, String requestId, String calculationType,
 			String calculationDomain) {
 
-		featureInitial += calculationType;
+		featureInitial += "_" + calculationType;
 
 		StringBuilder values = new StringBuilder();
 		StringBuilder keys = new StringBuilder();
 		DBObject meanVariance = getMeanVariance(orgBehaviourProcessInputData, requestId, calculationType,
 				calculationDomain);
 
-		keys.append(featureInitial + "_average,");
-		keys.append(featureInitial + "_population_variance,");
-		keys.append(featureInitial + "_population_standard_deviation,");
-		keys.append(featureInitial + "_minValue,");
-		keys.append(featureInitial + "_maxValue,");
+		keys.append(featureInitial + "_average;");
+		keys.append(featureInitial + "_population_variance;");
+		keys.append(featureInitial + "_population_standard_deviation;");
+		keys.append(featureInitial + "_minValue;");
+		keys.append(featureInitial + "_maxValue;");
 
-		values.append(String.valueOf(meanVariance.get("average")) + ",");
-		values.append(String.valueOf(meanVariance.get("population_variance")) + ",");
-		values.append(String.valueOf(meanVariance.get("population_standard_deviation")) + ",");
-		values.append(String.valueOf(meanVariance.get("min")) + ",");
-		values.append(String.valueOf(meanVariance.get("max")) + ",");
+		values.append(String.valueOf(meanVariance.get("average")) + ";");
+		values.append(String.valueOf(meanVariance.get("population_variance")) + ";");
+		values.append(String.valueOf(meanVariance.get("population_standard_deviation")) + ";");
+		values.append(String.valueOf(meanVariance.get("min")) + ";");
+		values.append(String.valueOf(meanVariance.get("max")) + ";");
 
 		trainingData.append(values.toString());
 		trainingDataKeys.append(keys.toString());
@@ -103,8 +107,7 @@ public class FeatureExtractorUtil {
 		limits.add("11-20");
 		limits.add("21-50");
 		limits.add("51-100");
-		limits.add("100-200");
-		limits.add("200-...");
+		limits.add("100-...");
 		Map<String, Double> rangePercentages = new HashMap<>();
 		for (String limit : limits) {
 			rangePercentages.put(limit, 0d);
@@ -140,8 +143,7 @@ public class FeatureExtractorUtil {
 		limits.add("151-200");
 		limits.add("201-500");
 		limits.add("501-1000");
-		limits.add("1001-2000");
-		limits.add("2001-...");
+		limits.add("1001-...");
 		Map<String, Double> rangePercentages = new HashMap<>();
 		for (String limit : limits) {
 			rangePercentages.put(limit, 0d);
@@ -175,11 +177,11 @@ public class FeatureExtractorUtil {
 		limits.add("0");
 		limits.add("0.0001-0.5");
 		limits.add("0.6-0.9");
-		for (int i = 1; i <= 20; i++) {
+		for (int i = 1; i <= 10; i++) {
 			limits.add(String.valueOf(i));
 
 		}
-		limits.add("21-...");
+		limits.add("11-...");
 		// init hash map
 		for (String limit : limits) {
 			// range percentages
@@ -282,7 +284,7 @@ public class FeatureExtractorUtil {
 		return percentageFeature;
 	}
 
-	public static ProcessedNestedPercentageFeature extractUserRoughTweetCountsFeature( BasicDBObject query,
+	public static ProcessedNestedPercentageFeature extractUserRoughTweetCountsFeature(BasicDBObject query,
 			int userPostCountWithHashtag) throws JSONException {
 
 		Map<String, Map<String, Double>> ratioValues = new HashMap<>();
@@ -291,25 +293,23 @@ public class FeatureExtractorUtil {
 		// limits between 0 - 1000
 		limits.add("0");
 		int previous = 1;
-		for (int i = 100; i <= 1000; i = i + 100) {
+		for (int i = 100; i <= 1000; i = i + 500) {
 			limits.add(previous + "-" + i);
 			previous = i + 1;
 		}
 		// limits between 1000 - 10000
 		previous = 1001;
-		for (int i = 2000; i <= 10000; i = i + 1000) {
+		for (int i = 2000; i <= 10000; i = i + 2000) {
 			limits.add(previous + "-" + i);
 			previous = i + 1;
 		}
-		limits.add("10000-50000");
-		limits.add("50001-100000");
-		// limits between 100.000 - 1.000.000
-		previous = 100001;
-		for (int i = 200000; i <= 1000000; i = i + 100000) {
+		// limits between 10000 - 100000
+		previous = 10001;
+		for (int i = 20000; i <= 100000; i = i + 10000) {
 			limits.add(previous + "-" + i);
 			previous = i + 1;
 		}
-		limits.add("1000001-...");
+		limits.add("100001-...");
 
 		// init hash map
 		for (String limit : limits) {
@@ -342,8 +342,78 @@ public class FeatureExtractorUtil {
 		}
 
 		CollectionUtil.calculatePercentageForNestedMap(ratioValues, userCount);
-		
+
 		ProcessedNestedPercentageFeature percentageFeature = new ProcessedNestedPercentageFeature(limits, ratioValues);
 		return percentageFeature;
 	}
+
+	public static Map<String, Double> getUserCreationTimePercentageData(BasicDBObject query) throws Exception {
+		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
+		Map<String, Double> usersByDate = new HashMap<>();
+		// get objects from cursor
+		int userCount = 0;
+		try {
+			while (paginatedResult.hasNext()) {
+				DBObject next = paginatedResult.next();
+				userCount++;
+				String twitterDateStr = (String) next.get(MongoCollectionFieldNames.MONGO_USER_CREATION_DATE);
+				String userCreationDate = DateTimeUtils.getStringOfDate("yyyyMM",
+						DateTimeUtils.getTwitterDate(twitterDateStr));
+				CollectionUtil.incrementKeyValueInMap(usersByDate, userCreationDate);
+			}
+		} finally {
+			paginatedResult.close();
+		}
+		CollectionUtil.calculatePercentage(usersByDate, userCount);
+		usersByDate = CollectionUtil.sortByComparator4DateKey(usersByDate);
+		return usersByDate;
+	}
+
+	public static Map<String, Double> getUserCreationTimePercentageDataWithBuckets(BasicDBObject query)
+			throws Exception {
+		// define buckets
+		List<String> buckets = new LinkedList<>();
+		buckets.add("200001-201412");
+		buckets.add("201501-201503");
+		buckets.add("201504-201506");
+		buckets.add("201507-201509");
+		buckets.add("201510-201512");
+		buckets.add("201601-201603");
+		buckets.add("201604-201606");
+		buckets.add("201607-201609");
+		buckets.add("201610-201612");
+		buckets.add("201506-201801");
+		buckets.add("201504-201801");
+		// get creation dates
+		Map<String, Double> usersByDate = getUserCreationTimePercentageData(query);
+		// calculate bucket percentages
+		Map<String, Double> creationtimeBuckets = new LinkedHashMap<>();
+		for (String dateBucket : buckets) {
+			String[] split = dateBucket.split("-");
+			String lowerDateStr = split[0];
+			String upperDateStr = split[1];
+			int lowerDate = Integer.valueOf(lowerDateStr);
+			int upperDate = Integer.valueOf(upperDateStr);
+			double bucketPercentage = 0;
+			for (Entry<String, Double> userCreationDateEntry : usersByDate.entrySet()) {
+				int userCreationDate = Integer.valueOf(userCreationDateEntry.getKey());
+				if (lowerDate <= userCreationDate && upperDate >= userCreationDate) {
+					bucketPercentage += userCreationDateEntry.getValue();
+				}
+			}
+			creationtimeBuckets.put(lowerDateStr.substring(2) + "-" + upperDateStr.substring(2), bucketPercentage);
+		}
+		return creationtimeBuckets;
+	}
+
+	public static ProcessedPercentageFeature extractUserCreationTimePercentageDataWithBuckets(BasicDBObject query)
+			throws Exception {
+		Map<String, Double> userCreationTimePercentageDataWithBuckets = getUserCreationTimePercentageDataWithBuckets(
+				query);
+		ProcessedPercentageFeature percentageFeature = new ProcessedPercentageFeature(
+				new ArrayList<>(userCreationTimePercentageDataWithBuckets.keySet()),
+				userCreationTimePercentageDataWithBuckets);
+		return percentageFeature;
+	}
+
 }

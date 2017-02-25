@@ -1022,7 +1022,6 @@ function getMeanVariance(requestType){
 		var userCreationDateMeanVariance_10 = '';
 		var userCreationDateMeanVariance_50 = '';
 		
-		
 		var mostSimilarTweetsMeanVariance = '';
 		var verySimilarTweetsMeanVariance = '';
 		var similarTweetsMeanVariance = '';
@@ -1058,17 +1057,15 @@ function getMeanVariance(requestType){
 		  });
 		
 		  data.forEach(function(d) {
-			if(d.calculationType == "creationDateInRataDie" && d.calculationDomain == "USER"){
-				userCreationDateMeanVariance = getHTMLStr4MeanVariance(d);
-			}
+		
 			if(d.calculationType == "creationDateInRataDie_2" && d.calculationDomain == "USER"){
-				userCreationDateMeanVariance_2 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+				userCreationDateMeanVariance_2 = getHTMLStr4UserCount(d,userCount);
 			}
 			if(d.calculationType == "creationDateInRataDie_10" && d.calculationDomain == "USER"){
-				userCreationDateMeanVariance_10 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+				userCreationDateMeanVariance_10 = getHTMLStr4UserCount(d,userCount);
 			}
 			if(d.calculationType == "creationDateInRataDie_50" && d.calculationDomain == "USER"){
-				userCreationDateMeanVariance_50 = getHTMLStr4MeanVarianceUserCount(d,userCount);
+				userCreationDateMeanVariance_50 = getHTMLStr4UserCount(d,userCount);
 			}
 			
 			if(d.calculationType == "hashtagRatio" && d.calculationDomain == "USER"){
@@ -1437,9 +1434,8 @@ function getMeanVariance(requestType){
 				  + totalRetweetCountDistinctRetweetCountRatio
 				  + "</tr></table>");
 
-		  d3.select("#userCreationDateMeanVariance").html(sumaryHtml + "<table><tr>"
-				  + userCreationDateMeanVariance
-				  + "</tr></table>");
+		  d3.select("#userCreationDateMeanVariance").html(sumaryHtml);
+		
 		  d3.select("#userCreationDateMeanVariance_2").html(sumaryHtml + "<table><tr>"
 				  + userCreationDateMeanVariance_2
 				  + "</tr></table>");
@@ -1480,12 +1476,18 @@ function getHTMLStr4MeanVarianceUserCount(d, userCount) {
 			+ d.population_standard_deviation
 			+ ' </td><td> <b> Min Value : </b>' + d.min
 			+ ' </td><td> <b> Max Value : </b>' + d.max + '<br></td>';
+	
+	str += getHTMLStr4UserCount(d, userCount);
+	return str;
+}
+
+function getHTMLStr4UserCount(d, userCount){
+	var str ="";
 	if (d.calculationDomain == "USER") {
 		str += ' <td> <b> User Count In Analysis : </b>' + d.count
 				+ '<br></td>';
 		str += ' <td> <b> Percentage of Users : </b> %' + ((d.count * 100)/ userCount).toFixed(2) + '<br></td>';
 	}
-
 	return str;
 }
 

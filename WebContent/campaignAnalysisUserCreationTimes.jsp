@@ -88,17 +88,21 @@ body {
 <script>
 
 function prepareGraphs(){ 
-// 	prepareUserCreationTimeGraph();
 	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart&userHashtagPostCount=0','creationTimeGraph','userCrationDate','(%) Percentage');
 	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart&userHashtagPostCount=2','creationTimeGraph_2','userCrationDate','(%) Percentage');
 	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart&userHashtagPostCount=10','creationTimeGraph_10','userCrationDate','(%) Percentage');
 	prepareUserCreationTimeGraph('visualizeUserCreationTimesInBarChart&userHashtagPostCount=50','creationTimeGraph_50','userCrationDate','(%) Percentage');
+
+	
+	prepareUserRatiosGraphInBarChart('visualizeUserBucketCreationTimes&userHashtagPostCount=0','creationTimeGraphInBucket','userCrationDate','(%) Percentage');
+	prepareUserRatiosGraphInBarChart('visualizeUserBucketCreationTimes&userHashtagPostCount=2','creationTimeGraphInBucket_2','userCrationDate','(%) Percentage');
 	
 	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart&userHashtagPostCount=0','userRatiosGraph','User Ratio Values','(%) Total User Percentage For Given Ratio');
 	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart&userHashtagPostCount=2','userRatiosGraph_2','User Ratio Values','(%) Total User Percentage For Given Ratio');
 	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart&userHashtagPostCount=10','userRatiosGraph_10','User Ratio Values','(%) Total User Percentage For Given Ratio');
 	prepareGroupedBarChart('visualizeUserTweetEntityRatiosInBarChart&userHashtagPostCount=50','userRatiosGraph_50','User Ratio Values','(%) Total User Percentage For Given Ratio');
 
+	
 	// 	prepareMultiLineUserRatiosGraph('visualizeUserPostDeviceRatios','userPostDevicesRatiosGraph','PostDeviceRatio');
 // 	prepareUserRatiosGraph('visualizeUserFriendFollowerRatio','userFriendFollowerRatiosGraph','friendFollowerRatio');
 	
@@ -280,6 +284,10 @@ function prepareGraphs(){
 </div>
 </div>
 
+<div class="divTableRow">
+<div id="creationTimeGraphInBucket" class="divTableCell"><b><big>Bucket Creation Times of Users :</big></b> <br></div>
+</div>
+
 
 <div class="divTableRow">
 <div id="userRatiosGraph" class="divTableCell"><b><big>Ratios of Users :</big></b> <br></div>
@@ -321,6 +329,11 @@ function prepareGraphs(){
 <div id="userCreationDateMeanVariance_2" class="divTableCell">
 </div>
 </div>
+
+<div class="divTableRow">
+<div id="creationTimeGraphInBucket_2" class="divTableCell"><b><big>Bucket Creation Times of Users who used campaign Hashtag in 2 or more Tweets :</big></b> <br></div>
+</div>
+
 
 <div class="divTableRow">
 <div id="creationTimeGraph_10" class="divTableCell"><b><big>Creation Times of Users who used campaign Hashtag in 10 or more Tweets :</big></b> <br></div>

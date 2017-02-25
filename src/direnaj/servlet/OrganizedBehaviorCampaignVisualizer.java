@@ -3,7 +3,6 @@ package direnaj.servlet;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -28,7 +27,6 @@ import direnaj.domain.feature.ProcessedPercentageFeature;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.functionalities.organizedBehaviour.FeatureExtractorUtil;
-import direnaj.util.CollectionUtil;
 import direnaj.util.DateTimeUtils;
 import direnaj.util.NumberUtils;
 import direnaj.util.PropertiesUtil;
@@ -119,6 +117,8 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 				visualizeHourlyTweetSimilarities(jsonArray, query4CosSimilarityRequest);
 			} else if ("visualizeUserCreationTimesInBarChart".equals(requestType)) {
 				visualizeUserCreationTimesInBarChart(jsonArray, query, userPostCountWithHashtag);
+			} else if ("visualizeUserBucketCreationTimes".equals(requestType)) {
+				visualizeUserCreationTimeBucketsInBarChart(jsonArray, query, userPostCountWithHashtag);
 			} else if ("visualizeUserFriendFollowerRatioInBarChart".equals(requestType)) {
 				visualizeUserFriendFollowerRatioInBarChart(jsonArray, query, requestId, userPostCountWithHashtag);
 			} else if ("visualizeUserRoughHashtagTweetCountsInBarChart".equals(requestType)) {
@@ -430,13 +430,13 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 	private void visualizeUserCreationTimesInBarChart(JSONArray jsonArray, BasicDBObject query,
 			int userPostCountWithHashtag) throws Exception, JSONException {
 
-		Map<String, Double> usersByDate = getUserCreationTimePercentageData(query);
+		Map<String, Double> usersByDate = FeatureExtractorUtil.getUserCreationTimePercentageData(query);
 		Map<String, Double> usersOfMultipleHashtagByDate = null;
 		if (userPostCountWithHashtag > 0) {
 			// get cursor
 			query.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
 					new BasicDBObject("$gte", userPostCountWithHashtag));
-			usersOfMultipleHashtagByDate = getUserCreationTimePercentageData(query);
+			usersOfMultipleHashtagByDate = FeatureExtractorUtil.getUserCreationTimePercentageData(query);
 		}
 		if (userPostCountWithHashtag == 0) {
 			for (Entry<String, Double> entry : usersByDate.entrySet()) {
@@ -456,27 +456,34 @@ public class OrganizedBehaviorCampaignVisualizer extends HttpServlet {
 		}
 
 	}
-
-	private Map<String, Double> getUserCreationTimePercentageData(BasicDBObject query) throws Exception {
-		DBCursor paginatedResult = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData().find(query);
-		Map<String, Double> usersByDate = new HashMap<>();
-		// get objects from cursor
-		int userCount = 0;
-		try {
-			while (paginatedResult.hasNext()) {
-				DBObject next = paginatedResult.next();
-				userCount++;
-				String twitterDateStr = (String) next.get(MongoCollectionFieldNames.MONGO_USER_CREATION_DATE);
-				String userCreationDate = DateTimeUtils.getStringOfDate("yyyyMM",
-						DateTimeUtils.getTwitterDate(twitterDateStr));
-				CollectionUtil.incrementKeyValueInMap(usersByDate, userCreationDate);
-			}
-		} finally {
-			paginatedResult.close();
+	private void visualizeUserCreationTimeBucketsInBarChart(JSONArray jsonArray, BasicDBObject query,
+			int userPostCountWithHashtag) throws Exception, JSONException {
+		
+		Map<String, Double> usersByDate = FeatureExtractorUtil.getUserCreationTimePercentageDataWithBuckets(query);
+		Map<String, Double> usersOfMultipleHashtagByDate = null;
+		if (userPostCountWithHashtag > 0) {
+			// get cursor
+			query.put(MongoCollectionFieldNames.MONGO_USER_HASHTAG_POST_COUNT,
+					new BasicDBObject("$gte", userPostCountWithHashtag));
+			usersOfMultipleHashtagByDate = FeatureExtractorUtil.getUserCreationTimePercentageDataWithBuckets(query);
 		}
-		CollectionUtil.calculatePercentage(usersByDate, userCount);
-		usersByDate = CollectionUtil.sortByComparator4DateKey(usersByDate);
-		return usersByDate;
+		if (userPostCountWithHashtag == 0) {
+			for (Entry<String, Double> entry : usersByDate.entrySet()) {
+				JSONObject jsonObject = new JSONObject();
+				jsonObject.put("ratio", entry.getKey());
+				jsonObject.put("percentage", entry.getValue());
+				jsonArray.put(jsonObject);
+			}
+		} else if (userPostCountWithHashtag > 0) {
+			for (Entry<String, Double> entry : usersByDate.entrySet()) {
+				JSONObject jsonObject = new JSONObject();
+				String dateInStr = entry.getKey();
+				jsonObject.put("ratio", dateInStr);
+				jsonObject.put("percentage", usersOfMultipleHashtagByDate.get(dateInStr));
+				jsonArray.put(jsonObject);
+			}
+		}
+		
 	}
 
 	private void visualizeHourlyTweetSimilarities(JSONArray jsonArray, BasicDBObject query4CosSimilarityRequest)
