@@ -47,6 +47,7 @@ public class OrganizedBehaviours extends HttpServlet {
 				String userId = params.get("userID")[0];
 				String password = params.get("pass")[0];
 				String operationType = params.get("operationType")[0];
+				String requestClassification = params.get("requestClassification")[0];
 				String campaignId = request.getParameter("campaignId");
 
 				String workUntilBreakPoint = null;
@@ -74,30 +75,34 @@ public class OrganizedBehaviours extends HttpServlet {
 					boolean calculateGeneralSimilarity = !TextUtils
 							.isEmpty(request.getParameter("calculateGeneralSimilarity"));
 					boolean bypassTweetCollection = !TextUtils.isEmpty(request.getParameter("bypassTweetCollection"));
-					boolean bypassSimilarityCalculation = !TextUtils.isEmpty(request.getParameter("bypassSimilarityCalculation"));
+					boolean bypassSimilarityCalculation = !TextUtils
+							.isEmpty(request.getParameter("bypassSimilarityCalculation"));
+
+					boolean bucketCalculation = !TextUtils.isEmpty(request.getParameter("bucketCalculation"));
 
 					String latestDateStr = request.getParameter("latestDate");
 					String earliestDateStr = request.getParameter("earliestDate");
 					Date latestDate = null;
 					Date earliestDate = null;
 					boolean isExternalDateGiven = false;
-					
+
 					if (!TextUtils.isEmpty(latestDateStr) && !TextUtils.isEmpty(earliestDateStr)) {
-						try{
+						try {
 							latestDate = DateTimeUtils.getUTCDateTimeWithFormat("yyyy-MM-dd hh:mm", latestDateStr);
 							earliestDate = DateTimeUtils.getUTCDateTimeWithFormat("yyyy-MM-dd hh:mm", earliestDateStr);
 							isExternalDateGiven = true;
-						}catch(Exception e){
-							 latestDate = null;
-							 earliestDate = null;
+						} catch (Exception e) {
+							latestDate = null;
+							earliestDate = null;
 						}
-					} 
+					}
 
 					organizationDetector = new OrganizationDetector(campaignId, topHashTagCount,
 							organizedHashtagDefinition, tracedHashtag,
 							OrganizedBehaviourDetectionRequestType.valueOf(operationType), disableGraphAnalysis,
 							calculateHashTagSimilarity, calculateGeneralSimilarity, bypassTweetCollection,
-							workUntilBreakPoint,isExternalDateGiven, earliestDate, latestDate,bypassSimilarityCalculation);
+							workUntilBreakPoint, isExternalDateGiven, earliestDate, latestDate,
+							bypassSimilarityCalculation, bucketCalculation, null, requestClassification, 0);
 
 					new Thread(organizationDetector).start();
 					forwardRequest(request, response, "/listOrganizedBehaviourRequests.jsp");

@@ -1,5 +1,6 @@
 package direnaj.driver;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -21,8 +22,12 @@ import com.mongodb.DBObject;
 
 import direnaj.adapter.DirenajInvalidJSONException;
 import direnaj.domain.User;
+import direnaj.functionalities.organizedBehaviour.OrganizationDetector;
+import direnaj.functionalities.organizedBehaviour.ResumeBreakPoint;
+import direnaj.servlet.OrganizedBehaviourDetectionRequestType;
 import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.util.CollectionUtil;
+import direnaj.util.PropertiesUtil;
 import twitter4j.HashtagEntity;
 import twitter4j.Status;
 
@@ -82,16 +87,69 @@ public class DirenajDriverVersion2 {
 	 * @param campaignID
 	 * @param tracedHashtag
 	 * @param requestId
+	 * @param oldTweetCursor
+	 * @param bucketCalculation
+	 * @param bypassSimilarityCalculation
+	 * @param latestTweetDate
+	 * @param earliestTweetDate
+	 * @param isExternalDateGiven
+	 * @param workUntilBreakPoint
+	 * @param bypassTweetCollection
+	 * @param calculateGeneralSimilarity
+	 * @param calculateHashTagSimilarity
+	 * @param requestDefinition
+	 * @param requestClassification
+	 * @param iterationIndex
 	 * @throws Exception
 	 * @throws DirenajInvalidJSONException
 	 */
-	public void saveHashtagUsers2Mongo(String campaignID, String tracedHashtag, String requestId)
+	public void saveHashtagUsers2Mongo(String campaignID, String tracedHashtag, String requestId,
+			DBCursor oldTweetCursor, boolean bucketCalculation, String requestDefinition,
+			boolean calculateHashTagSimilarity, boolean calculateGeneralSimilarity, boolean bypassTweetCollection,
+			ResumeBreakPoint workUntilBreakPoint, boolean isExternalDateGiven, Date earliestTweetDate,
+			Date latestTweetDate, boolean bypassSimilarityCalculation, String requestClassification, int iterationIndex)
 			throws Exception, DirenajInvalidJSONException {
 		// list for user ids
 		Set<User> users = new HashSet<>();
-		DBCursor tweetCursor = getTweets(campaignID);
+
+		DBCursor tweetCursor = null;
+		if (bucketCalculation && oldTweetCursor != null) {
+			tweetCursor = oldTweetCursor;
+		} else {
+			tweetCursor = getTweets(campaignID);
+		}
+
+		boolean cursorWillBeUsed = false;
+
 		try {
+			int bucketLimit = PropertiesUtil.getInstance().getIntProperty("toolkit.tweetCollection.bucketTweetCount",
+					10000);
+			int bucketCalculationCount = PropertiesUtil.getInstance()
+					.getIntProperty("toolkit.tweetCollection.bucketCalculationCount", 15);
+
+			int tweetCount = 0;
 			while (tweetCursor.hasNext()) {
+				tweetCount++;
+				if (iterationIndex < bucketCalculationCount && tweetCount == bucketLimit) {
+
+					String workUntilBreakPointName = "";
+					if (workUntilBreakPoint != null) {
+						workUntilBreakPointName = workUntilBreakPoint.name();
+					}
+					iterationIndex++;
+					OrganizationDetector organizationDetector = new OrganizationDetector(campaignID, 1,
+							requestDefinition + "_BC", tracedHashtag,
+							OrganizedBehaviourDetectionRequestType.CheckSingleHashtagInCampaign, true,
+							calculateHashTagSimilarity, calculateGeneralSimilarity, bypassTweetCollection,
+							workUntilBreakPointName, isExternalDateGiven, earliestTweetDate, latestTweetDate,
+							bypassSimilarityCalculation, bucketCalculation, tweetCursor, requestClassification,
+							iterationIndex);
+
+					new Thread(organizationDetector).start();
+					cursorWillBeUsed = true;
+					break;
+				}
+
 				JSONObject direnajTweetObject = new JSONObject(tweetCursor.next().toString());
 				// "retrieved_by" : "drenaj_toolkit",
 				if ("drenaj_toolkit".equals(direnajTweetObject.get("retrieved_by"))) {
@@ -136,7 +194,9 @@ public class DirenajDriverVersion2 {
 				}
 			}
 		} finally {
-			tweetCursor.close();
+			if (!cursorWillBeUsed) {
+				tweetCursor.close();
+			}
 		}
 		savePreProcessUsersIfNeeded(users, requestId, true);
 	}

@@ -3,7 +3,6 @@ package direnaj.functionalities.organizedBehaviour;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -11,13 +10,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.google.gson.Gson;
 import com.mongodb.BasicDBObject;
-import com.mongodb.BulkWriteOperation;
 import com.mongodb.Bytes;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -30,7 +25,6 @@ import direnaj.domain.UserTweets;
 import direnaj.driver.DirenajDriverVersion2;
 import direnaj.driver.DirenajMongoDriver;
 import direnaj.driver.DirenajMongoDriverUtil;
-import direnaj.driver.DirenajNeo4jDriver;
 import direnaj.driver.MongoCollectionFieldNames;
 import direnaj.servlet.OrganizedBehaviourDetectionRequestType;
 import direnaj.twitter.UserAccountPropertyAnalyser;
@@ -38,7 +32,6 @@ import direnaj.twitter.twitter4j.Twitter4jUtil;
 import direnaj.twitter.twitter4j.external.DrenajCampaignRecord;
 import direnaj.util.CollectionUtil;
 import direnaj.util.DateTimeUtils;
-import direnaj.util.ListUtils;
 import direnaj.util.PropertiesUtil;
 import direnaj.util.TextUtils;
 import twitter4j.HashtagEntity;
@@ -66,13 +59,19 @@ public class OrganizationDetector implements Runnable {
 	private boolean bypassTweetCollection;
 	private boolean bypassSimilarityCalculation;
 	private boolean isExternalDateGiven;
+	private boolean bucketCalculation;
 	private ResumeBreakPoint workUntilBreakPoint;
+	private String requestClassification;
+	private int iterationIndex;
+
+	private DBCursor tweetCursor;
 
 	public OrganizationDetector(String campaignId, int topHashtagCount, String requestDefinition, String tracedHashtag,
 			OrganizedBehaviourDetectionRequestType detectionRequestType, boolean disableGraphAnalysis,
 			boolean calculateHashTagSimilarity, boolean calculateGeneralSimilarity, boolean bypassTweetCollection,
 			String workUntilBreakPoint, boolean isExternalDateGiven, Date earliestDate, Date latestDate,
-			boolean bypassSimilarityCalculation) {
+			boolean bypassSimilarityCalculation, boolean bucketCalculation, DBCursor tweetCursor,
+			String requestClassification, int iterationIndex) {
 		direnajDriver = new DirenajDriverVersion2();
 		direnajMongoDriver = DirenajMongoDriver.getInstance();
 		requestId = TextUtils.generateUniqueId4Request();
@@ -95,11 +94,15 @@ public class OrganizationDetector implements Runnable {
 		this.earliestTweetDate = earliestDate;
 		this.latestTweetDate = latestDate;
 		this.bypassSimilarityCalculation = bypassSimilarityCalculation;
+		this.bucketCalculation = bucketCalculation;
+		this.requestClassification = requestClassification;
 		insertRequest2Mongo();
 
 		if (!TextUtils.isEmpty(workUntilBreakPoint)) {
 			this.workUntilBreakPoint = ResumeBreakPoint.valueOf(workUntilBreakPoint);
 		}
+		this.tweetCursor = tweetCursor;
+		this.iterationIndex = iterationIndex;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -129,6 +132,12 @@ public class OrganizationDetector implements Runnable {
 				.get(MongoCollectionFieldNames.MONGO_BYPASS_SIMILARITY_CALCULATION);
 		this.isExternalDateGiven = (boolean) requestObj.get(MongoCollectionFieldNames.MONGO_IS_EXTERNAL_DATE_GIVEN);
 
+		try {
+			this.bucketCalculation = (boolean) requestObj
+					.get(MongoCollectionFieldNames.MONGO_REQUEST_BUCKET_CALCULATION);
+		} catch (Exception e) {
+		}
+
 		this.earliestTweetDate = DateTimeUtils
 				.cast2Date(requestObj.get(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME));
 		this.latestTweetDate = DateTimeUtils
@@ -140,98 +149,6 @@ public class OrganizationDetector implements Runnable {
 		}
 		isCleaningDone4ResumeProcess = false;
 		updateRequestInMongoByColumnName(MongoCollectionFieldNames.MONGO_RESUME_PROCESS, false);
-	}
-
-	public HashMap<String, Double> calculateInNeo4J(List<String> userIds, String subgraphEdgeLabel) {
-		HashMap<String, Double> userClosenessCentralities = new HashMap<>();
-		if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
-			for (String userId : userIds) {
-				String closenessCalculateQuery = "START centralityNode=node:node_auto_index(calculationEdge = {calculationEdge}) " //
-						+ "WITH centralityNode " //
-						+ "MATCH p= (centralityNode)-[r]-(:User) " //
-						+ "WITH nodes(p) as nodes " //
-						+ "MATCH (a), (b) WHERE a<>b and a.id_str = {userId} and  b in nodes and b:User " //
-						+ "WITH length(shortestPath((a)<-[:" + subgraphEdgeLabel + "]-(b))) AS dist " //
-						+ "RETURN DISTINCT sum(1.0/dist) AS closenessCentrality"; //
-
-				String queryParams = "{}";
-				try {
-					JSONObject queryParamsJson = new JSONObject();
-					queryParamsJson.put("userId", userId);
-					queryParamsJson.put("calculationEdge", subgraphEdgeLabel);
-					queryParams = queryParamsJson.toString();
-				} catch (JSONException e) {
-					Logger.getLogger(OrganizationDetector.class)
-							.error("Error in OrganizationDetector calculateInNeo4J.", e);
-				}
-
-				Map<String, Object> cypherResult = DirenajNeo4jDriver.getInstance().executeSingleResultCypher(
-						closenessCalculateQuery, queryParams, ListUtils.getListOfStrings("closenessCentrality"));
-				double closenessCentrality = 0d;
-				if (cypherResult.containsKey("closenessCentrality")) {
-					closenessCentrality = Double.valueOf(cypherResult.get("closenessCentrality").toString());
-				}
-				userClosenessCentralities.put(userId, closenessCentrality);
-			}
-		}
-		return userClosenessCentralities;
-	}
-
-	public String createSubgraphByAddingEdges(List<String> userIds) {
-		String newRelationName = "FOLLOWS_" + requestId;
-		String cypherCreateNode = "CREATE (n:ClosenessCentralityCalculator { calculationEdge : '" + newRelationName
-				+ "' })";
-		DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherCreateNode, "{}");
-
-		int hopCount = PropertiesUtil.getInstance().getIntProperty("graphDb.closenessCentrality.calculation.hopNode",
-				2);
-		// collect all userIds
-		String collectionRepresentation4UserIds = "";
-		JSONArray array = new JSONArray();
-		for (String userId : userIds) {
-			collectionRepresentation4UserIds = ",'" + userId + "'";
-			array.put(userId);
-		}
-		// delete comma in the beginning
-		collectionRepresentation4UserIds = collectionRepresentation4UserIds.substring(1);
-		// execute cypher query
-		// String cypherQuery = "START begin=node:node_auto_index('id_str:(" +
-		// collectionRepresentation4UserIds + ")') " //
-		// + "WITH begin " //
-		// + "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) "
-		// //
-		// + "WITH distinct nodes(p) as nodes " //
-		// + "MATCH
-		// (x)-[:FOLLOWS]->(y),(n:ClosenessCentralityCalculator{calculationEdge:
-		// '" + newRelationName + "' }) " //
-		// + "WHERE x in nodes and y in nodes " //
-		// + "CREATE (n)-[:CalculateCentrality]->(x)-[r1:" + newRelationName +Y
-		// "]->(y)<-[:CalculateCentrality]-(n)";
-
-		String cypherQuery = "MATCH p = (begin:User)-[r:FOLLOWS*.." + hopCount + "]-(end:User) "
-				+ "WHERE begin.id_str IN {id_str} " //
-				+ "WITH distinct nodes(p) as nodes " //
-				+ "MATCH (n:ClosenessCentralityCalculator),(z:User) " //
-				+ "WHERE  n.calculationEdge = {calculationEdge} and z in nodes " //
-				+ "CREATE UNIQUE (n)-[:CalculateCentrality]->(z) " //
-				+ "WITH nodes " //
-				+ "MATCH (x)-[:FOLLOWS]->(y) " //
-				+ "WHERE x in nodes and y in nodes " //
-				+ "CREATE UNIQUE (x)-[r1:" + newRelationName + "]->(y)";
-
-		String params = "";
-		try {
-			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("id_str", array);
-			jsonObject.put("calculationEdge", newRelationName);
-			params = jsonObject.toString();
-		} catch (JSONException e) {
-			Logger.getLogger(OrganizationDetector.class)
-					.error("Error in OrganizationDetector createSubgraphByAddingEdges.", e);
-		}
-		Logger.getLogger(OrganizationDetector.class).debug("Params :" + params);
-		DirenajNeo4jDriver.getInstance().executeNoResultCypher(cypherQuery, params);
-		return newRelationName;
 	}
 
 	public void detectOrganizedBehaviourInHashtags() {
@@ -271,7 +188,14 @@ public class OrganizationDetector implements Runnable {
 				tracedSingleHashtag = tracedHashtag;
 				if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.TWEET_COLLECTION_COMPLETED,
 						resumeBreakPoint, workUntilBreakPoint)) {
-					direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId);
+					if (requestDefinition.contains("_")) {
+						requestDefinition = requestDefinition.split("_")[0];
+					}
+					direnajDriver.saveHashtagUsers2Mongo(campaignId, tracedHashtag, requestId, tweetCursor,
+							bucketCalculation, requestDefinition, calculateHashTagSimilarity,
+							calculateGeneralSimilarity, bypassTweetCollection, workUntilBreakPoint, isExternalDateGiven,
+							earliestTweetDate, latestTweetDate, bypassSimilarityCalculation,requestClassification,iterationIndex);
+
 					collectTweetsOfAllUsers(requestId);
 				}
 				if (ResumeBreakPoint.shouldProcessCurrentBreakPoint(ResumeBreakPoint.USER_ANALYZE_COMPLETED,
@@ -492,25 +416,6 @@ public class OrganizationDetector implements Runnable {
 		return domainUser;
 	}
 
-	private void bulkUpdateMongo4ClosenessCentrality(HashMap<String, Double> userClosenessCentralities) {
-		DBCollection processInputDataCollection = DirenajMongoDriver.getInstance().getOrgBehaviourProcessInputData();
-		BulkWriteOperation bulkWriteOperation = processInputDataCollection.initializeUnorderedBulkOperation();
-
-		for (Map.Entry<String, Double> entry : userClosenessCentralities.entrySet()) {
-			bulkWriteOperation.find(new BasicDBObject("requestId", requestId).append("userId", entry.getKey()))
-					.updateOne(new BasicDBObject("$set", new BasicDBObject("closenessCentrality", entry.getValue())));
-		}
-		bulkWriteOperation.execute();
-	}
-
-	@SuppressWarnings("unused")
-	private void calculateClosenessCentrality(List<String> userIds) {
-		String subgraphEdgeLabel = createSubgraphByAddingEdges(userIds);
-		HashMap<String, Double> userClosenessCentralities = calculateInNeo4J(userIds, subgraphEdgeLabel);
-		bulkUpdateMongo4ClosenessCentrality(userClosenessCentralities);
-		// clearNeo4jSubGraph(subgraphEdgeLabel);
-	}
-
 	public void changeRequestStatusInMongo(boolean requestStatus) {
 		DBCollection organizedBehaviorCollection = direnajMongoDriver.getOrgBehaviorRequestCollection();
 		BasicDBObject findQuery = new BasicDBObject();
@@ -543,31 +448,6 @@ public class OrganizationDetector implements Runnable {
 		updateQuery.append("$set", new BasicDBObject().append(MongoCollectionFieldNames.MONGO_RESUME_BREAKPOINT,
 				ResumeBreakPoint.FINISHED.name()));
 		organizedBehaviorCollection.update(findQuery, updateQuery);
-	}
-
-	private void clearNeo4jSubGraph(String subgraphEdgeLabel) {
-		if (!TextUtils.isEmpty(subgraphEdgeLabel)) {
-			String deleteRelationshipCypher = "MATCH (u:User)-[r:" + subgraphEdgeLabel + "]-(t:User) DELETE r";
-			DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteRelationshipCypher, "{}");
-			// delete Centrality Calculator Node and its relations
-			String params = "";
-			try {
-				JSONObject jsonObject = new JSONObject();
-				jsonObject.put("calculationEdge", subgraphEdgeLabel);
-				params = jsonObject.toString();
-			} catch (JSONException e) {
-				Logger.getLogger(OrganizationDetector.class).error("Error in OrganizationDetector clearNeo4jSubGraph.",
-						e);
-			}
-			// delete relationships
-			String deleteCentralitycalculatorRelationShips = "MATCH (n:ClosenessCentralityCalculator)-[r]-(u:User) "
-					+ "WHERE  n.calculationEdge = {calculationEdge} DELETE r";
-			DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteCentralitycalculatorRelationShips, params);
-			// delete node
-			String deleteCentralitycalculatorNode = "MATCH (n:ClosenessCentralityCalculator) "
-					+ "WHERE  n.calculationEdge = {calculationEdge} DELETE n";
-			DirenajNeo4jDriver.getInstance().executeNoResultCypher(deleteCentralitycalculatorNode, params);
-		}
 	}
 
 	/**
@@ -613,6 +493,8 @@ public class OrganizationDetector implements Runnable {
 		document.put(MongoCollectionFieldNames.MONGO_IS_EXTERNAL_DATE_GIVEN, isExternalDateGiven);
 		document.put(MongoCollectionFieldNames.MONGO_EARLIEST_TWEET_TIME, earliestTweetDate);
 		document.put(MongoCollectionFieldNames.MONGO_LATEST_TWEET_TIME, latestTweetDate);
+		document.put(MongoCollectionFieldNames.MONGO_REQUEST_BUCKET_CALCULATION, bucketCalculation);
+		document.put(MongoCollectionFieldNames.MONGO_REQUEST_ORGANIZED_CLASS, requestClassification);
 		organizedBehaviorCollection.insert(document);
 	}
 

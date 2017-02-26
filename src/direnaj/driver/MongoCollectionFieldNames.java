@@ -4,6 +4,7 @@ public interface MongoCollectionFieldNames {
 
 	
 	public static final String MONGO_REQUEST_ID = "requestId";
+	public static final String MONGO_REQUEST_ORGANIZED_CLASS = "organizedClass";
 	public final static String MONGO_USER_ID = "userId";
 
 	public static final String MONGO_TWEET_ID = "tweetId";
@@ -50,6 +51,8 @@ public interface MongoCollectionFieldNames {
 
 	public static final String MONGO_LATEST_TWEET_TIME = "latestTweetTimeInRequest";
 	public static final String MONGO_EARLIEST_TWEET_TIME = "earliestTweetTimeInRequest";
+
+	public static final String MONGO_REQUEST_BUCKET_CALCULATION = "bucketCalculation";
 
 	// Cosine Similarity Requests
 	public static final String MONGO_RESUME_PROCESS = "resumeProcess";
