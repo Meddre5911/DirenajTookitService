@@ -48,7 +48,7 @@ User interfaces are implemented using JSP.
 
 The data set can be found in.
 
-In the link - "10.6084/m9.figshare.6683004", two different files are exist. One for Seed Tweets and One for Extended Tweets.
+In the link - "https://figshare.com/articles/US_2016_Election_Data_used_for_classification_of_Organized_Behavior_in_Twitter/6683004", two different files are exist. One for Seed Tweets and One for Extended Tweets.
 
 Format of Seed Tweets File is as below : 
 
