@@ -1,0 +1,14 @@
+Organic : 226
+Organized : 625
+Trump : 311
+Hillary : 171
+Irrelevant : 372
+Political : 648
+Non Political : 231
+ORGANIC Total Seed Count:  970748  Total Expanded Count :  92758972  Total User Count :  312191
+ORGANIZED Total Seed Count:  2104719  Total Expanded Count :  187578673  Total User Count :  569723
+TRUMP Total Seed Count:  966079  Total Expanded Count :  102651333  Total User Count :  294895
+HILLARY Total Seed Count:  377416  Total Expanded Count :  36041447  Total User Count :  102528
+ IRRELEVANT Total Seed Count:  1801844  Total Expanded Count :  160686611  Total User Count :  535337
+POLITICAL Total Seed Count:  2648087  Total Expanded Count :  255808278  Total User Count :  709461
+ NON-POLITICAL Total Seed Count:  903568  Total Expanded Count :  90285375  Total User Count :  312484
